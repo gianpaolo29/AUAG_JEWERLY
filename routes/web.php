@@ -13,12 +13,32 @@ use App\Http\Controllers\Admin\PawnItemController;
 use App\Http\Controllers\Admin\RepairController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\Customer\ShopController;
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
 
 
 
 
-Route::get('/', [StorefrontController::class, 'home'])->name('home');
+Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
+Route::get('auth/google/callback', [GoogleController::class, 'callback']);
+
+Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+            ->name('password.request');
+
+Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+            ->name('password.email');
+
+Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+            ->name('password.reset');
+
+Route::post('reset-password', [NewPasswordController::class, 'store'])
+            ->name('password.store');
+
+
+Route::get('/', [StorefrontController::class, 'index'])->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

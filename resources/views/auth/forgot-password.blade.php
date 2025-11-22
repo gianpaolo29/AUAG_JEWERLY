@@ -1,25 +1,277 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUAG Jewelry - Reset Password</title>
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* Basic Reset and Global Styles */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: #f0f0f0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Background Styling --- */
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url("{{ asset('storage/BG.jpg') }}");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            filter: blur(5px);
+            z-index: -2;
+        }
+
+        /* --- Card and Layout Styling --- */
+        .login-container {
+            padding: 20px;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .login-card {
+            background: rgba(43, 36, 30, 0.8); /* Dark semi-transparent background */
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 187, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- Logo and Header --- */
+        .logo-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 30px;
+            font-weight: 700;
+            color: #ffc72c; /* Gold color */
+            margin: 0;
+            letter-spacing: 5px;
+        }
+
+        .logo-subtext {
+            font-size: 10px;
+            color: #c9c9c9;
+            margin-top: 5px;
+            letter-spacing: 3px;
+        }
+
+        .welcome-text {
+            font-size: 24px;
+            margin-top: 30px;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+
+        .signin-info {
+            font-size: 14px;
+            color: #a8a8a8;
+            margin-bottom: 30px;
+        }
+
+        /* --- Instruction Text --- */
+        .instruction-text {
+            font-size: 14px;
+            color: #a8a8a8;
+            margin-bottom: 25px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        /* --- Session + Error Messages --- */
+        .session-status {
+            background-color: #214021;
+            border: 1px solid #3fa43f;
+            color: #d4f4d4;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .error-text {
+            color: #ffb3b3;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        /* --- Form Elements --- */
+        .login-form {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #c9c9c9;
+            margin-bottom: 8px;
+            margin-top: 15px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        /* Input field styles */
+        .login-form .input-group input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: none;
+            background-color: #ffffff; 
+            border-radius: 6px;
+            color: #302418; 
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        input::placeholder {
+            color: #666; 
+        }
+
+        input:focus {
+            outline: none;
+            background-color: #f0f0f0; 
+            box-shadow: 0 0 0 2px #ffc72c;
+        }
+
+        .icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ffc72c;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: right;
+            font-size: 13px;
+            color: #ffc72c;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .forgot-password:hover {
+            color: #ffe6a4;
+        }
+
+        /* --- Sign In Button --- */
+        .signin-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(180deg, #ffc72c, #e7a800);
+            border: none;
+            border-radius: 8px;
+            color: #302418;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 199, 44, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .signin-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(255, 199, 44, 0.5);
+        }
+
+        /* --- Back to Login Link --- */
+        .back-to-login {
+            font-size: 14px;
+            color: #c9c9c9;
+            text-align: center;
+        }
+
+        .back-to-login a {
+            color: #ffc72c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-to-login a:hover {
+            color: #ffe6a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <div class="login-container">
+        <div class="login-card">
+            <header class="logo">
+                <h1 class="logo-text">AUAG</h1>
+                <p class="logo-subtext">FINE JEWELRY</p>
+            </header>
+
+            <h2 class="welcome-text">Reset Your Password</h2>
+            <p class="signin-info">Enter your email to receive a reset link</p>
+
+            <!-- Instruction Text -->
+            <div class="instruction-text">
+                Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.
+            </div>
+
+            <!-- Session Status -->
+            <x-auth-session-status class="session-status" :status="session('status')" />
+
+            <form class="login-form" method="POST" action="{{ route('password.email') }}">
+                @csrf
+
+                <!-- Email Address -->
+                <label for="email">Email Address</label>
+                <div class="input-group">
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="{{ old('email') }}"
+                        required
+                        autofocus
+                        autocomplete="email"
+                        placeholder="your@email.com"
+                    >
+                    <i class="icon fa-regular fa-envelope"></i>
+                </div>
+                <x-input-error :messages="$errors->get('email')" class="error-text" />
+
+                <button type="submit" class="signin-button">
+                    {{ __('Email Password Reset Link') }}
+                </button>
+            </form>
+
+            <p class="back-to-login">
+                Remember your password?
+                <a href="{{ route('login') }}">Back to login</a>
+            </p>
+        </div>
     </div>
-
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form method="POST" action="{{ route('password.email') }}">
-        @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+</body>
+</html>

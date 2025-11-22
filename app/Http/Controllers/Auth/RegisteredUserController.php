@@ -46,6 +46,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('customer.dashboard', absolute: false));
+        return redirect(route('home', absolute: false) 
+        ->with('login_success', 'You have registered and logged in successfully!'));
     }
 }

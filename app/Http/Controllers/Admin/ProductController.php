@@ -40,7 +40,7 @@ class ProductController extends Controller
             // Assuming the Product model uses 'is_active' for status, not 'status'
             'total_products'  => Product::count(),
             'active_products' => Product::where('status', true)->count(),
-            'low_stock'       => Product::where('quantity', '>', 0)
+            'low_stock'       => Product::where('quantity', '=>', 0)
                                         ->where('quantity', '<', $lowStock)
                                         ->count(),
             'categories'      => Category::count(),

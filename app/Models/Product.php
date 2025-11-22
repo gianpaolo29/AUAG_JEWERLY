@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use App\Models\PictureUrl;
@@ -19,42 +18,39 @@ class Product extends Model
         'description',
         'price',
         'quantity',
-        'status',   
+        'status',
     ];
 
     protected $casts = [
         'status' => 'boolean',
     ];
 
+    // 🔹 One image only, via morphOne
     public function picture()
     {
         return $this->morphOne(PictureUrl::class, 'imageable');
     }
 
-
+    // 🔹 Clean, safe accessor
     public function getImageUrlAttribute(): string
     {
-        // picture_urls.url could be:
-        // - full URL (https://...) OR
-        // - relative ('products/xyz.jpg')
-        $path = $this->picture->url ?? null;
+        // Safely get the url (null if no picture)
+        $path = optional($this->picture)->url;
 
+        // Fallback placeholder if no image at all
         if (!$path) {
             return asset('images/placeholder-product.png');
         }
 
-        // If already full URL, just return as-is
+        // If already a full external URL
         if (Str::startsWith($path, ['http://', 'https://'])) {
             return $path;
         }
 
-        // Otherwise assume it’s in storage/app/public/...
+        // Otherwise assume it's a storage path
         return asset('storage/' . ltrim($path, '/'));
     }
 
-    
-
-    // 👇 Category relation used in index blade
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -75,11 +71,9 @@ class Product extends Model
         return $this->hasMany(Repair::class);
     }
 
+    // Alias if you really want it
     public function pictureUrl()
     {
         return $this->picture();
     }
-
-    
-
 }

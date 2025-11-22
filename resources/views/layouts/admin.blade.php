@@ -11,6 +11,11 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    
     {{-- NOTE: Alpine.js Collapse is needed for the Users dropdown smooth animation --}}
     <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -20,11 +25,34 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Improved tooltip styling */
+        .sidebar-tooltip {
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .sidebar-tooltip::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-right-color: #1f2937;
+        }
+    </style>
 </head>
 <body class="h-full antialiased" 
     x-data="{ 
         isSidebarOpen: false, 
-        isDesktopSidebarCollapsed: localStorage.getItem('isDesktopSidebarCollapsed') === 'true' 
+        isDesktopSidebarCollapsed: localStorage.getItem('isDesktopSidebarCollapsed') === 'true',
+        // Tooltip management
+        activeTooltip: null,
+        tooltipText: '',
+        tooltipPosition: { x: 0, y: 0 }
     }"
     x-init="$watch('isDesktopSidebarCollapsed', value => localStorage.setItem('isDesktopSidebarCollapsed', value))"
 >
@@ -245,11 +273,11 @@
                     <li>
                         <ul role="list" class="-mx-2 space-y-1">
                             {{-- Dashboard --}}
-                            <li x-data="{ showTooltip: false }"
-                                class="relative">
+                            <li>
                                 <a href="{{ route('admin.dashboard') }}"
-                                   @mouseenter="showTooltip = true"
-                                   @mouseleave="showTooltip = false"
+                                   x-data="{ showTooltip: false }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Dashboard'; tooltipText = 'Dashboard'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
@@ -266,33 +294,17 @@
                                         Dashboard
                                     </span>
                                 </a>
-                                
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Dashboard
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             </li>
 
                             {{-- Users (dropdown) --}}
                             <li x-data="{ 
-                                    showTooltip: false,
                                     openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }} 
-                                }"
-                                class="relative">
+                                }">
                                 
                                 <button type="button"
-                                    @mouseenter="showTooltip = true"
-                                    @mouseleave="showTooltip = false"
+                                    x-data="{ showTooltip: false }"
+                                    @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Users'; tooltipText = 'Users'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                     @click="openUsers = !openUsers"
                                     class="w-full group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
@@ -318,21 +330,6 @@
                                     </svg>
                                 </button>
 
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Users
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
-
                                 {{-- Submenu when expanded - UPDATED: Same size as parent --}}
                                 <div x-show="openUsers && !isDesktopSidebarCollapsed"
                                      x-collapse
@@ -351,11 +348,11 @@
                             </li>
 
                             {{-- Products --}}
-                            <li x-data="{ showTooltip: false }"
-                                class="relative">
+                            <li>
                                 <a href="{{ route('admin.products.index') }}"
-                                   @mouseenter="showTooltip = true"
-                                   @mouseleave="showTooltip = false"
+                                   x-data="{ showTooltip: false }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Products'; tooltipText = 'Products'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.products.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
@@ -372,29 +369,14 @@
                                         Products
                                     </span>
                                 </a>
-                                
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Products
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             </li>
 
                             {{-- Transactions --}}
-                            <li x-data="{ showTooltip: false }"
-                                class="relative">
+                            <li>
                                 <a href="{{ route('admin.transactions.index') }}"
-                                   @mouseenter="showTooltip = true"
-                                   @mouseleave="showTooltip = false"
+                                   x-data="{ showTooltip: false }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Transactions'; tooltipText = 'Transactions'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.transactions.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
@@ -409,29 +391,14 @@
                                         Transactions
                                     </span>
                                 </a>
-                                
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Transactions
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             </li>
 
                             {{-- Pawn --}}
-                            <li x-data="{ showTooltip: false }"
-                                class="relative">
+                            <li>
                                 <a href="{{ route('admin.pawn.index') }}"
-                                   @mouseenter="showTooltip = true"
-                                   @mouseleave="showTooltip = false"
+                                   x-data="{ showTooltip: false }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Pawn'; tooltipText = 'Pawn'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.pawn.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
@@ -446,29 +413,14 @@
                                         Pawn
                                     </span>
                                 </a>
-                                
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Pawn
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             </li>
 
                             {{-- Repairs --}}
-                            <li x-data="{ showTooltip: false }"
-                                class="relative">
+                            <li>
                                 <a href="{{ route('admin.repairs.index') }}"
-                                   @mouseenter="showTooltip = true"
-                                   @mouseleave="showTooltip = false"
+                                   x-data="{ showTooltip: false }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Repairs'; tooltipText = 'Repairs'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.repairs.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
@@ -483,29 +435,14 @@
                                         Repairs
                                     </span>
                                 </a>
-                                
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Repairs
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             </li>
 
                             {{-- Analytics --}}
-                            <li x-data="{ showTooltip: false }"
-                                class="relative">
+                            <li>
                                 <a href=""
-                                   @mouseenter="showTooltip = true"
-                                   @mouseleave="showTooltip = false"
+                                   x-data="{ showTooltip: false }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Analytics'; tooltipText = 'Analytics'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.analytics.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
@@ -520,69 +457,50 @@
                                         Analytics
                                     </span>
                                 </a>
-                                
-                                {{-- FIXED: Tooltip with proper positioning --}}
-                                <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                                     x-transition:enter="transition ease-out duration-200"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-150"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                                     style="pointer-events: none;"
-                                     x-cloak>
-                                    Analytics
-                                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
-                                </div>
                             </li>
                         </ul>
                     </li>
 
                     {{-- Logout --}}
-                    <li class="mt-auto relative" x-data="{ showTooltip: false }">
-                        <form method="POST" action="{{ route('logout') }}" class="-mx-2">
-                            <button type="submit"
-                                    @mouseenter="showTooltip = true"
-                                    @mouseleave="showTooltip = false"
-                                    class="group flex items-center w-full rounded-md py-2 text-sm/6 font-semibold text-red-300 hover:bg-red-950/40 hover:text-red-200"
-                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                @csrf
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                     stroke-width="1.5" aria-hidden="true"
-                                     class="size-6 shrink-0 text-red-400 group-hover:text-red-300">
-                                    <path
-                                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3-3m0 0 3 3m-3-3v12"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <span x-show="!isDesktopSidebarCollapsed"
-                                      class="truncate transition-opacity duration-300 ease-in-out">
-                                    Logout
-                                </span>
-                            </button>
-                        </form>
-                        
-                        {{-- FIXED: Tooltip with proper positioning --}}
-                        <div x-show="isDesktopSidebarCollapsed && showTooltip"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 scale-95"
-                             x-transition:enter-end="opacity-100 scale-100"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100 scale-100"
-                             x-transition:leave-end="opacity-0 scale-95"
-                             class="absolute left-full bottom-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-red-800 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-                             style="pointer-events: none;"
-                             x-cloak>
-                            Logout
-                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-red-800"></div>
-                        </div>
+                    <li class="mt-auto">
+                        <button type="button"
+                                x-data="{ showTooltip: false }"
+                                @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Logout'; tooltipText = 'Logout'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
+                                @click="confirmLogout()"
+                                class="group flex items-center w-full rounded-md py-2 text-sm/6 font-semibold text-red-300 hover:bg-red-950/40 hover:text-red-200"
+                                x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="1.5" aria-hidden="true"
+                                 class="size-6 shrink-0 text-red-400 group-hover:text-red-300">
+                                <path
+                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3-3m0 0 3 3m-3-3v12"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <span x-show="!isDesktopSidebarCollapsed"
+                                  class="truncate transition-opacity duration-300 ease-in-out">
+                                Logout
+                            </span>
+                        </button>
                     </li>
                 </ul>
             </nav>
         </div>
     </div>
 
-    {{-- Rest of the code remains exactly the same... --}}
+    {{-- Global Tooltip --}}
+    <div x-show="isDesktopSidebarCollapsed && activeTooltip"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed sidebar-tooltip rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
+         x-bind:style="`left: ${tooltipPosition.x}px; top: ${tooltipPosition.y}px; transform: translateY(-50%);`"
+         x-cloak>
+        <span x-text="tooltipText"></span>
+    </div>
 
     {{-- MAIN AREA --}}
     <div
@@ -637,8 +555,8 @@
                     <div aria-hidden="true" class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200"></div>
 
                     {{-- Profile dropdown --}}
-                    <el-dropdown class="relative">
-                        <button class="relative flex items-center">
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="relative flex items-center">
                             <span class="absolute -inset-1.5"></span>
                             <span class="sr-only">Open user menu</span>
                             <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -654,20 +572,20 @@
                                 </svg>
                             </span>
                         </button>
-                        <el-menu anchor="bottom end" popover
-                                 class="w-40 origin-top-right rounded-md bg-white py-2 shadow-lg outline-1 outline-gray-900/5 transition data-closed:scale-95 data-closed:opacity-0">
-                            <span class="block px-3 py-1 text-sm/6 text-gray-900">
+                        
+                        {{-- Dropdown menu --}}
+                        <div x-show="open" 
+                             @click.outside="open = false"
+                             class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div class="px-4 py-2 text-sm text-gray-700 border-b">
                                 {{ auth()->user()->email ?? '' }}
-                            </span>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit"
-                                        class="block w-full px-3 py-1 text-left text-sm/6 text-gray-900 hover:bg-gray-50">
-                                    Sign out
-                                </button>
-                            </form>
-                        </el-menu>
-                    </el-dropdown>
+                            </div>
+                            <button @click="confirmLogout()"
+                                    class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
+                                Sign out
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -746,5 +664,31 @@
         </main>
 
     </div>
+
+    {{-- Hidden logout form --}}
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+        @csrf
+    </form>
+
+    <script>
+        // SweetAlert logout confirmation
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You will be logged out of your account!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, logout!',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+    </script>
 </body>
 </html>

@@ -388,9 +388,10 @@
             </div>
 
             <div class="social-login">
-                <button class="social-button google" type="button">
-                    <span class="social-icon"><i class="border-bord fa-brands fa-google"></i></span> Google
-                </button>
+                <a href="{{ route('google.login') }}" class="social-button google">
+                    <span class="social-icon"><i class="fa-brands fa-google"></i></span>
+                    Google
+                </a>
             </div>
 
             <p class="create-account">
