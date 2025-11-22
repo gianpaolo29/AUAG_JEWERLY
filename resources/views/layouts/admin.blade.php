@@ -11,29 +11,29 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    
+
     <!-- SweetAlert2 CSS & JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-    
+
     {{-- NOTE: Alpine.js Collapse is needed for the Users dropdown smooth animation --}}
     <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/flowbite@2.3.0/dist/flowbite.min.js"></script>
     @stack('scripts')
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <style>
         [x-cloak] { display: none !important; }
-        
+
         /* Improved tooltip styling */
         .sidebar-tooltip {
             pointer-events: none;
             z-index: 9999;
         }
-        
+
         .sidebar-tooltip::before {
             content: '';
             position: absolute;
@@ -45,9 +45,9 @@
         }
     </style>
 </head>
-<body class="h-full antialiased" 
-    x-data="{ 
-        isSidebarOpen: false, 
+<body class="h-full antialiased"
+    x-data="{
+        isSidebarOpen: false,
         isDesktopSidebarCollapsed: localStorage.getItem('isDesktopSidebarCollapsed') === 'true',
         // Tooltip management
         activeTooltip: null,
@@ -94,7 +94,7 @@
             {{-- Mobile Sidebar Content - UPDATED TO MATCH DESKTOP COLOR --}}
             <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 px-6 pb-4">
                 <div class="relative flex h-16 shrink-0 items-center">
-                    <img src="{{ asset('storage/Auag.jpg') }}" alt="AUAG Jewelry" class="h-8 w-auto rounded-md" />
+                    <img src="/Auag.jpg" alt="AUAG Jewelry" class="h-8 w-auto rounded-md" />
                     <span class="ml-3 text-sm font-semibold tracking-[0.2em] text-gray-100 uppercase">
                         Admin
                     </span>
@@ -253,9 +253,9 @@
         x-bind:class="isDesktopSidebarCollapsed ? 'lg:w-20' : 'lg:w-72'">
         <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-800 bg-gray-950/95 px-4 pb-4">
             {{-- Logo - FIXED ALIGNMENT --}}
-            <div class="flex h-14 shrink-0 items-center" 
+            <div class="flex h-14 shrink-0 items-center"
                  x-bind:class="isDesktopSidebarCollapsed ? 'justify-center' : 'justify-start'">
-                <img src="{{ asset('storage/Auag.jpg') }}" alt="AUAG Jewelry" class="h-8 w-auto rounded-md" />
+                <img src="/Auag.jpg" alt="AUAG Jewelry" class="h-8 w-auto rounded-md" />
                 <span x-show="!isDesktopSidebarCollapsed"
                       x-transition:enter="transition ease-out duration-300"
                       x-transition:enter-start="opacity-0 translate-x-3"
@@ -297,10 +297,10 @@
                             </li>
 
                             {{-- Users (dropdown) --}}
-                            <li x-data="{ 
-                                    openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }} 
+                            <li x-data="{
+                                    openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }}
                                 }">
-                                
+
                                 <button type="button"
                                     x-data="{ showTooltip: false }"
                                     @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Users'; tooltipText = 'Users'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
@@ -506,11 +506,11 @@
     <div
         class="min-h-screen bg-gray-50 transition-all duration-300 ease-in-out"
         x-bind:class="isDesktopSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'">
-        
+
         {{-- Top bar --}}
         <div
             class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white/95 px-4 shadow-xs backdrop-blur-sm sm:gap-x-6 sm:px-6 lg:px-8">
-            
+
             {{-- Mobile sidebar toggle --}}
             <button type="button" @click="isSidebarOpen = true"
                     class="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden">
@@ -572,9 +572,9 @@
                                 </svg>
                             </span>
                         </button>
-                        
+
                         {{-- Dropdown menu --}}
-                        <div x-show="open" 
+                        <div x-show="open"
                              @click.outside="open = false"
                              class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                             <div class="px-4 py-2 text-sm text-gray-700 border-b">
@@ -592,7 +592,7 @@
 
         {{-- Flash Notification --}}
         @if(session('success') || session('error'))
-        <div 
+        <div
             x-data="{ show: true }"
             x-init="setTimeout(() => show = false, 4000)"
             x-show="show"
@@ -601,7 +601,7 @@
             class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-[9999]"
         >
             <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
-                <div 
+                <div
                     class="pointer-events-auto w-full max-w-sm rounded-lg bg-white shadow-lg outline-1 outline-black/5 transition duration-300 ease-out transform"
                     x-transition:enter="transform ease-out duration-300"
                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-x-2 sm:translate-y-0"

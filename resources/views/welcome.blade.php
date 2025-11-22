@@ -42,8 +42,8 @@
   <section class="relative min-h-screen overflow-hidden">
     <!-- Background with subtle overlay -->
     <div class="absolute inset-0">
-      <img src="{{ asset('storage/Model.webp') }}" 
-           alt="Jewelry on marble" 
+      <img src="/Model.webp"
+           alt="Jewelry on marble"
            class="w-full h-full object-cover object-center" />
       <div class="absolute inset-0 hero-gradient"></div>
     </div>
@@ -66,13 +66,13 @@
 
         <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12">
-          <a href="{{ url('/shop') }}" 
+          <a href="{{ url('/shop') }}"
              class="group relative overflow-hidden bg-white text-gray-900 px-8 py-4 rounded-2xl font-medium text-lg hover:scale-105 transition-all duration-300 shadow-2xl">
             <span class="relative z-10">Explore Collection</span>
             <div class="absolute inset-0 bg-gradient-to-r from-emerald-400 to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </a>
-          
-          <a href="#about" 
+
+          <a href="#about"
              onclick="scrollToSection('#about')"
              class="group border-2 border-white/50 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 backdrop-blur-sm">
             <span class="flex items-center gap-2">
@@ -202,15 +202,15 @@
             <span class="text-emerald-600 font-medium tracking-wider">OUR LEGACY</span>
             <h2 class="font-serif text-5xl text-gray-900 mt-4">Crafting Stories Since 2024</h2>
           </div>
-          
+
           <div class="space-y-6">
             <p class="text-gray-600 text-lg leading-relaxed">
-              For over year, AUAG Jewelry has been synonymous with exceptional craftsmanship and timeless elegance. 
+              For over year, AUAG Jewelry has been synonymous with exceptional craftsmanship and timeless elegance.
               Our journey began with a simple vision: to create pieces that capture life's most precious moments.
             </p>
-            
+
             <p class="text-gray-600 text-lg leading-relaxed">
-              Today, we continue to honor traditional techniques while embracing innovative design, 
+              Today, we continue to honor traditional techniques while embracing innovative design,
               ensuring each piece becomes a cherished heirloom.
             </p>
           </div>
@@ -235,17 +235,17 @@
           <div class="grid grid-cols-2 gap-6">
             <div class="space-y-6">
               <div class="aspect-square rounded-3xl overflow-hidden bg-white shadow-lg">
-                <img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                <img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
                      alt="Craftsmanship" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700">
               </div>
               <div class="aspect-square rounded-3xl overflow-hidden bg-white shadow-lg">
-                <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
                      alt="Materials" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700">
               </div>
             </div>
             <div class="space-y-6 pt-12">
               <div class="aspect-square rounded-3xl overflow-hidden bg-white shadow-lg">
-                <img src="https://images.unsplash.com/photo-1588444650700-6c7f0c89d36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                <img src="https://images.unsplash.com/photo-1588444650700-6c7f0c89d36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
                      alt="Design" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700">
               </div>
               <div class="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg">
@@ -329,29 +329,29 @@
             <div class="grid md:grid-cols-2 gap-6">
               <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                <input type="text" id="name" name="name" 
+                <input type="text" id="name" name="name"
                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-300 outline-none">
               </div>
               <div>
                 <label for="lastname" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                <input type="text" id="lastname" name="lastname" 
+                <input type="text" id="lastname" name="lastname"
                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-300 outline-none">
               </div>
             </div>
-            
+
             <div>
               <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              <input type="email" id="email" name="email" 
+              <input type="email" id="email" name="email"
                      class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-300 outline-none">
             </div>
-            
+
             <div>
               <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
               <textarea id="message" name="message" rows="5"
                         class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-300 outline-none resize-none"></textarea>
             </div>
-            
-            <button type="submit" 
+
+            <button type="submit"
                     class="w-full bg-gradient-to-r from-gray-900 to-gray-700 text-white py-4 rounded-2xl font-medium hover:shadow-xl transition-all duration-300 hover:scale-105">
               Send Message
             </button>
@@ -367,17 +367,17 @@
       <div class="bg-white/50 backdrop-blur-sm rounded-3xl p-12 shadow-2xl">
         <h3 class="font-serif text-4xl text-gray-900 mb-4">Stay in the Loop</h3>
         <p class="text-gray-600 text-lg mb-8">Be the first to discover new collections, exclusive offers, and styling inspiration.</p>
-        
+
         <form class="flex gap-4 max-sm:flex-col items-center justify-center"
               onsubmit="event.preventDefault(); showNewsletterSuccess()">
           <input type="email" required placeholder="Enter your email address"
                  class="flex-1 max-w-md px-6 py-4 rounded-2xl border border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-300 outline-none">
-          <button type="submit" 
+          <button type="submit"
                   class="bg-gradient-to-r from-gray-900 to-gray-700 text-white px-8 py-4 rounded-2xl font-medium hover:shadow-xl transition-all duration-300 hover:scale-105">
             Subscribe
           </button>
         </form>
-        
+
         <p class="text-gray-500 text-sm mt-4">By subscribing, you agree to our Privacy Policy</p>
       </div>
     </div>
@@ -389,7 +389,7 @@
       <!-- Brand -->
       <div class="space-y-4">
         <div class="flex items-center gap-3">
-          <img src="{{ asset('storage/Auag.jpg') }}" alt="AUAG Jewelry Logo" class="h-10 w-10 rounded-lg">
+          <img src="/Auag.jpg" alt="AUAG Jewelry Logo" class="h-10 w-10 rounded-lg">
           <span class="font-serif text-2xl font-light">AUAG Jewelry</span>
         </div>
         <p class="text-white/70 text-sm leading-relaxed max-w-sm">
