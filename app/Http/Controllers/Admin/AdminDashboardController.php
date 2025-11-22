@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
 use App\Models\PawnItem;
 use App\Models\Repair;
-use Illuminate\Support\Facades\DB;
+use App\Models\Transaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
@@ -36,14 +36,14 @@ class AdminDashboardController extends Controller
             ->get();
 
         $revenueChartLabels = [];
-        $revenueChartData   = [];
+        $revenueChartData = [];
         $datesRange = collect(range(6, 0))->map(fn ($d) => Carbon::today()->subDays($d)->toDateString());
 
         $revenueByDate = $revenueRows->keyBy('date');
 
         foreach ($datesRange as $date) {
             $revenueChartLabels[] = Carbon::parse($date)->format('M d');
-            $revenueChartData[]   = (float) optional($revenueByDate->get($date))->total ?? 0;
+            $revenueChartData[] = (float) optional($revenueByDate->get($date))->total ?? 0;
         }
 
         $pawnStatusRows = PawnItem::select('status', DB::raw('COUNT(*) as total'))
@@ -51,14 +51,14 @@ class AdminDashboardController extends Controller
             ->get();
 
         $pawnStatusLabels = $pawnStatusRows->pluck('status')->map(fn ($s) => ucfirst($s))->toArray();
-        $pawnStatusData   = $pawnStatusRows->pluck('total')->map(fn ($v) => (int) $v)->toArray();
+        $pawnStatusData = $pawnStatusRows->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
         $repairStatusRows = Repair::select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')
             ->get();
 
         $repairStatusLabels = $repairStatusRows->pluck('status')->map(fn ($s) => ucfirst($s))->toArray();
-        $repairStatusData   = $repairStatusRows->pluck('total')->map(fn ($v) => (int) $v)->toArray();
+        $repairStatusData = $repairStatusRows->pluck('total')->map(fn ($v) => (int) $v)->toArray();
 
         $recentTransactions = Transaction::with(['customer:id,name', 'staff:id,name', 'items'])
             ->latest()

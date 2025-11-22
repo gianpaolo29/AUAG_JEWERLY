@@ -10,16 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('products', function (Blueprint $table) {
-        $table->boolean('status')->default(true)->after('quantity');
-    });
-}
+    {
+        Schema::table('products', function (Blueprint $table) {
+            $table->boolean('status')->default(true)->after('quantity');
+        });
+    }
 
-public function down(): void
-{
-    Schema::table('products', function (Blueprint $table) {
-        $table->dropColumn('status');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+    }
 };

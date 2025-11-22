@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
             $table->foreignId('staff_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('type', ['Buy','Pawn','Repair']);
+            $table->enum('type', ['Buy', 'Pawn', 'Repair']);
             $table->timestamps();
 
-            $table->index(['customer_id','staff_id','type']);
+            $table->index(['customer_id', 'staff_id', 'type']);
         });
     }
 

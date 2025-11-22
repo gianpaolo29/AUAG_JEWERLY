@@ -19,10 +19,10 @@ return new class extends Migration
             $table->decimal('price', 12, 2)->default(0);          // principal / appraised value
             $table->decimal('interest_cost', 12, 2)->default(0);  // interest amount
             $table->date('due_date')->nullable();
-            $table->enum('status', ['active','redeemed','forfeited'])->default('active'); // helpful
+            $table->enum('status', ['active', 'redeemed', 'forfeited'])->default('active'); // helpful
             $table->timestamps();
 
-            $table->index(['customer_id','status']);
+            $table->index(['customer_id', 'status']);
         });
     }
 

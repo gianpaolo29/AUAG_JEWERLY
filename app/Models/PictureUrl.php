@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class PictureUrl extends Model
 {
@@ -19,5 +19,4 @@ class PictureUrl extends Model
     {
         return $this->morphTo();
     }
-    
 }

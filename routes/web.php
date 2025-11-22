@@ -1,42 +1,36 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\PawnItemController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\RepairController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\TransactionController;
-use App\Http\Controllers\Admin\PawnItemController;
-use App\Http\Controllers\Admin\RepairController;
-use App\Http\Controllers\StorefrontController;
-use App\Http\Controllers\Customer\ShopController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
-
-
-
-
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Customer\ShopController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StorefrontController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'callback']);
 
 Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
-            ->name('password.request');
+    ->name('password.request');
 
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
-            ->name('password.email');
+    ->name('password.email');
 
 Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-            ->name('password.reset');
+    ->name('password.reset');
 
 Route::post('reset-password', [NewPasswordController::class, 'store'])
-            ->name('password.store');
-
+    ->name('password.store');
 
 Route::get('/', [StorefrontController::class, 'index'])->name('home');
 
@@ -45,7 +39,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -60,11 +53,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     Route::resource('users', UserController::class)->except(['show']);
     Route::resource('customers', CustomerController::class)->parameters([
-        'customers' => 'customer'
+        'customers' => 'customer',
     ])->except(['show']);
 
     Route::resource('staff', StaffController::class)->parameters([
-        'staff' => 'staff'
+        'staff' => 'staff',
     ])->except(['show']);
 
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
@@ -80,20 +73,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     Route::resource('repairs', RepairController::class)
         ->names([
-            'index'  => 'repairs.index',
+            'index' => 'repairs.index',
             'create' => 'repairs.create',
-            'store'  => 'repairs.store',
-            'edit'   => 'repairs.edit',
+            'store' => 'repairs.store',
+            'edit' => 'repairs.edit',
             'update' => 'repairs.update',
-            'destroy'=> 'repairs.destroy',
+            'destroy' => 'repairs.destroy',
         ])->parameters([
             'repairs' => 'repair',
-    ]);
+        ]);
 
     Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
 
-
-    
 });
 
 Route::middleware(['auth', 'role:staff'])->group(function () {
@@ -104,6 +95,5 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 });
-
 
 require __DIR__.'/auth.php';

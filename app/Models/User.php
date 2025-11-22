@@ -46,6 +46,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
     public function isAdmin()
     {
         return $this->role === 'admin';
@@ -60,5 +61,4 @@ class User extends Authenticatable
     {
         return $this->role === 'customer';
     }
-
 }

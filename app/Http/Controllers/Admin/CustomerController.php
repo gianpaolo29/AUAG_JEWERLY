@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -17,9 +17,8 @@ class CustomerController extends Controller
         $q = $request->string('q')->toString();
 
         $users = User::where('role', $this->role)
-            ->when($q, fn($qr) =>
-                $qr->where('name', 'like', "%{$q}%")
-                   ->orWhere('email', 'like', "%{$q}%")
+            ->when($q, fn ($qr) => $qr->where('name', 'like', "%{$q}%")
+                ->orWhere('email', 'like', "%{$q}%")
             )
             ->orderBy('name')
             ->paginate(10);
@@ -37,8 +36,8 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:150'],
-            'email'    => ['required', 'email', 'max:150', 'unique:users,email'],
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:6'],
         ]);
 
@@ -60,8 +59,8 @@ class CustomerController extends Controller
     public function update(Request $request, User $customer)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:150'],
-            'email'    => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($customer->id)],
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($customer->id)],
             'password' => ['nullable', 'string', 'min:6'],
         ]);
 

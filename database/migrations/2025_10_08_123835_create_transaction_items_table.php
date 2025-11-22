@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaction_items', function (Blueprint $table) {
-            
+
             $table->id(); // transaction_item_id
             $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
 
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('repair_id')->nullable()->constrained('repairs')->nullOnDelete();
 
             $table->integer('quantity')->default(1);
-            $table->decimal('unit_price', 12, 2)->default(0); 
+            $table->decimal('unit_price', 12, 2)->default(0);
             $table->decimal('line_total', 12, 2)->default(0);
 
             $table->timestamps();

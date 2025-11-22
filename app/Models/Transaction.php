@@ -3,11 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TransactionItem;
-use App\Models\User;
-use App\Models\PawnItem;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-
 
 class Transaction extends Model
 {

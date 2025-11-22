@@ -5,22 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $q    = $request->string('q')->toString();
+        $q = $request->string('q')->toString();
         $role = $request->string('role')->toString();
 
         $users = User::query()
-            ->when($q, fn($qr) =>
-                $qr->where('name', 'like', "%{$q}%")
-                   ->orWhere('email', 'like', "%{$q}%")
+            ->when($q, fn ($qr) => $qr->where('name', 'like', "%{$q}%")
+                ->orWhere('email', 'like', "%{$q}%")
             )
-            ->when($role, fn($qr) => $qr->where('role', $role))
+            ->when($role, fn ($qr) => $qr->where('role', $role))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
@@ -30,16 +29,17 @@ class UserController extends Controller
 
     public function create()
     {
-        $user = new User();
+        $user = new User;
+
         return view('admin.users.form', compact('user'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:150'],
-            'email'    => ['required', 'email', 'max:150', 'unique:users,email'],
-            'role'     => ['required', Rule::in(['admin', 'staff', 'customer'])],
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
+            'role' => ['required', Rule::in(['admin', 'staff', 'customer'])],
             'password' => ['required', 'string', 'min:6'],
         ]);
 
@@ -60,13 +60,13 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:150'],
-            'email'    => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
-            'role'     => ['required', Rule::in(['admin', 'staff', 'customer'])],
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => ['required', Rule::in(['admin', 'staff', 'customer'])],
             'password' => ['nullable', 'string', 'min:6'],
         ]);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);

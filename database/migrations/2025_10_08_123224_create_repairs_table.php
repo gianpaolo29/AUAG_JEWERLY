@@ -16,10 +16,10 @@ return new class extends Migration
             $table->decimal('price', 12, 2)->default(0);
             $table->text('description')->nullable();
             $table->foreignId('customer_id')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
-            $table->enum('status', ['pending','in_progress','completed','cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'in_progress', 'completed', 'cancelled'])->default('pending');
             $table->timestamps();
 
-            $table->index(['customer_id','status']);
+            $table->index(['customer_id', 'status']);
         });
     }
 

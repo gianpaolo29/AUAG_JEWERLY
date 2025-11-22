@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Repair;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use App\Models\Transaction;
+use Illuminate\Support\Facades\Storage;
 
 class RepairController extends Controller
 {
@@ -17,7 +17,7 @@ class RepairController extends Controller
      */
     public function index(Request $request)
     {
-        $q      = $request->string('q')->toString();
+        $q = $request->string('q')->toString();
         $status = $request->string('status')->toString();
 
         $repairs = Repair::query()
@@ -28,7 +28,7 @@ class RepairController extends Controller
                         ->orWhere('description', 'like', "%{$q}%")
                         ->orWhereHas('customer', function ($q2) use ($q) {
                             $q2->where('name', 'like', "%{$q}%")
-                               ->orWhere('email', 'like', "%{$q}%");
+                                ->orWhere('email', 'like', "%{$q}%");
                         });
                 });
             })
@@ -45,8 +45,8 @@ class RepairController extends Controller
      */
     public function create()
     {
-        $repair  = new Repair();
-        $isEdit  = false;
+        $repair = new Repair;
+        $isEdit = false;
 
         $customers = User::where('role', 'customer')
             ->orderBy('name')
@@ -63,16 +63,16 @@ class RepairController extends Controller
         $validated = $request->validate([
             'customer_id' => ['required', 'exists:users,id'],
             'description' => ['required', 'string', 'max:1000'],
-            'price'       => ['required', 'numeric', 'min:0'],
-            'status'      => ['required', 'string', 'max:50'],
-            'image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'status' => ['required', 'string', 'max:50'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $repair = Repair::create([
-            'customer_id' => $validated['customer_id'],  
+            'customer_id' => $validated['customer_id'],
             'description' => $validated['description'],
-            'price'       => $validated['price'],
-            'status'      => $validated['status'],
+            'price' => $validated['price'],
+            'status' => $validated['status'],
         ]);
 
         // ONE image only (morphOne)
@@ -114,16 +114,16 @@ class RepairController extends Controller
         $validated = $request->validate([
             'customer_id' => ['required', 'exists:users,id'],
             'description' => ['required', 'string', 'max:1000'],
-            'price'       => ['required', 'numeric', 'min:0'],
-            'status'      => ['required', 'string', 'max:50'],
-            'image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'status' => ['required', 'string', 'max:50'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $repair->update([
             'customer_id' => $validated['customer_id'],
             'description' => $validated['description'],
-            'price'       => $validated['price'],
-            'status'      => $validated['status'],
+            'price' => $validated['price'],
+            'status' => $validated['status'],
         ]);
 
         // Replace existing image
@@ -164,37 +164,36 @@ class RepairController extends Controller
     }
 
     public function markComplete(Repair $repair)
-{
-    // If already completed, don't double-create a transaction
-    if ($repair->status === 'completed') {
-        return back()->with('info', 'This repair is already completed.');
+    {
+        // If already completed, don't double-create a transaction
+        if ($repair->status === 'completed') {
+            return back()->with('info', 'This repair is already completed.');
+        }
+
+        DB::transaction(function () use ($repair) {
+            // 1) Update status
+            $repair->update([
+                'status' => 'completed',
+            ]);
+
+            // 2) Create a transaction record
+            $transaction = Transaction::create([
+                'customer_id' => $repair->customer_id,
+                'staff_id' => auth()->id(),   // current logged-in staff
+                'type' => 'Repair',       // so you can filter later
+            ]);
+
+            // 3) Add a single transaction item linked to this repair
+            $transaction->items()->create([
+                'product_id' => null,
+                'pawn_item_id' => null,
+                'repair_id' => $repair->id,
+                'quantity' => 1,
+                'unit_price' => $repair->price,
+                'line_total' => $repair->price,
+            ]);
+        });
+
+        return back()->with('success', 'Repair marked as completed and transaction recorded.');
     }
-
-    DB::transaction(function () use ($repair) {
-        // 1) Update status
-        $repair->update([
-            'status' => 'completed',
-        ]);
-
-        // 2) Create a transaction record
-        $transaction = Transaction::create([
-            'customer_id' => $repair->customer_id,
-            'staff_id'    => auth()->id(),   // current logged-in staff
-            'type'        => 'Repair',       // so you can filter later
-        ]);
-
-        // 3) Add a single transaction item linked to this repair
-        $transaction->items()->create([
-            'product_id'   => null,
-            'pawn_item_id' => null,
-            'repair_id'    => $repair->id,
-            'quantity'     => 1,
-            'unit_price'   => $repair->price,
-            'line_total'   => $repair->price,
-        ]);
-    });
-
-    return back()->with('success', 'Repair marked as completed and transaction recorded.');
-}
-
 }

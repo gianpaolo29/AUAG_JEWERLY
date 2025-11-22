@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class PawnItem extends Model
@@ -36,7 +36,7 @@ class PawnItem extends Model
         // first() because morphMany = multiple records
         $pic = $this->pictures->first();
 
-        if (!$pic || !$pic->url) {
+        if (! $pic || ! $pic->url) {
             return asset('images/placeholder-product.png');
         }
 
@@ -48,7 +48,7 @@ class PawnItem extends Model
         }
 
         // stored in storage/app/public/...
-        return asset('storage/' . ltrim($path, '/'));
+        return asset('storage/'.ltrim($path, '/'));
     }
 
     protected $casts = [

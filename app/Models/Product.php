@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
-use App\Models\PictureUrl;
 
 class Product extends Model
 {
@@ -38,7 +37,7 @@ class Product extends Model
         $path = optional($this->picture)->url;
 
         // Fallback placeholder if no image at all
-        if (!$path) {
+        if (! $path) {
             return asset('images/placeholder-product.png');
         }
 
@@ -48,7 +47,7 @@ class Product extends Model
         }
 
         // Otherwise assume it's a storage path
-        return asset('storage/' . ltrim($path, '/'));
+        return asset('storage/'.ltrim($path, '/'));
     }
 
     public function category(): BelongsTo
