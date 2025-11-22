@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.brand-text {
+    font-family: 'Playfair Display', serif;
+}
+
+.nav-underline {
+    position: relative;
+}
+
+.nav-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #D4AF37 0%, #FFD700 50%, #F0E68C 100%);
+    transition: width 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.nav-underline:hover::after,
+.nav-underline.active::after {
+    width: 100%;
+}
