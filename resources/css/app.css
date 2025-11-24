@@ -26,3 +26,10 @@
 .nav-underline.active::after {
     width: 100%;
 }
+
+.swal-button, .swal2-styled {
+    display: block !important;
+    opacity: 1 !important;
+    /* Ensure text is visible as well */
+    color: initial !important;
+}

@@ -178,7 +178,7 @@
           <article class="snap-center min-w-[85%] sm:min-w-[48%] lg:min-w-[31%] bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300">
               <div class="aspect-square flex items-center justify-center bg-gray-50">
                   <img
-                      src="{{ asset($product->pictureUrl->url) }}"
+                      src="{{ asset('storage/' . $product->pictureUrl->url) }}"
                       alt="{{ $product->name }}"
                       class="w-full h-full object-contain max-w-xs"
                   >
