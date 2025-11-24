@@ -128,12 +128,16 @@ class ProductController extends Controller
             'status' => (bool) ($validated['status'] ?? true),
         ]);
 
-        // Handle one image only
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
+            $image      = $request->file('image');
+            $imageName  = time() . '_' . $image->getClientOriginalName();
 
+            // Move to project_name/public/products
+            $image->move(public_path('products'), $imageName);
+
+            // Save URL or path in DB
             $product->pictureUrl()->create([
-                'url' => $path,
+                'url' => 'products/' . $imageName,
             ]);
         }
 

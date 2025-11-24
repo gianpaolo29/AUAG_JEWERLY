@@ -17,7 +17,7 @@
 
     {{-- 2. Stats Cards (Clean, Elevated Style with Top Accent) --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
-    
+
         {{-- Total Products --}}
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="h-2 bg-blue-500"></div> {{-- Top accent bar --}}
@@ -75,11 +75,11 @@
         </div>
     </div>
 
-  
-    
-    <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-100 flex flex-col gap-4"> 
+
+
+    <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-100 flex flex-col gap-4">
     <form method="GET" class="flex flex-col gap-4" x-data x-on:change="this.$el.submit()">
-    
+
         {{-- Search Input (Full width, requires Enter key) --}}
         <div class="relative w-full">
             <svg class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 19l-6-6M5 11a6 6 0 1 1 12 0 6 6 0 0 1-12 0z"/></svg>
@@ -118,7 +118,7 @@
             <input type="hidden" name="dir" value="{{ $dir }}">
 
             {{-- Clear Filters Link --}}
-            <a href="{{ route('admin.products.index') }}" 
+            <a href="{{ route('admin.products.index') }}"
                class="text-sm text-gray-500 hover:text-gray-700 font-medium whitespace-nowrap p-2 transition flex-shrink-0">
                 <span class="inline-flex items-center gap-1">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 16h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM12 9v6M9 12h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -126,7 +126,7 @@
                 </span>
             </a>
         </div>
-        
+
     </form>
 </div>
 
@@ -151,14 +151,14 @@
                 <th class="px-5 py-3 text-left whitespace-nowrap"><a href="{{ $link('name') }}" class="hover:text-violet-600 transition">Product Name{!! $arrow('name') !!}</a></th>
                 <th class="px-5 py-3 text-left whitespace-nowrap">Category</th>
                 <th class="px-5 py-3 text-left whitespace-nowrap"><a href="{{ $link('price') }}" class="hover:text-violet-600 transition">Price{!! $arrow('price') !!}</a></th>
-                <th class="px-5 py-3 text-left whitespace-nowrap"><a href="{{ $link('quantity') }}" class="hover:text-violet-600 transition">Stock{!! $arrow('quantity') !!}</a></th> 
+                <th class="px-5 py-3 text-left whitespace-nowrap"><a href="{{ $link('quantity') }}" class="hover:text-violet-600 transition">Stock{!! $arrow('quantity') !!}</a></th>
                 <th class="px-5 py-3 text-left whitespace-nowrap"><a href="{{ $link('status') }}" class="hover:text-violet-600 transition">Status{!! $arrow('status') !!}</a></th>
                 <th class="px-5 py-3 text-center whitespace-nowrap w-[150px]">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($products as $p)
-                <tr class="text-gray-700 transition duration-100 hover:bg-violet-50/50"> 
+                <tr class="text-gray-700 transition duration-100 hover:bg-violet-50/50">
                     <td class="px-5 py-3 w-10">
                     <input type="checkbox" class="rounded text-violet-600 border-gray-300 focus:ring-violet-500">
                     </td>
@@ -166,8 +166,7 @@
                         <div class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden grid place-content-center border border-gray-200">
                             @if ($p->pictureUrl)
                                 <img
-                                    src="{{ Storage::url($p->pictureUrl->url) }}"
-                                    class="h-10 w-10 object-cover"
+                                    src="{{ asset($p->pictureUrl->url) }}"                                    class="h-10 w-10 object-cover"
                                     alt="{{ $p->name }}"
                                 >
                             @else
@@ -206,17 +205,17 @@
                     <form method="POST" action="{{ route('admin.products.toggle',$p) }}">
                         @csrf @method('PATCH')
                         <button type="submit" class="inline-flex items-center rounded-lg px-3 py-1 text-xs font-semibold whitespace-nowrap transition
-                        {{ $p->status 
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
+                        {{ $p->status
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                         {{ $p->status ? 'Active' : 'Inactive' }}
                         </button>
                     </form>
                     </td>
                     <td class="px-5 py-3 text-center whitespace-nowrap">
-                    <div class="inline-flex items-center justify-center gap-1"> 
+                    <div class="inline-flex items-center justify-center gap-1">
                         {{-- Edit Button (Icon) --}}
-                        <a href="{{ route('admin.products.edit',$p) }}" 
+                        <a href="{{ route('admin.products.edit',$p) }}"
                            class="text-violet-600 hover:text-violet-700 p-2 rounded-lg hover:bg-violet-100 transition duration-150">
                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </a>
@@ -224,7 +223,7 @@
                         <form method="POST" action="{{ route('admin.products.destroy',$p) }}"
                             onsubmit="return confirm('Are you sure you want to delete {{ $p->name }}?')">
                         @csrf @method('DELETE')
-                        <button type="submit" 
+                        <button type="submit"
                                 class="text-rose-600 hover:text-rose-700 p-2 rounded-lg hover:bg-rose-100 transition duration-150">
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
                         </button>
@@ -242,9 +241,9 @@
             </table>
         </div>
 
-    
+
         {{-- Pagination Footer --}}
-        <div class="px-5 py-4 border-t border-gray-200 flex justify-between items-center bg-white"> 
+        <div class="px-5 py-4 border-t border-gray-200 flex justify-between items-center bg-white">
             <p class="text-sm text-gray-600 hidden sm:block">
                 Showing {{ $products->firstItem() ?? 0 }} to {{ $products->lastItem() ?? 0 }} of {{ $products->total() }} results.
             </p>
