@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class AnalyticsController extends Controller
 {
@@ -23,14 +23,15 @@ class AnalyticsController extends Controller
             } elseif ($range === '30d') {
                 $query->where($column, '>=', now()->subDays(29));
             }
+
             // 'all' = no filter
             return $query;
         };
 
         $rangeLabel = match ($range) {
             'today' => 'Today',
-            '7d'    => 'Last 7 Days',
-            '30d'   => 'Last 30 Days',
+            '7d' => 'Last 7 Days',
+            '30d' => 'Last 30 Days',
             default => 'All Time',
         };
 
@@ -81,7 +82,7 @@ class AnalyticsController extends Controller
         $salesByDay = $salesByDayQuery->get();
 
         $salesByDayLabels = $salesByDay->pluck('day')->map(fn ($d) => Carbon::parse($d)->format('M d'));
-        $salesByDayData   = $salesByDay->pluck('total');
+        $salesByDayData = $salesByDay->pluck('total');
 
         // --- PRODUCT / INVENTORY ANALYTICS ---
 
@@ -103,8 +104,8 @@ class AnalyticsController extends Controller
             ->get();
 
         $materialLabels = $materials->pluck('material');
-        $materialData   = $materials->pluck('count');
-        $topMaterial    = $materials->sortByDesc('count')->first();
+        $materialData = $materials->pluck('count');
+        $topMaterial = $materials->sortByDesc('count')->first();
 
         // Revenue per category (filtered by range)
         $revenueByCategoryQuery = DB::table('transaction_items')
@@ -121,7 +122,7 @@ class AnalyticsController extends Controller
         $revenueByCategory = $revenueByCategoryQuery->get();
 
         $revenueByCategoryLabels = $revenueByCategory->pluck('category');
-        $revenueByCategoryData   = $revenueByCategory->pluck('total_sales');
+        $revenueByCategoryData = $revenueByCategory->pluck('total_sales');
 
         // Top-selling products (filtered by range)
         $topProductsQuery = DB::table('transaction_items')
@@ -159,7 +160,7 @@ class AnalyticsController extends Controller
         $pawnStatusRaw = $pawnStatusQuery->get();
 
         $pawnStatusLabels = $pawnStatusRaw->pluck('status');
-        $pawnStatusData   = $pawnStatusRaw->pluck('total');
+        $pawnStatusData = $pawnStatusRaw->pluck('total');
 
         // --- REPAIR ANALYTICS (filtered by range) ---
 
@@ -172,7 +173,7 @@ class AnalyticsController extends Controller
         $repairStatusRaw = $repairStatusQuery->get();
 
         $repairStatusLabels = $repairStatusRaw->pluck('status');
-        $repairStatusData   = $repairStatusRaw->pluck('total');
+        $repairStatusData = $repairStatusRaw->pluck('total');
 
         // --- STAFF PERFORMANCE (filtered by range) ---
 
@@ -190,7 +191,7 @@ class AnalyticsController extends Controller
         $staffSales = $staffSalesQuery->get();
 
         $staffSalesLabels = $staffSales->pluck('name');
-        $staffSalesData   = $staffSales->pluck('total_sales');
+        $staffSalesData = $staffSales->pluck('total_sales');
 
         // --- FAVORITES & VIEWS (filtered by range) ---
 
@@ -232,7 +233,7 @@ class AnalyticsController extends Controller
         $ordersCount = $ordersCountQuery->count(); // number of orders
 
         $funnelLabels = ['Views', 'Favorites', 'Orders'];
-        $funnelData   = [
+        $funnelData = [
             $viewsCount,
             $favoritesCount,
             $ordersCount,
@@ -243,7 +244,7 @@ class AnalyticsController extends Controller
         $aiSuggestions = [];
 
         if ($lowStockCount > 0) {
-            $aiSuggestions[] = "Some products are low on stock. Use AI to auto-flag items that might sell out soon based on past sales.";
+            $aiSuggestions[] = 'Some products are low on stock. Use AI to auto-flag items that might sell out soon based on past sales.';
         }
 
         if ($topMaterial) {
@@ -251,19 +252,19 @@ class AnalyticsController extends Controller
         }
 
         if ($avgOrderValue > 0 && $avgOrderValue < 2000) {
-            $aiSuggestions[] = "Average order value is ₱" . number_format($avgOrderValue, 2) . ". Try AI-powered “bundle suggestions” or upsell at checkout.";
+            $aiSuggestions[] = 'Average order value is ₱'.number_format($avgOrderValue, 2).'. Try AI-powered “bundle suggestions” or upsell at checkout.';
         }
 
         if ($monthRevenue > 0 && $todayRevenue == 0) {
-            $aiSuggestions[] = "No sales today yet. Use AI to identify your top customers and send them targeted offers.";
+            $aiSuggestions[] = 'No sales today yet. Use AI to identify your top customers and send them targeted offers.';
         }
 
         if ($mostFavorited->count() > 0) {
-            $aiSuggestions[] = "Your most favorited products are perfect candidates for remarketing ads and homepage highlights.";
+            $aiSuggestions[] = 'Your most favorited products are perfect candidates for remarketing ads and homepage highlights.';
         }
 
         if (empty($aiSuggestions)) {
-            $aiSuggestions[] = "Data looks stable. Next step: connect AI to build smart product recommendations and dynamic pricing tests.";
+            $aiSuggestions[] = 'Data looks stable. Next step: connect AI to build smart product recommendations and dynamic pricing tests.';
         }
 
         // --- QUICK ACTIONS (ADMIN SHORTCUTS) ---
@@ -302,45 +303,45 @@ class AnalyticsController extends Controller
         ];
 
         return view('admin.analytics', [
-            'range'                    => $range,
-            'rangeLabel'               => $rangeLabel,
+            'range' => $range,
+            'rangeLabel' => $rangeLabel,
 
-            'totalRevenue'             => $totalRevenue,
-            'todayRevenue'             => $todayRevenue,
-            'weekRevenue'              => $weekRevenue,
-            'monthRevenue'             => $monthRevenue,
-            'avgOrderValue'            => $avgOrderValue,
-            'salesByDayLabels'         => $salesByDayLabels,
-            'salesByDayData'           => $salesByDayData,
+            'totalRevenue' => $totalRevenue,
+            'todayRevenue' => $todayRevenue,
+            'weekRevenue' => $weekRevenue,
+            'monthRevenue' => $monthRevenue,
+            'avgOrderValue' => $avgOrderValue,
+            'salesByDayLabels' => $salesByDayLabels,
+            'salesByDayData' => $salesByDayData,
 
-            'totalProducts'            => $totalProducts,
-            'publishedProducts'        => $publishedProducts,
-            'lowStockCount'            => $lowStockCount,
-            'materialLabels'           => $materialLabels,
-            'materialData'             => $materialData,
-            'revenueByCategoryLabels'  => $revenueByCategoryLabels,
-            'revenueByCategoryData'    => $revenueByCategoryData,
-            'topProducts'              => $topProducts,
+            'totalProducts' => $totalProducts,
+            'publishedProducts' => $publishedProducts,
+            'lowStockCount' => $lowStockCount,
+            'materialLabels' => $materialLabels,
+            'materialData' => $materialData,
+            'revenueByCategoryLabels' => $revenueByCategoryLabels,
+            'revenueByCategoryData' => $revenueByCategoryData,
+            'topProducts' => $topProducts,
 
-            'totalCustomers'           => $totalCustomers,
-            'newCustomersThisMonth'    => $newCustomersThisMonth,
+            'totalCustomers' => $totalCustomers,
+            'newCustomersThisMonth' => $newCustomersThisMonth,
 
-            'pawnStatusLabels'         => $pawnStatusLabels,
-            'pawnStatusData'           => $pawnStatusData,
-            'repairStatusLabels'       => $repairStatusLabels,
-            'repairStatusData'         => $repairStatusData,
+            'pawnStatusLabels' => $pawnStatusLabels,
+            'pawnStatusData' => $pawnStatusData,
+            'repairStatusLabels' => $repairStatusLabels,
+            'repairStatusData' => $repairStatusData,
 
-            'staffSalesLabels'         => $staffSalesLabels,
-            'staffSalesData'           => $staffSalesData,
+            'staffSalesLabels' => $staffSalesLabels,
+            'staffSalesData' => $staffSalesData,
 
-            'mostFavorited'            => $mostFavorited,
-            'mostViewed'               => $mostViewed,
+            'mostFavorited' => $mostFavorited,
+            'mostViewed' => $mostViewed,
 
-            'funnelLabels'             => $funnelLabels,
-            'funnelData'               => $funnelData,
+            'funnelLabels' => $funnelLabels,
+            'funnelData' => $funnelData,
 
-            'aiSuggestions'            => $aiSuggestions,
-            'quickActions'             => $quickActions,
+            'aiSuggestions' => $aiSuggestions,
+            'quickActions' => $quickActions,
         ]);
     }
 }

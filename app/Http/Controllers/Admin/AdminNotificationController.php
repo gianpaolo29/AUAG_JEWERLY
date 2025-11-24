@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
 class AdminNotificationController extends Controller
 {
@@ -24,7 +24,7 @@ class AdminNotificationController extends Controller
 
         // Redirect to URL if present
         $data = $notification->data;
-        if (!empty($data['url'])) {
+        if (! empty($data['url'])) {
             return redirect($data['url']);
         }
 

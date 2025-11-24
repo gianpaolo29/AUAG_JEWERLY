@@ -10,14 +10,16 @@ use Illuminate\Console\Command;
 class CheckPawnDueDates extends Command
 {
     protected $signature = 'pawn:check-due-dates';
+
     protected $description = 'Check for pawn items with approaching due dates and send notifications';
 
     public function handle()
     {
         $admin = User::where('role', 'admin')->first();
 
-        if (!$admin) {
+        if (! $admin) {
             $this->error('No admin user found!');
+
             return;
         }
 
@@ -40,7 +42,7 @@ class CheckPawnDueDates extends Command
                     ->whereDate('created_at', today())
                     ->exists();
 
-                if (!$alreadyNotified) {
+                if (! $alreadyNotified) {
                     $admin->notify(new PawnDueDateReminderNotification($pawnItem));
                     $notifiedCount++;
                 }

@@ -17,7 +17,7 @@ return new class extends Migration
                 'diamond',
                 'pearl',
                 'gemstone',
-                'other'
+                'other',
             ])->nullable()->after('quantity');
 
             $table->string('size')->nullable()->after('material');
@@ -29,7 +29,7 @@ return new class extends Migration
                 'modern',
                 'luxury',
                 'casual',
-                'other'
+                'other',
             ])->nullable()->after('size');
         });
     }

@@ -75,17 +75,17 @@ class RepairController extends Controller
             'status' => $validated['status'],
         ]);
 
-        //fix save to public
+        // fix save to public
         if ($request->hasFile('image')) {
-            $filename = uniqid() . '.' . $request->image->extension();
+            $filename = uniqid().'.'.$request->image->extension();
             $path = $request->image->storeAs('repairs', $filename, 'public');
-
 
             // Save relative URL to DB
             $repair->picture()->create([
-                'url' => $path
+                'url' => $path,
             ]);
         }
+
         return redirect()
             ->route('admin.repairs.index')
             ->with('success', 'Repair created successfully.');
@@ -131,14 +131,14 @@ class RepairController extends Controller
         // Replace existing image
 
         if ($request->hasFile('image')) {
-            $filename = uniqid() . '.' . $request->image->extension();
+            $filename = uniqid().'.'.$request->image->extension();
             $path = $request->image->storeAs('repairs', $filename, 'public');
 
             $repair->picture()->delete();
 
             // Save relative URL to DB
             $repair->picture()->create([
-                'url' => $path
+                'url' => $path,
             ]);
         }
 

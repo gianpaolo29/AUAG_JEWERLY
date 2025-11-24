@@ -7,56 +7,54 @@ use App\Models\PawnItem;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class StaffPawnController extends Controller
 {
     public function index(Request $request)
-{
-    $q = $request->string('q')->toString();
-    $status = $request->string('status')->toString();
-    $dueDate = $request->date('due_date');
-    $today = \Carbon\Carbon::today();
+    {
+        $q = $request->string('q')->toString();
+        $status = $request->string('status')->toString();
+        $dueDate = $request->date('due_date');
+        $today = \Carbon\Carbon::today();
 
-    $pawnItems = PawnItem::with(['customer', 'pictures'])
-        ->when($q, function ($query) use ($q) {
-            $query->where('title', 'like', "%{$q}%")
-                  ->orWhereHas('customer', function ($q2) use ($q) {
-                      $q2->where('name', 'like', "%{$q}%");
-                  });
-        })
-        ->when($status, fn($query) => $query->where('status', $status))
-        ->when($dueDate, fn($query) => $query->whereDate('due_date', '<=', $dueDate))
-        ->latest()
-        ->paginate(10)
-        ->through(function (PawnItem $item) use ($today) {
+        $pawnItems = PawnItem::with(['customer', 'pictures'])
+            ->when($q, function ($query) use ($q) {
+                $query->where('title', 'like', "%{$q}%")
+                    ->orWhereHas('customer', function ($q2) use ($q) {
+                        $q2->where('name', 'like', "%{$q}%");
+                    });
+            })
+            ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($dueDate, fn ($query) => $query->whereDate('due_date', '<=', $dueDate))
+            ->latest()
+            ->paginate(10)
+            ->through(function (PawnItem $item) use ($today) {
 
-            $principal = (float) $item->price;
-            $baseInterest = (float) $item->interest_cost;
+                $principal = (float) $item->price;
+                $baseInterest = (float) $item->interest_cost;
 
-            $monthsOverdue = 0;
-            $isOverdue = false;
+                $monthsOverdue = 0;
+                $isOverdue = false;
 
-            if ($item->due_date && $today->gt($item->due_date)) {
-                $daysOverdue = $item->due_date->diffInDays($today);
-                $monthsOverdue = (int) ceil($daysOverdue / 30);
-                $isOverdue = $monthsOverdue > 0;
-            }
+                if ($item->due_date && $today->gt($item->due_date)) {
+                    $daysOverdue = $item->due_date->diffInDays($today);
+                    $monthsOverdue = (int) ceil($daysOverdue / 30);
+                    $isOverdue = $monthsOverdue > 0;
+                }
 
-            $penalty = $monthsOverdue * 0.03 * $principal;
-            $totalInterest = $baseInterest + $penalty;
-            $totalToPay = $principal + $totalInterest;
+                $penalty = $monthsOverdue * 0.03 * $principal;
+                $totalInterest = $baseInterest + $penalty;
+                $totalToPay = $principal + $totalInterest;
 
-            $item->computed_interest = $totalInterest;
-            $item->to_pay = $totalToPay;
-            $item->is_overdue = $isOverdue;
+                $item->computed_interest = $totalInterest;
+                $item->to_pay = $totalToPay;
+                $item->is_overdue = $isOverdue;
 
-            return $item;
-        });
+                return $item;
+            });
 
-    return view('staff.pawn.index', compact('pawnItems', 'q', 'status', 'dueDate'));
-}
-
+        return view('staff.pawn.index', compact('pawnItems', 'q', 'status', 'dueDate'));
+    }
 
     public function create()
     {

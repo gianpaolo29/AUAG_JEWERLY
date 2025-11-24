@@ -10,9 +10,7 @@ class PawnDueDateReminderNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public PawnItem $pawnItem)
-    {
-    }
+    public function __construct(public PawnItem $pawnItem) {}
 
     public function via($notifiable)
     {
@@ -22,14 +20,14 @@ class PawnDueDateReminderNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'title'   => 'Pawn Due Date Approaching',
-            'message' => 'Pawn ticket #' . ($this->pawnItem->ticket_no ?? $this->pawnItem->id) .
-                         ' is due on ' . $this->pawnItem->due_date . '.',
-            'url'     => route('admin.pawn.index'),
-            'icon'    => 'clock',
-            'meta'    => [
+            'title' => 'Pawn Due Date Approaching',
+            'message' => 'Pawn ticket #'.($this->pawnItem->ticket_no ?? $this->pawnItem->id).
+                         ' is due on '.$this->pawnItem->due_date.'.',
+            'url' => route('admin.pawn.index'),
+            'icon' => 'clock',
+            'meta' => [
                 'due_date' => $this->pawnItem->due_date,
-                'status'   => $this->pawnItem->status,
+                'status' => $this->pawnItem->status,
             ],
         ];
     }

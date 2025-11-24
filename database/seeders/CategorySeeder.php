@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
@@ -14,19 +13,19 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         Category::firstOrCreate([
-            'name' => 'Ring'
+            'name' => 'Ring',
         ]);
 
         Category::firstOrCreate([
-            'name' => 'Bracelet'
+            'name' => 'Bracelet',
         ]);
 
         Category::firstOrCreate([
-            'name' => 'Necklace'
+            'name' => 'Necklace',
         ]);
 
         Category::firstOrCreate([
-            'name' => 'Earring'
+            'name' => 'Earring',
         ]);
     }
 }

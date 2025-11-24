@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
-use App\Models\PictureUrl;
 
 class Product extends Model
 {
@@ -27,7 +26,7 @@ class Product extends Model
 
     protected $casts = [
         'status' => 'boolean',
-        'price'  => 'decimal:2',
+        'price' => 'decimal:2',
     ];
 
     public const MATERIAL_OPTIONS = [
@@ -43,7 +42,7 @@ class Product extends Model
         'modern',
         'luxury',
         'casual',
-        'wedding'
+        'wedding',
     ];
 
     protected static function boot(): void
@@ -76,22 +75,21 @@ class Product extends Model
 
     protected $appends = ['image_url'];
 
-
     public function getImageUrlAttribute(): string
-{
-    $path = $this->picture->url ?? null;
+    {
+        $path = $this->picture->url ?? null;
 
-    if (!$path) {
-        return asset('images/placeholder-product.png');
-    }
+        if (! $path) {
+            return asset('images/placeholder-product.png');
+        }
 
-    // If full URL, return it
-    if (Str::startsWith($path, ['http://', 'https://'])) {
-        return $path;
-    }
+        // If full URL, return it
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
 
-    // Now using public/
-    return asset($path);
+        // Now using public/
+        return asset($path);
     }
 
     public function category(): BelongsTo
@@ -124,6 +122,4 @@ class Product extends Model
     {
         return $query->where('status', 1);
     }
-
-
 }

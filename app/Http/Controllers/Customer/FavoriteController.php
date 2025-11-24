@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
@@ -10,7 +11,7 @@ class FavoriteController extends Controller
 {
     public function toggle(Product $product)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->back()->with('error', 'Please login first.');
         }
 
@@ -18,17 +19,18 @@ class FavoriteController extends Controller
 
         // Check if already favorited
         $existing = Favorite::where('user_id', $user->id)
-                            ->where('product_id', $product->id)
-                            ->first();
+            ->where('product_id', $product->id)
+            ->first();
 
         if ($existing) {
             $existing->delete();
+
             return back()->with('success', 'Removed from favorites.');
         }
 
         Favorite::create([
             'user_id' => $user->id,
-            'product_id' => $product->id
+            'product_id' => $product->id,
         ]);
 
         return back()->with('success', 'Added to favorites.');

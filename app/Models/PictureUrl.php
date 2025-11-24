@@ -19,6 +19,4 @@ class PictureUrl extends Model
     {
         return $this->morphTo();
     }
-
-    
 }

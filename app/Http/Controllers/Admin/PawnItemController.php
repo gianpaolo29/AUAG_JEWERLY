@@ -105,11 +105,11 @@ class PawnItemController extends Controller
         // save images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $filename = uniqid() . '.' . $file->extension();
+                $filename = uniqid().'.'.$file->extension();
                 $path = $file->storeAs('pawn-items', $filename, 'public');
 
                 $pawnItem->pictures()->create([
-                    'url' => $path
+                    'url' => $path,
                 ]);
             }
         }
@@ -171,11 +171,11 @@ class PawnItemController extends Controller
         // add new images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $filename = uniqid() . '.' . $file->extension();
+                $filename = uniqid().'.'.$file->extension();
                 $path = $file->storeAs('pawn-items', $filename, 'public');
 
                 $pawnItem->pictures()->create([
-                    'url' => $path
+                    'url' => $path,
                 ]);
             }
         }

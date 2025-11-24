@@ -67,12 +67,12 @@ class StaffTransactionController extends Controller
             $price = (float) $item['unit_price'];
 
             $transaction->items()->create([
-                'product_id'  => $item['product_id'],
-                'quantity'    => $qty,
-                'unit_price'  => $price,
-                'line_total'  => $qty * $price,
+                'product_id' => $item['product_id'],
+                'quantity' => $qty,
+                'unit_price' => $price,
+                'line_total' => $qty * $price,
                 'pawn_item_id' => null,
-                'repair_id'    => null,
+                'repair_id' => null,
             ]);
 
             // stock deduction

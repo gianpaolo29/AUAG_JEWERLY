@@ -10,9 +10,7 @@ class NewRepairRequestNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public Repair $repair)
-    {
-    }
+    public function __construct(public Repair $repair) {}
 
     public function via($notifiable)
     {
@@ -22,13 +20,13 @@ class NewRepairRequestNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'title'   => 'New Repair Request',
-            'message' => 'New repair request from ' . ($this->repair->customer->name ?? 'Unknown') . '.',
-            'url'     => route('admin.repairs.index'),
-            'icon'    => 'wrench',
-            'meta'    => [
+            'title' => 'New Repair Request',
+            'message' => 'New repair request from '.($this->repair->customer->name ?? 'Unknown').'.',
+            'url' => route('admin.repairs.index'),
+            'icon' => 'wrench',
+            'meta' => [
                 'status' => $this->repair->status,
-                'item'   => $this->repair->item_description ?? null,
+                'item' => $this->repair->item_description ?? null,
             ],
         ];
     }

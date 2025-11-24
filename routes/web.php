@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\PawnItemController;
 use App\Http\Controllers\Admin\ProductController;
@@ -11,23 +13,17 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Customer\FavoriteController;
 use App\Http\Controllers\Customer\ShopController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Staff\StaffDashboardController;
+use App\Http\Controllers\Staff\StaffPawnController;
+use App\Http\Controllers\Staff\StaffProductController;
+use App\Http\Controllers\Staff\StaffRepairController;
+use App\Http\Controllers\Staff\StaffTransactionController;
 use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Customer\FavoriteController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Admin\AnalyticsController;
-use App\Http\Controllers\Admin\AdminNotificationController;
-use App\Http\Controllers\Staff\StaffDashboardController;
-use App\Http\Controllers\Staff\StaffProductController;
-use App\Http\Controllers\Staff\StaffTransactionController;
-use App\Http\Controllers\Staff\StaffPawnController;
-use App\Http\Controllers\Staff\StaffRepairController;
-
-
-
-
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'callback']);
@@ -97,14 +93,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
-     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('admin.notifications.markAllRead');
 
 });
-
-
-
 
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
@@ -112,7 +105,7 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::post('/favorites/{product}/toggle', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::post('/product/view/{product}', [ShopController::class, 'trackView'])
-    ->name('product.view');
+        ->name('product.view');
 });
 
 Route::middleware(['auth', 'role:staff'])->group(function () {
@@ -130,13 +123,13 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/pawn/create', [StaffPawnController::class, 'create'])->name('staff.pawn.create');
     Route::post('/pawn', [StaffPawnController::class, 'store'])->name('staff.pawn.store');
 
-        // Repairs
-    Route::get('/staff/repairs',                [StaffRepairController::class, 'index'])->name('staff.repairs.index');
-    Route::get('/staff/repairs/create',         [StaffRepairController::class, 'create'])->name('staff.repairs.create');
-    Route::post('/staff/repairs',               [StaffRepairController::class, 'store'])->name('staff.repairs.store');
-    Route::get('/staff/repairs/{repair}/edit',  [StaffRepairController::class, 'edit'])->name('staff.repairs.edit');
-    Route::put('/staff/repairs/{repair}',       [StaffRepairController::class, 'update'])->name('staff.repairs.update');
-    Route::delete('/staff/repairs/{repair}',    [StaffRepairController::class, 'destroy'])->name('staff.repairs.destroy');
+    // Repairs
+    Route::get('/staff/repairs', [StaffRepairController::class, 'index'])->name('staff.repairs.index');
+    Route::get('/staff/repairs/create', [StaffRepairController::class, 'create'])->name('staff.repairs.create');
+    Route::post('/staff/repairs', [StaffRepairController::class, 'store'])->name('staff.repairs.store');
+    Route::get('/staff/repairs/{repair}/edit', [StaffRepairController::class, 'edit'])->name('staff.repairs.edit');
+    Route::put('/staff/repairs/{repair}', [StaffRepairController::class, 'update'])->name('staff.repairs.update');
+    Route::delete('/staff/repairs/{repair}', [StaffRepairController::class, 'destroy'])->name('staff.repairs.destroy');
     Route::post('/staff/repairs/{repair}/complete', [StaffRepairController::class, 'markComplete'])
         ->name('staff.repairs.complete');
 

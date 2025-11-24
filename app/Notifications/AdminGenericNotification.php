@@ -3,8 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class AdminGenericNotification extends Notification
@@ -12,14 +10,16 @@ class AdminGenericNotification extends Notification
     use Queueable;
 
     public string $title;
+
     public string $message;
+
     public ?string $url;
 
     public function __construct(string $title, string $message, ?string $url = null)
     {
-        $this->title   = $title;
+        $this->title = $title;
         $this->message = $message;
-        $this->url     = $url;
+        $this->url = $url;
     }
 
     // Store in DB
@@ -31,10 +31,9 @@ class AdminGenericNotification extends Notification
     public function toDatabase($notifiable): array
     {
         return [
-            'title'   => $this->title,
+            'title' => $this->title,
             'message' => $this->message,
-            'url'     => $this->url,
+            'url' => $this->url,
         ];
     }
 }
-

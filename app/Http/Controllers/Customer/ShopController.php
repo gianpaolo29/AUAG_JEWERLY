@@ -3,33 +3,28 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use App\Models\ProductView;
 
 class ShopController extends Controller
 {
     public function index(Request $request)
     {
         $query = Product::with('category')->active();
-        
+
         // Search filter
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%")
-                  ->orWhere('material', 'LIKE', "%{$search}%")
-                  ->orWhere('style', 'LIKE', "%{$search}%")
-                  ->orWhereHas('category', function($q) use ($search) {
-                      $q->where('name', 'LIKE', "%{$search}%");
-                  });
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('material', 'LIKE', "%{$search}%")
+                    ->orWhere('style', 'LIKE', "%{$search}%")
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
@@ -44,7 +39,7 @@ class ShopController extends Controller
 
         // Category filter
         if ($request->has('category')) {
-            $query->whereIn('category_id', (array)$request->category);
+            $query->whereIn('category_id', (array) $request->category);
         }
 
         // Sorting
@@ -82,7 +77,7 @@ class ShopController extends Controller
 
         return response()->json([
             'success' => true,
-            'views'   => $product->view_count,
+            'views' => $product->view_count,
         ]);
     }
 }

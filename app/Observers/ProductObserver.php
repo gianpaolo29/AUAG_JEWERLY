@@ -3,8 +3,8 @@
 namespace App\Observers;
 
 use App\Models\Product;
-use App\Notifications\LowStockAlertNotification;
 use App\Models\User;
+use App\Notifications\LowStockAlertNotification;
 
 class ProductObserver
 {

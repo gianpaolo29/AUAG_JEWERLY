@@ -21,11 +21,11 @@ class StaffRepairController extends Controller
             ->with(['customer', 'picture'])
             ->when($q, function ($query) use ($q) {
                 $query->where('description', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function ($q2) use ($q) {
-                          $q2->where('name', 'like', "%{$q}%");
-                      });
+                    ->orWhereHas('customer', function ($q2) use ($q) {
+                        $q2->where('name', 'like', "%{$q}%");
+                    });
             })
-            ->when($status, fn($query) => $query->where('status', $status))
+            ->when($status, fn ($query) => $query->where('status', $status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -40,9 +40,9 @@ class StaffRepairController extends Controller
 
         $customers = User::where('role', 'customer')
             ->orderBy('name')
-            ->get(['id','name','email']);
+            ->get(['id', 'name', 'email']);
 
-        return view('staff.repairs.form', compact('repair','customers','isEdit'));
+        return view('staff.repairs.form', compact('repair', 'customers', 'isEdit'));
     }
 
     public function store(Request $request)
@@ -70,13 +70,13 @@ class StaffRepairController extends Controller
     {
         $isEdit = true;
 
-        $customers = User::where('role','customer')
+        $customers = User::where('role', 'customer')
             ->orderBy('name')
-            ->get(['id','name','email']);
+            ->get(['id', 'name', 'email']);
 
         $repair->load('picture');
 
-        return view('staff.repairs.form', compact('repair','customers','isEdit'));
+        return view('staff.repairs.form', compact('repair', 'customers', 'isEdit'));
     }
 
     public function update(Request $request, Repair $repair)
