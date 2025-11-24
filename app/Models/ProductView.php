@@ -9,7 +9,7 @@ class ProductView extends Model
     protected $fillable = ['user_id', 'product_id'];
 
     public function ViewByUsers(){
-        return $this->belongsToMany(User::class, 'viewed')
+        return $this->belongsToMany(User::class, 'viewed');
     }
 }
 

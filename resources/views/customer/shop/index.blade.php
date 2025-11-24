@@ -90,6 +90,7 @@
                 <div class="relative">
                     <select x-model="sort" @change="applyFilters()" class="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl">
                         <option value="newest">Newest</option>
+                        <option value="recommended">Recommended</option>
                         <option value="popular">Popular</option>
                         <option value="price-low">Price: Low to High</option>
                         <option value="price-high">Price: High to Low</option>
@@ -130,6 +131,7 @@
                         <div class="hidden lg:block">
                             <select x-model="sort" @change="applyFilters()" class="block w-full pl-4 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm">
                                 <option value="newest">Newest</option>
+                                <option value="recommended">Recommended</option>
                                 <option value="popular">Popular</option>
                                 <option value="price-low">Price: Low to High</option>
                                 <option value="price-high">Price: High to Low</option>
@@ -615,11 +617,12 @@
         },
 
         openProductModal(product) {
-            // Alpine problem: product IDs may come as string → convert
             product.id = Number(product.id);
             this.selectedProduct = product;
 
             this.productModalOpen = true;
+
+            axios.post(`/product/view/${product.id}`)
         },
 
         applyFilters() {
