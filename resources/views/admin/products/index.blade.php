@@ -170,7 +170,7 @@
                         <div class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden grid place-content-center border border-gray-200">
                             @if ($p->pictureUrl)
                                 <img
-                                    src="/{{ $p->pictureUrl->url }}"                                    class="h-10 w-10 object-cover"
+                                    src="{{ asset('storage/' . $p->pictureUrl->url) }}"                                    class="h-10 w-10 object-cover"
                                     alt="{{ $p->name }}"
                                 >
                             @else
