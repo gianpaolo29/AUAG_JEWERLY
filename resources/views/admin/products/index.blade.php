@@ -114,7 +114,7 @@
                 <input type="hidden" name="dir" value="{{ $dir }}">
 
                 {{-- Clear Filters --}}
-                <a href="{{ route('admin.products.index') }}" 
+                <a href="{{ route('admin.products.index') }}"
                    class="text-sm text-gray-500 hover:text-gray-700 font-medium whitespace-nowrap p-2 transition flex-shrink-0">
                     <span class="inline-flex items-center gap-1">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 16h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM12 9v6M9 12h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -170,7 +170,7 @@
                         <div class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden grid place-content-center border border-gray-200">
                             @if ($p->pictureUrl)
                                 <img
-                                    src="{{ asset($p->pictureUrl->url) }}"                                    class="h-10 w-10 object-cover"
+                                    src="/{{ $p->pictureUrl->url }}"                                    class="h-10 w-10 object-cover"
                                     alt="{{ $p->name }}"
                                 >
                             @else
@@ -220,8 +220,8 @@
                         <form method="POST" action="{{ route('admin.products.toggle',$p) }}">
                             @csrf @method('PATCH')
                             <button type="submit" class="inline-flex items-center rounded-lg px-3 py-1 text-xs font-semibold whitespace-nowrap transition
-                                {{ $p->status 
-                                    ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
+                                {{ $p->status
+                                    ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                                 {{ $p->status ? 'Active' : 'Inactive' }}
                             </button>
@@ -230,14 +230,14 @@
                     {{-- Actions --}}
                     <td class="px-5 py-3 text-center whitespace-nowrap">
                         <div class="inline-flex items-center justify-center gap-1">
-                            <a href="{{ route('admin.products.edit',$p) }}" 
+                            <a href="{{ route('admin.products.edit',$p) }}"
                                class="text-violet-600 hover:text-violet-700 p-2 rounded-lg hover:bg-violet-100 transition duration-150">
                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </a>
                             <form method="POST" action="{{ route('admin.products.destroy',$p) }}"
                                   onsubmit="return confirm('Are you sure you want to delete {{ $p->name }}?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" 
+                                <button type="submit"
                                         class="text-rose-600 hover:text-rose-700 p-2 rounded-lg hover:bg-rose-100 transition duration-150">
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
                                 </button>
