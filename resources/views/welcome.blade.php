@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-
+  <link rel="icon" type="image/png" href="{{ asset('Auag.jpg') }}">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <title>AUAG Jewelry</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

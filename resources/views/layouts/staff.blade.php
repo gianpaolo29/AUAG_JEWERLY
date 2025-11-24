@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>{{ $title ?? 'AUAG Jewelry' }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('Auag.jpg') }}">
 
     {{-- Assuming you are using Laravel Mix/Vite/etc. to compile Tailwind CSS --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -20,7 +21,8 @@
         x-data="{ show: true }" 
         x-show="show"
         x-init="setTimeout(() => show = false, 3500)"
-        class="fixed top-4 right-4 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center space-x-2"
+        {{-- CHANGED z-50 to z-[9999] for maximum priority --}}
+        class="fixed top-4 right-4 z-[9999] bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center space-x-2" 
     >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -33,7 +35,6 @@
         </button>
     </div>
 @endif
-
 
 <header x-data="{ open: false, scrolled: false }"
         @scroll.window="scrolled = window.pageYOffset > 10"
