@@ -116,6 +116,9 @@ class ProductController extends Controller
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'quantity' => ['required', 'integer', 'min:0'],
             'status' => ['sometimes', 'boolean'],
+            'material'    => ['nullable', Rule::in(Product::MATERIAL_OPTIONS)],
+            'size'        => ['nullable','string','max:50'],
+            'style'       => ['nullable', Rule::in(Product::STYLE_OPTIONS)],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -126,16 +129,26 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'quantity' => $validated['quantity'],
             'status' => (bool) ($validated['status'] ?? true),
+            'material'=> $validated['material'] ?? null,
+            'size' => $validated['size'] ?? null,
+            'style'=> $validated['style'] ?? null,
         ]);
 
         // Handle one image only
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
+            $image      = $request->file('image');
+            $imageName  = time() . '_' . $image->getClientOriginalName();
 
+            // Move to project_name/public/products
+            $image->move(public_path('products'), $imageName);
+
+            // Save URL or path in DB
             $product->pictureUrl()->create([
-                'url' => $path,
+                'url' => 'products/' . $imageName,
             ]);
         }
+
+
 
         return redirect()
             ->route('admin.products.index')
@@ -165,6 +178,9 @@ class ProductController extends Controller
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'quantity' => ['required', 'integer', 'min:0'],
             'status' => ['sometimes', 'boolean'],
+            'material'    => ['nullable', Rule::in(Product::MATERIAL_OPTIONS)],
+            'size'        => ['nullable','string','max:50'],
+            'style'       => ['nullable', Rule::in(Product::STYLE_OPTIONS)],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -175,19 +191,21 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'quantity' => $validated['quantity'],
             'status' => (bool) ($validated['status'] ?? $product->status),
+            'material'=> $validated['material'] ?? null,
+            'size'=> $validated['size'] ?? null,
+            'style'=> $validated['style'] ?? null,
         ]);
 
-        // If new image uploaded, delete old + save new
         if ($request->hasFile('image')) {
-            if ($product->pictureUrl) {
-                Storage::disk('public')->delete($product->pictureUrl->url);
-                $product->pictureUrl->delete();
-            }
+            $image      = $request->file('image');
+            $imageName  = time() . '_' . $image->getClientOriginalName();
 
-            $path = $request->file('image')->store('products', 'public');
+            // Move to project_name/public/products
+            $image->move(public_path('products'), $imageName);
 
-            $product->pictureUrl()->create([
-                'url' => $path,
+            // Save URL or path in DB
+            $product->pictureUrl()->update([
+                'url' => 'products/' . $imageName,
             ]);
         }
 

@@ -169,10 +169,9 @@
                     <td class="px-5 py-3 w-10">
                         <div class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden grid place-content-center border border-gray-200">
                             <img
-                                src="{{ $p->image_url }}"
-                                class="h-10 w-10 object-cover"
-                                alt="{{ $p->name }}"
-                            >
+                                    src="{{ asset($p->pictureUrl->url) }}"                                    class="h-10 w-10 object-cover"
+                                    alt="{{ $p->name }}"
+                                >
                         </div>
                     </td>
                     <td class="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">

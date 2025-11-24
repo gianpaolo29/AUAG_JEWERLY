@@ -106,11 +106,19 @@ class PawnItemController extends Controller
         // save images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $path = $file->store('pawn-items', 'public');
-                $pawnItem->pictures()->create(['url' => $path]);
+
+                $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                // Move to public/pawn-items
+                $file->move(public_path('pawn-items'), $imageName);
+
+                // Save relative path to DB
+                $pawnItem->pictures()->create([
+                    'url' => 'pawn-items/' . $imageName,
+                ]);
             }
         }
-        $this->notifyAdmins(new NewPawnItemNotification($pawnItem));
+       
 
         return redirect()
             ->route('admin.pawn.index')
@@ -169,8 +177,16 @@ class PawnItemController extends Controller
         // add new images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $path = $file->store('pawn-items', 'public');
-                $pawnItem->pictures()->create(['url' => $path]);
+
+                $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                // Move to public/pawn-items
+                $file->move(public_path('pawn-items'), $imageName);
+
+                // Save relative path to DB
+                $pawnItem->pictures()->update([
+                    'url' => 'pawn-items/' . $imageName,
+                ]);
             }
         }
 

@@ -19,9 +19,9 @@
 
     // Existing pictures for edit (id + full url)
     $existingPictures = ($pawnItem->pictures ?? collect())->map(fn($pic) => [
-        'id'  => $pic->id,
-        'url' => asset('storage/' . ltrim($pic->url, '/')),
-    ]);
+    'id'  => $pic->id,
+    'url' => asset($pic->url),
+]);
 @endphp
 
 <x-admin-layout :title="$title">

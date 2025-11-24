@@ -76,14 +76,20 @@ class RepairController extends Controller
         ]);
 
         // ONE image only (morphOne)
+       //fix save to public
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('repairs', 'public');
 
+            $file = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // Move file to public/repairs
+            $file->move(public_path('repairs'), $imageName);
+
+            // Save relative URL to DB
             $repair->picture()->create([
-                'url' => $path,
+                'url' => 'repairs/' . $imageName,
             ]);
         }
-        $this->notifyAdmins(new NewRepairRequestNotification($repair));
         return redirect()
             ->route('admin.repairs.index')
             ->with('success', 'Repair created successfully.');
@@ -127,18 +133,19 @@ class RepairController extends Controller
         ]);
 
         // Replace existing image
+        
         if ($request->hasFile('image')) {
 
-            // delete old image
-            if ($repair->picture) {
-                Storage::disk('public')->delete($repair->picture->url);
-                $repair->picture->delete();
-            }
+            $file = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
-            // store new file
-            $path = $request->file('image')->store('repairs', 'public');
+            // Move file to public/repairs
+            $file->move(public_path('repairs'), $imageName);
 
-            $repair->picture()->create(['url' => $path]);
+            // Save relative URL to DB
+            $repair->picture()->update([
+                'url' => 'repairs/' . $imageName,
+            ]);
         }
 
         return redirect()
