@@ -55,32 +55,6 @@
             {{-- Right Actions --}}
             <div class="flex items-center justify-end gap-2 md:gap-3 flex-1 md:flex-none">
 
-                {{-- Search --}}
-                <button class="p-2 rounded-full hover:bg-white/10 transition-all duration-200 group"
-                        aria-label="Search">
-                    <svg class="w-5 h-5 text-white/80 group-hover:text-white group-hover:scale-110 transition-transform"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="7"/>
-                        <path d="M21 21l-4.3-4.3"/>
-                    </svg>
-                </button>
-
-                {{-- Cart --}}
-                <button class="p-2 rounded-full hover:bg-white/10 transition-all duration-200 group relative"
-                        aria-label="Cart">
-                    <svg class="w-5 h-5 text-white/80 group-hover:text-white group-hover:scale-110 transition-transform"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 6h15l-1.5 9h-12z"/>
-                        <path d="M6 6 4 3H2"/>
-                        <circle cx="9" cy="20" r="1"/>
-                        <circle cx="18" cy="20" r="1"/>
-                    </svg>
-                    {{-- Cart badge --}}
-                    <span class="absolute -top-1 -right-1 bg-white text-gray-900 text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                        0
-                    </span>
-                </button>
-
                 {{-- Profile --}}
                 @auth
                     <div x-data="{ openProfile: false }" class="relative">
