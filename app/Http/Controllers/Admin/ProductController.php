@@ -183,17 +183,18 @@ class ProductController extends Controller
 
         // If new image uploaded, delete old + save new
         if ($request->hasFile('image')) {
-            if ($product->pictureUrl) {
-                Storage::disk('public')->delete($product->pictureUrl->url);
-                $product->pictureUrl->delete();
-            }
+            $image      = $request->file('image');
+            $imageName  = time() . '_' . $image->getClientOriginalName();
 
-            $path = $request->file('image')->store('products', 'public');
+            // Move to project_name/public/products
+            $image->move(public_path('products'), $imageName);
 
-            $product->pictureUrl()->create([
-                'url' => $path,
+            // Save URL or path in DB
+            $product->pictureUrl()->update([
+                'url' => 'products/' . $imageName,
             ]);
         }
+
 
         return redirect()
             ->route('admin.products.index')

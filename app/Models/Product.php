@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\LowStockAlertNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,7 @@ class Product extends Model
         'description',
         'price',
         'quantity',
-        'status',  
+        'status',
         'material',
         'size',
         'style',
@@ -44,6 +45,23 @@ class Product extends Model
         'casual',
         'wedding'
     ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::updated(function ($product) {
+            // Check if quantity changed and is below threshold (e.g., 10 items)
+            if ($product->isDirty('quantity') && $product->quantity <= 10) {
+                // Get the admin user (assuming you have only one)
+                $admin = User::where('role', 'admin')->first();
+
+                if ($admin) {
+                    $admin->notify(new LowStockAlertNotification($product));
+                }
+            }
+        });
+    }
 
     public function favouritedByUsers()
     {
@@ -106,6 +124,6 @@ class Product extends Model
     {
         return $query->where('status', 1);
     }
-    
+
 
 }

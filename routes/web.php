@@ -99,7 +99,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
      Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('admin.notifications.markAllRead');
 
 });
 
