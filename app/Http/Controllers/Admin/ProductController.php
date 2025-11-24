@@ -135,19 +135,15 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $image      = $request->file('image');
-            $imageName  = time() . '_' . $image->getClientOriginalName();
+            $filename = uniqid() . '.' . $request->image->extension();
 
-            // Move to project_name/public/products
-            $image->move(public_path('products'), $imageName);
+            $path = $request->image->storeAs('products', $filename, 'public');
 
             // Save URL or path in DB
             $product->pictureUrl()->create([
-                'url' => 'products/' . $imageName,
+                'url' => $path
             ]);
         }
-
-
 
         return redirect()
             ->route('admin.products.index')
@@ -196,15 +192,10 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $image      = $request->file('image');
-            $imageName  = time() . '_' . $image->getClientOriginalName();
-
-            // Move to project_name/public/products
-            $image->move(public_path('products'), $imageName);
-
-            // Save URL or path in DB
+            $filename = uniqid() . '.' . $request->image->extension();
+            $path = $request->image->storeAs('products', $filename, 'public');
             $product->pictureUrl()->update([
-                'url' => 'products/' . $imageName,
+                'url' => $path
             ]);
         }
 
