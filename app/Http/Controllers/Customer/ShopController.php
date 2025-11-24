@@ -14,6 +14,7 @@ class ShopController extends Controller
     {
         $query = Product::with('category')->active();
 
+
         // Search filter
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;

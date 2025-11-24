@@ -11,17 +11,17 @@
             .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
             .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
             .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-            
+
             /* Custom animations */
             @keyframes fadeIn {
                 from { opacity: 0; transform: translateY(10px); }
                 to { opacity: 1; transform: translateY(0); }
             }
-            
+
             .animate-fade-in {
                 animation: fadeIn 0.3s ease-out;
             }
-            
+
             /* Consistent image sizing */
             .product-image {
                 width: 100%;
@@ -51,7 +51,7 @@
             .gradient-bg {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             }
-            
+
             .gradient-text {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 -webkit-background-clip: text;
@@ -80,12 +80,12 @@
                 <button @click="openFilters = !openFilters"
                         class="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 smooth-transition font-medium">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
                     Filters
                 </button>
-                
+
                 {{-- Sort Dropdown Mobile --}}
                 <div class="relative">
                     <select x-model="sort" @change="applyFilters()" class="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl">
@@ -105,11 +105,11 @@
                         <div class="flex-1 max-w-lg">
                             <form method="GET" action="{{ route('shop.index') }}" id="searchForm">
                                 <div class="relative">
-                                    <input type="text" 
+                                    <input type="text"
                                            name="search"
                                            value="{{ request('search') }}"
                                            x-model="searchQuery"
-                                           placeholder="Search products..." 
+                                           placeholder="Search products..."
                                            class="w-full pl-12 pr-4 py-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
                                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +125,7 @@
                                 </template>
                             </form>
                         </div>
-                        
+
                         {{-- Desktop Sort --}}
                         <div class="hidden lg:block">
                             <select x-model="sort" @change="applyFilters()" class="block w-full pl-4 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm">
@@ -146,19 +146,19 @@
                             @endif
                         </p>
                         <div class="flex items-center gap-2 bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <button @click="gridView = 'grid'" 
+                            <button @click="gridView = 'grid'"
                                     :class="gridView === 'grid' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
                                     class="p-2 rounded-lg smooth-transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                                 </svg>
                             </button>
-                            <button @click="gridView = 'list'" 
+                            <button @click="gridView = 'list'"
                                     :class="gridView === 'list' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
                                     class="p-2 rounded-lg smooth-transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                                 </svg>
                             </button>
@@ -175,11 +175,11 @@
                                     <div class="relative overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer"
                                          :class="gridView === 'list' ? 'md:w-1/3' : ''"
                                          @click="openProductModal({{ $product }})">
-                                        <img src="{{ $product->image_url ?: '/images/placeholder.jpg' }}" 
+                                        <img src="{{ $product->image_url ?: '/images/placeholder.jpg' }}"
                                              alt="{{ $product->name }}"
                                              class="product-image group-hover:scale-105 smooth-transition"
                                              :class="gridView === 'list' ? 'md:h-full' : ''">
-                                        
+
                                         {{-- Category Badge --}}
                                         @if($product->category)
                                             <div class="absolute top-3 left-3">
@@ -196,7 +196,7 @@
                                             @else
                                                 <span class="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-medium">Out of Stock</span>
                                             @endif
-                                        </div>  
+                                        </div>
                                     </div>
 
                                     {{-- Product Info --}}
@@ -216,19 +216,19 @@
                                             <span class="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $product->style }}</span>
                                             <span class="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $product->material }}</span>
                                         </div>
-                                        
+
                                         {{-- Action Buttons --}}
                                         <div class="flex gap-3">
                                             <button @click="openProductModal({{ $product }})"
                                                     class="flex-1 px-4 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 smooth-transition text-center font-medium shadow-sm">
                                                 View
                                             </button>
-                                            
+
                                             <form action="{{ route('favorites.toggle', $product) }}" method="POST" @click.stop>
     @csrf
     <button type="submit"
         class="w-12 h-12 flex items-center justify-center rounded-xl shadow-sm smooth-transition"
-        :class="favorites.includes({{ $product->id }}) ? 'bg-red-500 text-white' : 'gradient-bg text-white'">
+        :class="{{ $product->is_favorite }} ? 'bg-red-500 text-white' : 'gradient-bg text-white'">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
         </svg>
@@ -245,7 +245,7 @@
                             <div class="max-w-md mx-auto">
                                 <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                     </svg>
                                 </div>
@@ -302,17 +302,17 @@
                                         <span>Max: ₱50,000</span>
                                     </div>
                                     <div class="flex gap-3">
-                                        <input type="number" 
-                                               name="min_price" 
+                                        <input type="number"
+                                               name="min_price"
                                                x-model="filters.min_price"
                                                value="{{ request('min_price') }}"
-                                               placeholder="Min" 
+                                               placeholder="Min"
                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <input type="number" 
-                                               name="max_price" 
+                                        <input type="number"
+                                               name="max_price"
                                                x-model="filters.max_price"
                                                value="{{ request('max_price') }}"
-                                               placeholder="Max" 
+                                               placeholder="Max"
                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
                                 </div>
@@ -325,8 +325,8 @@
                                     @php $selectedCats = (array) request('category', []); @endphp
                                     @forelse ($categories as $cat)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox" 
-                                                   name="category[]" 
+                                            <input type="checkbox"
+                                                   name="category[]"
                                                    value="{{ $cat->id }}"
                                                    x-model="filters.categories"
                                                    @checked(in_array($cat->id, $selectedCats))
@@ -340,7 +340,7 @@
                             </div>
 
                             {{-- Apply Filters Button --}}
-                            <button type="submit" 
+                            <button type="submit"
                                     class="w-full gradient-bg text-white py-4 rounded-xl font-medium hover:opacity-90 smooth-transition shadow-sm">
                                 Apply Filters
                             </button>
@@ -353,7 +353,7 @@
         {{-- Mobile Filters Drawer --}}
         <div x-show="openFilters" class="lg:hidden" x-cloak>
             {{-- Backdrop --}}
-            <div x-show="openFilters" 
+            <div x-show="openFilters"
                  class="fixed inset-0 bg-black bg-opacity-50 z-40"
                  @click="openFilters = false">
             </div>
@@ -367,7 +367,7 @@
                  x-transition:leave-start="transform translate-x-0"
                  x-transition:leave-end="transform translate-x-full"
                  class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 overflow-y-auto">
-                
+
                 {{-- Drawer Header --}}
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
@@ -390,17 +390,17 @@
                                 <h4 class="font-medium text-gray-900 dark:text-white mb-4">Price Range</h4>
                                 <div class="space-y-4">
                                     <div class="flex gap-3">
-                                        <input type="number" 
-                                               name="min_price" 
+                                        <input type="number"
+                                               name="min_price"
                                                x-model="filters.min_price"
                                                value="{{ request('min_price') }}"
-                                               placeholder="Min" 
+                                               placeholder="Min"
                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <input type="number" 
-                                               name="max_price" 
+                                        <input type="number"
+                                               name="max_price"
                                                x-model="filters.max_price"
                                                value="{{ request('max_price') }}"
-                                               placeholder="Max" 
+                                               placeholder="Max"
                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
                                 </div>
@@ -412,8 +412,8 @@
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @foreach ($categories as $cat)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox" 
-                                                   name="category[]" 
+                                            <input type="checkbox"
+                                                   name="category[]"
                                                    value="{{ $cat->id }}"
                                                    x-model="filters.categories"
                                                    @checked(in_array($cat->id, request('category', [])))
@@ -425,7 +425,7 @@
                             </div>
 
                             {{-- Apply Filters Button --}}
-                            <button type="submit" 
+                            <button type="submit"
                                     @click="openFilters = false"
                                     class="w-full gradient-bg text-white py-4 rounded-xl font-medium hover:opacity-90 smooth-transition shadow-sm">
                                 Apply Filters
@@ -440,7 +440,7 @@
         <div x-show="productModalOpen" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 {{-- Backdrop --}}
-                <div x-show="productModalOpen" 
+                <div x-show="productModalOpen"
                      class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
                      x-transition:enter="ease-out duration-300"
                      x-transition:enter-start="opacity-0"
@@ -463,12 +463,12 @@
                     <div class="flex flex-col">
                         {{-- Product Image --}}
                         <div class="relative">
-                            <img :src="selectedProduct.image_url || '/images/placeholder.jpg'" 
+                            <img :src="selectedProduct.image_url || '/images/placeholder.jpg'"
                                  :alt="selectedProduct.name"
                                  class="modal-image">
-                            
+
                             {{-- Close Button --}}
-                            <button @click="productModalOpen = false" 
+                            <button @click="productModalOpen = false"
                                     class="absolute top-4 right-4 p-2 bg-black/20 backdrop-blur-sm text-white rounded-full hover:bg-black/30 smooth-transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -477,13 +477,13 @@
 
                             {{-- Category Badge --}}
                             <div class="absolute top-4 left-4">
-                                <span class="px-3 py-1 bg-black/80 backdrop-blur-sm text-white text-sm rounded-full font-medium" 
+                                <span class="px-3 py-1 bg-black/80 backdrop-blur-sm text-white text-sm rounded-full font-medium"
                                       x-text="selectedProduct.category ? selectedProduct.category.name : 'Uncategorized'"></span>
                             </div>
 
                             {{-- Stock Status --}}
                             <div class="absolute bottom-4 left-4">
-                                <span class="px-3 py-1 text-sm rounded-full font-medium" 
+                                <span class="px-3 py-1 text-sm rounded-full font-medium"
                                       :class="selectedProduct.quantity > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
                                       x-text="selectedProduct.quantity > 0 ? 'In Stock' : 'Out of Stock'"></span>
                             </div>
@@ -522,15 +522,16 @@
     @csrf
     <button type="submit"
         class="w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2"
+            :class="{{ $product->is_favorite }} ? 'bg-red-500 text-white' : 'gradient-bg text-white'"
         @click="toggleFavorite(selectedProduct.id)">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
         </svg>
-        <span x-text="favorites.includes(selectedProduct.id) ? 'Remove Favorite' : 'Add to Favorite'"></span>
+        <span x-text="selectedProduct.is_favorite ? 'Remove Favorite' : 'Add to Favorite'"></span>
     </button>
 </form>
 
-                                
+
                                 <button @click="productModalOpen = false"
                                         class="flex-1 px-4 py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-700 smooth-transition font-medium shadow-sm">
                                     Close

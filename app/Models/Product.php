@@ -45,6 +45,8 @@ class Product extends Model
         'wedding',
     ];
 
+    protected $appends = ['image_url', 'is_favorite'];
+
     protected static function boot(): void
     {
         parent::boot();
@@ -72,8 +74,6 @@ class Product extends Model
     {
         return $this->morphOne(PictureUrl::class, 'imageable');
     }
-
-    protected $appends = ['image_url'];
 
     public function getImageUrlAttribute(): string
     {
@@ -121,5 +121,12 @@ class Product extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 1);
+    }
+
+    public function getIsFavoriteAttribute(): bool
+    {
+        return auth()->check()
+            && Favorite::where('user_id', auth()->id())
+                ->where('product_id', $this->id)->exists();
     }
 }
