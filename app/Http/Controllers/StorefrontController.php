@@ -30,6 +30,7 @@ class StorefrontController extends Controller
 
         if (! $hasSales) {
             $bestSellers = Product::query()
+                ->with('picture')
                 ->inRandomOrder()
                 ->limit(8)
                 ->get();
