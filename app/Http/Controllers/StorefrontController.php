@@ -16,6 +16,7 @@ class StorefrontController extends Controller
 
         // Join products with total_sold, order by best sellers
         $bestSellers = Product::query()
+            ->with('picture')
             ->leftJoinSub($salesSub, 'sales', function ($join) {
                 $join->on('products.id', '=', 'sales.product_id');
             })
