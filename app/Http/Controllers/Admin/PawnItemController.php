@@ -110,6 +110,7 @@ class PawnItemController extends Controller
                 $pawnItem->pictures()->create(['url' => $path]);
             }
         }
+        $this->notifyAdmins(new NewPawnItemNotification($pawnItem));
 
         return redirect()
             ->route('admin.pawn.index')

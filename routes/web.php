@@ -12,10 +12,21 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Customer\ShopController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Customer\FavoriteController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AdminNotificationController;
+use App\Http\Controllers\Staff\StaffDashboardController;
+use App\Http\Controllers\Staff\StaffProductController;
+use App\Http\Controllers\Staff\StaffTransactionController;
+use App\Http\Controllers\Staff\StaffPawnController;
+
+
+
+
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'callback']);
@@ -84,16 +95,39 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         ]);
 
     Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 
 });
 
-Route::middleware(['auth', 'role:staff'])->group(function () {
-    Route::get('/staff/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
-});
+
+
 
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/customer/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+    Route::post('/favorites/{product}/toggle', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/product/view/{product}', [ShopController::class, 'trackView'])
+    ->name('product.view');
 });
 
+Route::middleware(['auth', 'role:staff'])->group(function () {
+    Route::get('/staff/dashboard', [StaffDashboardController::class, 'index'])->name('staff.dashboard');
+    Route::get('/staff/products', [StaffProductController::class, 'index'])->name('staff.products.index');
+    Route::get('/staff/transactions', [StaffTransactionController::class, 'index'])
+        ->name('staff.transactions.index');
+    Route::get('/staff/transactions/create', [StaffTransactionController::class, 'create'])
+        ->name('staff.transactions.create');
+    Route::post('/staff/transactions', [StaffTransactionController::class, 'store'])
+        ->name('staff.transactions.store');
+    Route::get('/staff/transactions/{transaction}', [StaffTransactionController::class, 'show'])
+        ->name('staff.transactions.show');
+    Route::get('/staff/pawn', [StaffPawnController::class, 'index'])->name('staff.pawn.index');
+    Route::get('/pawn/create', [StaffPawnController::class, 'create'])->name('staff.pawn.create');
+    Route::post('/pawn', [StaffPawnController::class, 'store'])->name('staff.pawn.store');
+
+});
 require __DIR__.'/auth.php';
