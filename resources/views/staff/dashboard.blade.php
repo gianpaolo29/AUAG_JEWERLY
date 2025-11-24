@@ -70,24 +70,19 @@
             <div class="bg-white rounded-xl shadow-md p-6 space-y-4">
                 <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
 
-                <a href=""
+                <a href="{{ route('staff.pawn.create') }}"
                     class="block p-4 bg-yellow-500 text-white rounded-xl text-center">
                     New Pawn Item
                 </a>
 
-                <a href=""
+                <a href="{{ route('staff.repairs.index') }}"
                     class="block p-4 bg-blue-500 text-white rounded-xl text-center">
                     View Repairs
                 </a>
 
-                <a href=""
+                <a href="{{ route('staff.transactions.index') }}"
                     class="block p-4 bg-green-500 text-white rounded-xl text-center">
                     View Transactions
-                </a>
-
-                <a href=""
-                    class="block p-4 bg-gray-800 text-white rounded-xl text-center">
-                    Staff Profile
                 </a>
             </div>
 

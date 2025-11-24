@@ -77,12 +77,12 @@ class ShopController extends Controller
     }
 
     public function trackView(Product $product)
-{
-    $product->increment('view_count');
+    {
+        $product->increment('view_count');
 
-    return response()->json([
-        'success' => true,
-        'views'   => $product->view_count,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'views'   => $product->view_count,
+        ]);
+    }
 }
