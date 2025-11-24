@@ -75,10 +75,12 @@ class RepairController extends Controller
             'status' => $validated['status'],
         ]);
 
-        // ONE image only (morphOne)
+        // fix save to public
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('repairs', 'public');
+            $filename = uniqid().'.'.$request->image->extension();
+            $path = $request->image->storeAs('repairs', $filename, 'public');
 
+            // Save relative URL to DB
             $repair->picture()->create([
                 'url' => $path,
             ]);
@@ -127,18 +129,17 @@ class RepairController extends Controller
         ]);
 
         // Replace existing image
+
         if ($request->hasFile('image')) {
+            $filename = uniqid().'.'.$request->image->extension();
+            $path = $request->image->storeAs('repairs', $filename, 'public');
 
-            // delete old image
-            if ($repair->picture) {
-                Storage::disk('public')->delete($repair->picture->url);
-                $repair->picture->delete();
-            }
+            $repair->picture()->delete();
 
-            // store new file
-            $path = $request->file('image')->store('repairs', 'public');
-
-            $repair->picture()->create(['url' => $path]);
+            // Save relative URL to DB
+            $repair->picture()->create([
+                'url' => $path,
+            ]);
         }
 
         return redirect()
@@ -194,6 +195,6 @@ class RepairController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Repair marked as completed and transaction recorded.');
+        return back()->with('success', 'Transaction Completed');
     }
 }

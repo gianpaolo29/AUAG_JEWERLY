@@ -1,9 +1,9 @@
 @php
     use Illuminate\Support\Facades\Storage;
 
-    $existingImage = $product->relationLoaded('pictureUrl') && $product->pictureUrl
-        ? Storage::url($product->pictureUrl->url)
-        : null;
+    $existingImage = $product->pictureUrl
+    ? asset('storage/' .$product->pictureUrl->url)
+    : null;
 @endphp
 
 <x-admin-layout :title="$product->exists ? 'Edit Product' : 'Add Product'">
@@ -29,14 +29,7 @@
         </div>
 
         <form id="product-form"
-              x-data="{
-                    preview: @js($existingImage),
-                    onFile(e) {
-                        const [f] = e.target.files || [];
-                        if (!f) return;
-                        this.preview = URL.createObjectURL(f);
-                    }
-              }"
+              x-data="previewUploader('{{ $existingImage }}')"
               method="POST"
               enctype="multipart/form-data"
               action="{{ $product->exists
@@ -93,17 +86,62 @@
                     </div>
 
                     {{-- Description --}}
+                    {{-- Description --}}
                     <div>
                         <label for="description" class="block text-sm font-semibold text-gray-700">
                             Description
                         </label>
                         <textarea name="description" id="description" rows="4"
-                                  placeholder="Describe the product..."
-                                  class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">{{ old('description', $product->description) }}</textarea>
+                                placeholder="Describe the product..."
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">{{ old('description', $product->description) }}</textarea>
                         @error('description')
                         <p class="text-rose-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    {{-- Material --}}
+                    <div>
+                        <label for="material" class="block text-sm font-semibold text-gray-700">
+                            Material
+                        </label>
+                        <select id="material" name="material"
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                            <option value="">Select Material</option>
+                            @foreach(\App\Models\Product::MATERIAL_OPTIONS as $mat)
+                                <option value="{{ $mat }}" @selected(old('material', $product->material) === $mat)>
+                                    {{ ucfirst($mat) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Size --}}
+                    <div>
+                        <label for="size" class="block text-sm font-semibold text-gray-700">
+                            Size
+                        </label>
+                        <input type="text" id="size" name="size"
+                            value="{{ old('size', $product->size) }}"
+                            placeholder="e.g. 18 inches, Adjustable, 2mm, Medium"
+                            class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                    </div>
+
+                    {{-- Style --}}
+                    <div>
+                        <label for="style" class="block text-sm font-semibold text-gray-700">
+                            Style
+                        </label>
+                        <select id="style" name="style"
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                            <option value="">Select Style</option>
+                            @foreach(\App\Models\Product::STYLE_OPTIONS as $sty)
+                                <option value="{{ $sty }}" @selected(old('style', $product->style) === $sty)>
+                                    {{ ucfirst($sty) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                 </div>
 
                 {{-- Pricing & stock --}}
@@ -214,5 +252,18 @@
                 </div>
             </div>
         </form>
+        <script>
+        function previewUploader(existingImage) {
+            return {
+                preview: existingImage || null,
+
+                onFile(e) {
+                    const f = e.target.files[0];
+                    if (!f) return;
+                    this.preview = URL.createObjectURL(f);
+                }
+            }
+        }
+        </script>
     </div>
 </x-admin-layout>

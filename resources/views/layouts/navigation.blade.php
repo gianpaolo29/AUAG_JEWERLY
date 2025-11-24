@@ -22,62 +22,38 @@
                         $navItems = [
                             ['url' => '/', 'label' => 'Home'],
                             ['url' => '/shop', 'label' => 'Shop'],
-                            ['url' => '#about', 'label' => 'About'],
-                            ['url' => '#contact', 'label' => 'Contact'],
-                            ['url' => '/appraisal', 'label' => 'Appraisals'],
+                            ['url' => '/#about', 'label' => 'About'],
+                            ['url' => '/#contact', 'label' => 'Contact'],
                         ];
                     @endphp
 
                     @foreach($navItems as $item)
-                        @if(str_starts_with($item['url'], '#'))
-                            <a href="{{ $item['url'] }}"
-                               class="relative font-medium text-white/80 hover:text-white transition-colors duration-200
-                                      group/nav scroll-smooth"
-                               onclick="scrollToSection('{{ $item['url'] }}')">
-                                {{ $item['label'] }}
-                                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover/nav:w-full"></span>
-                            </a>
-                        @else
-                            <a href="{{ url($item['url']) }}"
-                               class="relative font-medium text-white/80 hover:text-white transition-colors duration-200
-                                      {{ request()->is(trim($item['url'], '/').'*') ? 'text-white' : '' }}
-                                      group/nav">
-                                {{ $item['label'] }}
-                                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover/nav:w-full {{ request()->is(trim($item['url'], '/').'*') ? 'w-full' : '' }}"></span>
-                            </a>
-                        @endif
+                        @php
+                            $isHash = str_starts_with($item['url'], '#');
+
+                            // FIXED: proper active detection
+                            if ($item['url'] === '/') {
+                                $isActive = request()->is('/');
+                            } else {
+                                $isActive = !$isHash && request()->is(ltrim($item['url'], '/').'*');
+                            }
+                        @endphp
+
+                        <a href="{{ $isHash ? $item['url'] : url($item['url']) }}"
+                           class="relative font-medium transition-colors duration-200 group/nav-item
+              {{ $isActive ? 'text-white' : 'text-white/80 hover:text-white' }}">
+                            {{ $item['label'] }}
+
+                            <span class="absolute -bottom-1 left-0 h-0.5 bg-white transition-all duration-300
+                     w-0 group-hover/nav-item:w-full {{ $isActive ? 'w-full' : '' }}">
+        </span>
+                        </a>
                     @endforeach
                 </div>
             </nav>
 
             {{-- Right Actions --}}
             <div class="flex items-center justify-end gap-2 md:gap-3 flex-1 md:flex-none">
-
-                {{-- Search --}}
-                <button class="p-2 rounded-full hover:bg-white/10 transition-all duration-200 group"
-                        aria-label="Search">
-                    <svg class="w-5 h-5 text-white/80 group-hover:text-white group-hover:scale-110 transition-transform"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="7"/>
-                        <path d="M21 21l-4.3-4.3"/>
-                    </svg>
-                </button>
-
-                {{-- Cart --}}
-                <button class="p-2 rounded-full hover:bg-white/10 transition-all duration-200 group relative"
-                        aria-label="Cart">
-                    <svg class="w-5 h-5 text-white/80 group-hover:text-white group-hover:scale-110 transition-transform"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 6h15l-1.5 9h-12z"/>
-                        <path d="M6 6 4 3H2"/>
-                        <circle cx="9" cy="20" r="1"/>
-                        <circle cx="18" cy="20" r="1"/>
-                    </svg>
-                    {{-- Cart badge --}}
-                    <span class="absolute -top-1 -right-1 bg-white text-gray-900 text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                        0
-                    </span>
-                </button>
 
                 {{-- Profile --}}
                 @auth

@@ -68,7 +68,6 @@ class PawnItemController extends Controller
      */
     public function create()
     {
-        // 👇 match blade variable name
         $pawnItem = new PawnItem;
         $isEdit = false;
 
@@ -106,8 +105,12 @@ class PawnItemController extends Controller
         // save images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $path = $file->store('pawn-items', 'public');
-                $pawnItem->pictures()->create(['url' => $path]);
+                $filename = uniqid().'.'.$file->extension();
+                $path = $file->storeAs('pawn-items', $filename, 'public');
+
+                $pawnItem->pictures()->create([
+                    'url' => $path,
+                ]);
             }
         }
 
@@ -168,8 +171,12 @@ class PawnItemController extends Controller
         // add new images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $path = $file->store('pawn-items', 'public');
-                $pawnItem->pictures()->create(['url' => $path]);
+                $filename = uniqid().'.'.$file->extension();
+                $path = $file->storeAs('pawn-items', $filename, 'public');
+
+                $pawnItem->pictures()->create([
+                    'url' => $path,
+                ]);
             }
         }
 

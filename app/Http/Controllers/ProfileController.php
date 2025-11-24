@@ -21,6 +21,13 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function editStaff(Request $request): View
+    {
+        return view('profile.staff-edit', [
+            'user' => $request->user(),
+        ]);
+    }
+
     /**
      * Update the user's profile information.
      */

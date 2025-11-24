@@ -61,4 +61,10 @@ class User extends Authenticatable
     {
         return $this->role === 'customer';
     }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(\App\Models\Product::class, 'favorites')
+            ->withTimestamps();
+    }
 }

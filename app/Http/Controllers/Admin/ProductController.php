@@ -116,6 +116,9 @@ class ProductController extends Controller
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'quantity' => ['required', 'integer', 'min:0'],
             'status' => ['sometimes', 'boolean'],
+            'material' => ['nullable', Rule::in(Product::MATERIAL_OPTIONS)],
+            'size' => ['nullable', 'string', 'max:50'],
+            'style' => ['nullable', Rule::in(Product::STYLE_OPTIONS)],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -126,12 +129,17 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'quantity' => $validated['quantity'],
             'status' => (bool) ($validated['status'] ?? true),
+            'material' => $validated['material'] ?? null,
+            'size' => $validated['size'] ?? null,
+            'style' => $validated['style'] ?? null,
         ]);
 
-        // Handle one image only
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
+            $filename = uniqid().'.'.$request->image->extension();
 
+            $path = $request->image->storeAs('products', $filename, 'public');
+
+            // Save URL or path in DB
             $product->pictureUrl()->create([
                 'url' => $path,
             ]);
@@ -165,6 +173,9 @@ class ProductController extends Controller
             'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'quantity' => ['required', 'integer', 'min:0'],
             'status' => ['sometimes', 'boolean'],
+            'material' => ['nullable', Rule::in(Product::MATERIAL_OPTIONS)],
+            'size' => ['nullable', 'string', 'max:50'],
+            'style' => ['nullable', Rule::in(Product::STYLE_OPTIONS)],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -175,18 +186,15 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'quantity' => $validated['quantity'],
             'status' => (bool) ($validated['status'] ?? $product->status),
+            'material' => $validated['material'] ?? null,
+            'size' => $validated['size'] ?? null,
+            'style' => $validated['style'] ?? null,
         ]);
 
-        // If new image uploaded, delete old + save new
         if ($request->hasFile('image')) {
-            if ($product->pictureUrl) {
-                Storage::disk('public')->delete($product->pictureUrl->url);
-                $product->pictureUrl->delete();
-            }
-
-            $path = $request->file('image')->store('products', 'public');
-
-            $product->pictureUrl()->create([
+            $filename = uniqid().'.'.$request->image->extension();
+            $path = $request->image->storeAs('products', $filename, 'public');
+            $product->pictureUrl()->update([
                 'url' => $path,
             ]);
         }

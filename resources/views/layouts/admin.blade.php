@@ -21,6 +21,8 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/flowbite@2.3.0/dist/flowbite.min.js"></script>
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.5.1/flowbite.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @stack('scripts')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -227,7 +229,7 @@
 
                                 {{-- Analytics --}}
                                 <li>
-                                    <a href=""
+                                    <a href="{{ route('admin.analytics') }}"
                                        class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
                                         {{ request()->routeIs('admin.analytics.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -439,7 +441,7 @@
 
                             {{-- Analytics --}}
                             <li>
-                                <a href=""
+                                <a href="{{ route('admin.analytics') }}"
                                    x-data="{ showTooltip: false }"
                                    @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Analytics'; tooltipText = 'Analytics'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
@@ -541,17 +543,59 @@
 
             <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                 <div class="flex items-center gap-x-4 lg:gap-x-6 ml-auto">
-                    {{-- Notification Icon --}}
-                    <button type="button" class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
-                        <span class="sr-only">View notifications</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                             aria-hidden="true" class="size-6">
-                            <path
-                                d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="relative p-2 text-gray-600 hover:text-gray-900">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                                 aria-hidden="true" class="size-6">
+                                <path
+                                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            @auth
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                                                {{ auth()->user()->unreadNotifications->count() }}
+                                            </span>
+                                @endif
+                            @endauth
+                        </button>
 
+                        <div x-show="open" @click.away="open = false"
+                             class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                            <div class="p-4 border-b flex justify-between items-center">
+                                <h3 class="font-semibold">Notifications</h3>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <form action="/admin/notifications/read-all" method="POST">
+                                        @csrf
+                                        <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">
+                                            Mark all as read
+                                        </button>
+                                    </form>
+
+                                @endif
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                @forelse(auth()->user()->notifications->take(10) as $notification)
+                                    <div class="p-4 border-b hover:bg-gray-50 cursor-pointer
+                    {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}"
+                                         onclick="window.location.href='{{ $notification->data['url'] ?? '#' }}'">
+                                        <div class="flex justify-between items-start">
+                                            <p class="font-semibold text-sm">{{ $notification->data['title'] ?? 'Notification' }}</p>
+                                            @if(!$notification->read_at)
+                                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                            @endif
+                                        </div>
+                                        <p class="text-sm text-gray-600 mt-1">{{ $notification->data['message'] ?? '' }}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-gray-500">
+                                        No notifications
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
                     <div aria-hidden="true" class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200"></div>
 
                     {{-- Profile dropdown --}}

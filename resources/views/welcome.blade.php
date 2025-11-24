@@ -176,11 +176,13 @@
            class="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pr-2">
         @foreach($bestSellers as $product)
           <article class="snap-center min-w-[85%] sm:min-w-[48%] lg:min-w-[31%] bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300">
-            <img
-              src="{{ $product->image_url ?? asset('images/placeholder-product.png') }}"
-              alt="{{ $product->name }}"
-              class="w-full aspect-[4/3] object-cover"
-            >
+              <div class="aspect-square flex items-center justify-center bg-gray-50">
+                  <img
+                      src="{{ $product->picture ? asset('storage/' . $product->picture->url) : '/test.png' }}"
+                      alt="{{ $product->name }}"
+                      class="w-full h-full object-contain max-w-xs"
+                  >
+              </div>
             <div class="px-6 py-5">
               <h3 class="font-serif text-xl">{{ $product->name }}</h3>
               <p class="text-black/60 mt-1">
@@ -245,7 +247,7 @@
             </div>
             <div class="space-y-6 pt-12">
               <div class="aspect-square rounded-3xl overflow-hidden bg-white shadow-lg">
-                <img src="https://images.unsplash.com/photo-1588444650700-6c7f0c89d36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
+                <img src="/ggg.jpg"
                      alt="Design" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700">
               </div>
               <div class="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg">

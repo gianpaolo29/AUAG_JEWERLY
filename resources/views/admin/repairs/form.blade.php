@@ -111,7 +111,7 @@
                     <label class="text-sm font-medium text-gray-700">Description *</label>
                     <textarea name="description" rows="3" required
                               class="w-full border rounded-lg text-sm px-3 py-2"
-                              placeholder="e.g., Damaged band on Rolex watch, needs crystal replacement.">{{ old('description', $repair->description) }}</textarea>
+                              placeholder="Repair, Resize, Adjust">{{ old('description', $repair->description) }}</textarea>
                     @error('description') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
