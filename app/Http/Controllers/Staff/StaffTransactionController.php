@@ -81,7 +81,7 @@ class StaffTransactionController extends Controller
         }
 
         return redirect()
-            ->route('staff.transactions.form')
+            ->route('staff.transactions.index')
             ->with('success', 'Sale recorded successfully.');
     }
 
