@@ -1,6 +1,6 @@
 <x-admin-layout title="Repairs">
     <div class="flex flex-col gap-6"
-        x-data="repairIndex()">
+         x-data="repairIndex()">
 
         {{-- HEADER --}}
         <div class="flex items-center justify-between">
@@ -50,126 +50,123 @@
         <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                    <tr>
-                        <th class="px-4 py-3 text-left">Customer</th>
-                        <th class="px-4 py-3 text-left">Description</th>
-                        <th class="px-4 py-3 text-left">Date</th>
-                        <th class="px-4 py-3 text-right">Price</th>
-                        <th class="px-4 py-3 text-center">Status</th>
-                        <th class="px-4 py-3 text-center">Mark As Complete</th>
-                        <th class="px-4 py-3 text-center">Actions</th>
-                        <th class="px-4 py-3 text-center">Show</th>
-
-                    </tr>
+                <tr>
+                    <th class="px-4 py-3 text-left">Customer</th>
+                    <th class="px-4 py-3 text-left">Description</th>
+                    <th class="px-4 py-3 text-left">Date</th>
+                    <th class="px-4 py-3 text-right">Price</th>
+                    <th class="px-4 py-3 text-center">Status</th>
+                    <th class="px-4 py-3 text-center">Mark As Complete</th>
+                    <th class="px-4 py-3 text-center">Actions</th>
+                    <th class="px-4 py-3 text-center">Show</th>
+                </tr>
                 </thead>
 
                 <tbody class="divide-y">
-                    @forelse($repairs as $r)
-                        <tr class="hover:bg-gray-50">
-                            {{-- 1. CUSTOMER (text-left) --}}
-                            <td class="px-4 py-3 text-left align-top">
-                                <span class="font-medium">{{ $r->customer?->name ?? 'Walk-in' }}</span>
-                                <p class="text-xs text-gray-400">{{ $r->customer?->email }}</p>
-                            </td>
+                @forelse($repairs as $r)
+                    <tr class="hover:bg-gray-50">
+                        {{-- 1. CUSTOMER (text-left) --}}
+                        <td class="px-4 py-3 text-left align-top">
+                            <span class="font-medium">{{ $r->customer?->name ?? 'Walk-in' }}</span>
+                            <p class="text-xs text-gray-400">{{ $r->customer?->email }}</p>
+                        </td>
 
-                            {{-- 2. DESCRIPTION (text-left) --}}
-                            <td class="px-4 py-3 text-left align-top">{{ Str::limit($r->description, 40) }}</td>
+                        {{-- 2. DESCRIPTION (text-left) --}}
+                        <td class="px-4 py-3 text-left align-top">{{ Str::limit($r->description, 40) }}</td>
 
-                            {{-- 3. DATE (text-left) --}}
-                            <td class="px-4 py-3 text-left align-top whitespace-nowrap">
-                                <span class="font-medium">{{ $r->created_at->format('M d, Y') }}</span>
-                                <p class="text-xs text-gray-400">{{ $r->created_at->format('h:i A') }}</p>
-                            </td>
+                        {{-- 3. DATE (text-left) --}}
+                        <td class="px-4 py-3 text-left align-top whitespace-nowrap">
+                            <span class="font-medium">{{ $r->created_at->format('M d, Y') }}</span>
+                            <p class="text-xs text-gray-400">{{ $r->created_at->format('h:i A') }}</p>
+                        </td>
 
-                            {{-- 4. PRICE (text-right) --}}
-                            <td class="px-4 py-3 text-right align-top whitespace-nowrap">
-                                ₱{{ number_format($r->price, 2) }}
-                            </td>
+                        {{-- 4. PRICE (text-right) --}}
+                        <td class="px-4 py-3 text-right align-top whitespace-nowrap">
+                            ₱{{ number_format($r->price, 2) }}
+                        </td>
 
-                            {{-- 5. STATUS (text-center) --}}
-                            <td class="px-4 py-3 text-center align-top">
-                                @php
-                                    $color = match($r->status) {
-                                        'pending'   => 'bg-amber-50 text-amber-700 border-amber-200',
-                                        'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                        'cancelled' => 'bg-rose-50 text-rose-700 border-rose-200',
-                                        default     => 'bg-gray-50 text-gray-700 border-gray-200'
-                                    };
-                                @endphp
-                                <span class="px-2.5 py-0.5 rounded-full border text-xs font-semibold {{ $color }}">
+                        {{-- 5. STATUS (text-center) --}}
+                        <td class="px-4 py-3 text-center align-top">
+                            @php
+                                $color = match($r->status) {
+                                    'pending'   => 'bg-amber-50 text-amber-700 border-amber-200',
+                                    'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                    'cancelled' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                    default     => 'bg-gray-50 text-gray-700 border-gray-200'
+                                };
+                            @endphp
+                            <span class="px-2.5 py-0.5 rounded-full border text-xs font-semibold {{ $color }}">
                                     {{ ucfirst($r->status) }}
                                 </span>
-                            </td>
+                        </td>
 
-                            {{-- 6. MARK AS COMPLETE (text-center) --}}
-                            <td class="px-4 py-3 text-center align-top whitespace-nowrap">
-                                @if($r->status === 'pending')
-                                    <form method="POST"
-                                          action="{{ route('admin.repairs.complete', $r) }}"
-                                          onsubmit="return confirm('Mark this repair as completed?')">
-                                        @csrf
-                                        <button class="text-emerald-600 text-xs font-semibold hover:text-emerald-800 p-1.5 sm:p-0">
-                                            Complete
-                                        </button>
-                                    </form>
-                                @else
-                                    <span class="text-xs text-gray-400">Completed</span>
-                                @endif
-                            </td>
+                        {{-- 6. MARK AS COMPLETE (text-center) --}}
+                        <td class="px-4 py-3 text-center align-top whitespace-nowrap">
+                            @if($r->status === 'pending')
+                                <form method="POST"
+                                      action="{{ route('admin.repairs.complete', $r) }}"
+                                      onsubmit="return confirm('Mark this repair as completed?')">
+                                    @csrf
+                                    <button class="text-emerald-600 text-xs font-semibold hover:text-emerald-800 p-1.5 sm:p-0">
+                                        Complete
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-xs text-gray-400">Completed</span>
+                            @endif
+                        </td>
 
-                            <td class="px-5 py-3 text-center whitespace-nowrap">
-                            <div class="inline-flex items-center justify-center gap-1"> 
+                        {{-- 7. ACTIONS (Edit/Delete) --}}
+                        <td class="px-5 py-3 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center justify-center gap-1">
                                 {{-- Edit Button (Icon) --}}
-                                <a href="{{ route('admin.repairs.edit',$r) }}" 
-                                class="text-violet-600 hover:text-violet-700 p-2 rounded-lg hover:bg-violet-100 transition duration-150">
-                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                <a href="{{ route('admin.repairs.edit',$r) }}"
+                                   class="text-violet-600 hover:text-violet-700 p-2 rounded-lg hover:bg-violet-100 transition duration-150">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </a>
                                 {{-- Delete Button (Icon) --}}
                                 <form method="POST" action="{{ route('admin.repairs.destroy',$r) }}"
-                                    onsubmit="return confirm('Are you sure you want to delete {{ $r->name }}?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" 
-                                        class="text-rose-600 hover:text-rose-700 p-2 rounded-lg hover:bg-rose-100 transition duration-150">
-                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
-                                </button>
+                                      onsubmit="return confirm('Are you sure you want to delete this repair?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit"
+                                            class="text-rose-600 hover:text-rose-700 p-2 rounded-lg hover:bg-rose-100 transition duration-150">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                                    </button>
                                 </form>
                             </div>
-                            </td>
+                        </td>
 
-                            {{-- 8. SHOW (View Modal) (text-center) --}}
-                            {{-- Isolated the Show/View button to match the new 'Show' TH --}}
-                            <td class="px-4 py-3 text-center align-top whitespace-nowrap">
-                                <button type="button"
-                                        class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500"
-                                        title="View details"
-                                        @click="openModal(@js([
+                        {{-- 8. SHOW (View Modal) --}}
+                        <td class="px-4 py-3 text-center align-top whitespace-nowrap">
+                            <button type="button"
+                                    class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500"
+                                    title="View details"
+                                    @click="openModal(@js([
                                             'id'             => $r->id,
                                             'customer_name'  => $r->customer->name ?? 'Walk-in',
                                             'customer_email' => $r->customer->email ?? '',
                                             'description'    => $r->description,
                                             'price'          => (float) $r->price,
                                             'status'         => $r->status,
-                                            'image_url'      => $r->picture ? asset('storage/'.$r->picture->url) : null,
+                                            'image_url'      => $r->picture ? asset($r->picture->url) : null,
                                         ]))">
-                                    {{-- eye icon --}}
-                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" stroke-width="1.5">
-                                        <path d="M2.25 12s3-6.75 9.75-6.75S21.75 12 21.75 12 18.75 18.75 12 18.75 2.25 12 2.25 12Z"
-                                              stroke-linecap="round" stroke-linejoin="round" />
-                                        <circle cx="12" cy="12" r="3" />
-                                    </svg>
-                                </button>
-                            </td>
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.5">
+                                    <path d="M2.25 12s3-6.75 9.75-6.75S21.75 12 21.75 12 18.75 18.75 12 18.75 2.25 12 2.25 12Z"
+                                          stroke-linecap="round" stroke-linejoin="round" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
 
-                        </tr>
-
-                    @empty
-                        <tr>
-                            <td colspan="8" class="py-10 text-center text-gray-500"> {{-- Updated colspan to 8 --}}
-                                No repairs found.
-                            </td>
-                        </tr>
-                    @endforelse
+                @empty
+                    <tr>
+                        <td colspan="8" class="py-10 text-center text-gray-500">
+                            No repairs found.
+                        </td>
+                    </tr>
+                @endforelse
                 </tbody>
             </table>
 
@@ -238,10 +235,13 @@
                     {{-- Image --}}
                     <div class="border-t border-gray-100 pt-2">
                         <p class="text-xs font-semibold text-gray-700 mb-2">Image</p>
+
                         <template x-if="repair.image_url">
                             <img :src="repair.image_url"
-                                 class="w-32 h-32 object-cover rounded border">
+                                 class="w-full max-w-xs h-auto object-cover rounded border"
+                                 alt="Repair image">
                         </template>
+
                         <template x-if="!repair.image_url">
                             <p class="text-[11px] text-gray-400">No image uploaded.</p>
                         </template>

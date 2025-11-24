@@ -75,12 +75,18 @@ class RepairController extends Controller
             'status' => $validated['status'],
         ]);
 
-        // ONE image only (morphOne)
+        //fix save to public
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('repairs', 'public');
 
+            $file = $request->file('image');
+            $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // Move file to public/repairs
+            $file->move(public_path('repairs'), $imageName);
+
+            // Save relative URL to DB
             $repair->picture()->create([
-                'url' => $path,
+                'url' => 'repairs/' . $imageName,
             ]);
         }
 
