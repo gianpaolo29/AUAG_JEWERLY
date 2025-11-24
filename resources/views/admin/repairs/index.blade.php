@@ -148,7 +148,7 @@
                                             'description'    => $r->description,
                                             'price'          => (float) $r->price,
                                             'status'         => $r->status,
-                                            'image_url'      => $r->picture ? asset($r->picture->url) : null,
+                                            'image_url'      => $r->picture ? asset('storage/' .$r->picture->url) : null,
                                         ]))">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
                                      stroke="currentColor" stroke-width="1.5">

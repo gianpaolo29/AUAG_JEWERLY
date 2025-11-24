@@ -20,7 +20,7 @@
     // Existing pictures for edit (id + full url)
     $existingPictures = ($pawnItem->pictures ?? collect())->map(fn($pic) => [
     'id'  => $pic->id,
-    'url' => asset($pic->url),
+    'url' => asset('storage/' .$pic->url),
 ]);
 @endphp
 

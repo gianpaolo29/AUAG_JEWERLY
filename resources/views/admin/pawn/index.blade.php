@@ -210,7 +210,7 @@
                                                 <h4 class="text-sm font-semibold text-gray-800 mb-2">Pictures</h4>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($item->pictures as $pic)
-                                                        <img src="{{ asset($pic->url) }}"
+                                                        <img src="{{ asset('storage/' .$pic->url) }}"
                                                              class="w-16 h-16 object-cover rounded border border-gray-200"
                                                              alt="Pawn picture">
                                                     @endforeach

@@ -2,7 +2,7 @@
     use Illuminate\Support\Facades\Storage;
 
     $existingImage = $product->pictureUrl
-    ? asset($product->pictureUrl->url)
+    ? asset('storage/' .$product->pictureUrl->url)
     : null;
 @endphp
 
