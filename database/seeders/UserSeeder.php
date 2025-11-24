@@ -15,9 +15,11 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Create Admin User
-        User::create([
+        User::firstOrCreate(
+            [
+                'email' => 'admin1000@gmail.com',
+            ],[
             'name' => 'Gian Mulingbayan',
-            'email' => 'admin1000@gmail.com',
             'password' => Hash::make('Computer_29'),
             'role' => 'admin',
             'email_verified_at' => now(),
@@ -25,9 +27,10 @@ class UserSeeder extends Seeder
         ]);
 
         // Create Staff User
-        User::create([
-            'name' => 'Neil Armstrong',
+        User::firstOrCreate([
             'email' => 'neil.armstrong@gmail.com.com',
+        ],[
+            'name' => 'Neil Armstrong',
             'password' => Hash::make('password'),
             'role' => 'staff',
             'email_verified_at' => now(),
@@ -35,14 +38,15 @@ class UserSeeder extends Seeder
         ]);
 
         // Create Customer User
-        User::create([
-            'name' => 'Gian Paolo Mulingbayan',
+        User::firstOrCreate([
             'email' => 'gianpaolo.mulingbayan@example.com',
+        ],[
+            'name' => 'Gian Paolo Mulingbayan',
+
             'password' => Hash::make('password123'),
             'role' => 'customer',
             'email_verified_at' => now(),
             'remember_token' => Str::random(10),
         ]);
-
     }
 }

@@ -77,16 +77,13 @@ class RepairController extends Controller
 
         //fix save to public
         if ($request->hasFile('image')) {
+            $filename = uniqid() . '.' . $request->image->extension();
+            $path = $request->image->storeAs('repairs', $filename, 'public');
 
-            $file = $request->file('image');
-            $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-
-            // Move file to public/repairs
-            $file->move(public_path('repairs'), $imageName);
 
             // Save relative URL to DB
             $repair->picture()->create([
-                'url' => 'repairs/' . $imageName,
+                'url' => $path
             ]);
         }
         return redirect()
@@ -132,18 +129,16 @@ class RepairController extends Controller
         ]);
 
         // Replace existing image
-        
+
         if ($request->hasFile('image')) {
+            $filename = uniqid() . '.' . $request->image->extension();
+            $path = $request->image->storeAs('repairs', $filename, 'public');
 
-            $file = $request->file('image');
-            $imageName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-
-            // Move file to public/repairs
-            $file->move(public_path('repairs'), $imageName);
+            $repair->picture()->delete();
 
             // Save relative URL to DB
-            $repair->picture()->update([
-                'url' => 'repairs/' . $imageName,
+            $repair->picture()->create([
+                'url' => $path
             ]);
         }
 

@@ -270,14 +270,20 @@
                                 </button>
 
                                 {{-- Hidden fields to tell backend keep/remove --}}
-                                <input type="hidden"
-                                       name="keep_images[]"
-                                       :value="pic.id"
-                                       x-show="!pic.remove">
-                                <input type="hidden"
-                                       name="remove_images[]"
-                                       :value="pic.id"
-                                       x-show="pic.remove">
+                                <template x-if="!pic.remove">
+                                    <input type="hidden"
+                                                 name="keep_images[]"
+                                                 :value="pic.id"
+                                                 >
+                                </template>
+
+                                <template x-if="pic.remove">
+                                    <input type="hidden"
+                                           name="remove_images[]"
+                                           :value="pic.id"
+                                           x-if="pic.remove">
+                                </template>
+
                             </div>
                         </template>
 
