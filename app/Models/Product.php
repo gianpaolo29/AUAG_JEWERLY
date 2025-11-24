@@ -84,12 +84,12 @@ class Product extends Model
         }
 
         // If full URL, return it
-        if (Str::startsWith($path, ['http://', 'https://'])) {
-            return $path;
-        }
+        // if (Str::startsWith($path, ['http://', 'https://'])) {
+        //     return $path;
+        // }
 
         // Now using public/
-        return asset($path);
+        return asset('storage/' . $path);
     }
 
     public function category(): BelongsTo

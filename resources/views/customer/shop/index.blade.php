@@ -175,7 +175,7 @@
                                     <div class="relative overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer"
                                          :class="gridView === 'list' ? 'md:w-1/3' : ''"
                                          @click="openProductModal({{ $product }})">
-                                        <img src="{{ asset('/storage/'. $product->image_url) ?: '/images/placeholder.jpg' }}"
+                                        <img src="{{ $product->image_url ?: '/images/placeholder.jpg' }}"
                                              alt="{{ $product->name }}"
                                              class="product-image group-hover:scale-105 smooth-transition"
                                              :class="gridView === 'list' ? 'md:h-full' : ''">
@@ -463,7 +463,7 @@
                     <div class="flex flex-col">
                         {{-- Product Image --}}
                         <div class="relative">
-                            <img :src="`/storage/${selectedProduct.image_url}` || '/images/placeholder.jpg'"
+                            <img :src="selectedProduct.image_url || '/images/placeholder.jpg'"
                                  :alt="selectedProduct.name"
                                  class="modal-image">
 
