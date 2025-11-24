@@ -247,7 +247,7 @@
             </div>
             <div class="space-y-6 pt-12">
               <div class="aspect-square rounded-3xl overflow-hidden bg-white shadow-lg">
-                <img src="https://images.unsplash.com/photo-1588444650700-6c7f0c89d36b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
+                <img src="/ggg.jpg"
                      alt="Design" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700">
               </div>
               <div class="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg">
