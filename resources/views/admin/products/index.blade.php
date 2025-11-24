@@ -168,10 +168,16 @@
                     </td>
                     <td class="px-5 py-3 w-10">
                         <div class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden grid place-content-center border border-gray-200">
-                            <img
+                            @if ($p->pictureUrl)
+                                <img
                                     src="{{ asset($p->pictureUrl->url) }}"                                    class="h-10 w-10 object-cover"
                                     alt="{{ $p->name }}"
                                 >
+                            @else
+                                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                    <path d="M4 5h16v14H4zM4 15l4-4 4 4 4-3 4 3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            @endif
                         </div>
                     </td>
                     <td class="px-5 py-3 font-medium text-gray-900 whitespace-nowrap">

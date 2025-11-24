@@ -23,12 +23,12 @@ class AdminGenericNotification extends Notification
     }
 
     // Store in DB
-    public function via($notifiable)
+    public function via(object $notifiable): array
     {
         return ['database'];
     }
 
-    public function toDatabase($notifiable)
+    public function toDatabase($notifiable): array
     {
         return [
             'title'   => $this->title,

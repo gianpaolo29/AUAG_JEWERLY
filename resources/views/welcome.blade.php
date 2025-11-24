@@ -176,11 +176,13 @@
            class="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pr-2">
         @foreach($bestSellers as $product)
           <article class="snap-center min-w-[85%] sm:min-w-[48%] lg:min-w-[31%] bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300">
-            <img
-              src="{{ $product->image_url ?? asset('images/placeholder-product.png') }}"
-              alt="{{ $product->name }}"
-              class="w-full aspect-[4/3] object-cover"
-            >
+              <div class="aspect-square flex items-center justify-center bg-gray-50">
+                  <img
+                      src="{{ asset($product->pictureUrl->url) }}"
+                      alt="{{ $product->name }}"
+                      class="w-full h-full object-contain max-w-xs"
+                  >
+              </div>
             <div class="px-6 py-5">
               <h3 class="font-serif text-xl">{{ $product->name }}</h3>
               <p class="text-black/60 mt-1">

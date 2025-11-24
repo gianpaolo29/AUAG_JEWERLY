@@ -68,7 +68,6 @@ class PawnItemController extends Controller
      */
     public function create()
     {
-        // 👇 match blade variable name
         $pawnItem = new PawnItem;
         $isEdit = false;
 
@@ -118,7 +117,7 @@ class PawnItemController extends Controller
                 ]);
             }
         }
-       
+        $this->notifyAdmins(new NewPawnItemNotification($pawnItem));
 
         return redirect()
             ->route('admin.pawn.index')

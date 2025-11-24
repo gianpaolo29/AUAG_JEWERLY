@@ -75,8 +75,7 @@ class RepairController extends Controller
             'status' => $validated['status'],
         ]);
 
-        // ONE image only (morphOne)
-       //fix save to public
+        //fix save to public
         if ($request->hasFile('image')) {
 
             $file = $request->file('image');

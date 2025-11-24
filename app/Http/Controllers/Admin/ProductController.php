@@ -134,7 +134,6 @@ class ProductController extends Controller
             'style'=> $validated['style'] ?? null,
         ]);
 
-        // Handle one image only
         if ($request->hasFile('image')) {
             $image      = $request->file('image');
             $imageName  = time() . '_' . $image->getClientOriginalName();
@@ -208,6 +207,7 @@ class ProductController extends Controller
                 'url' => 'products/' . $imageName,
             ]);
         }
+
 
         return redirect()
             ->route('admin.products.index')

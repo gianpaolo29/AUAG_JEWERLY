@@ -2,40 +2,51 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\PawnItem;
 use App\Models\User;
 use App\Notifications\PawnDueDateReminderNotification;
-use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class CheckPawnDueDates extends Command
 {
     protected $signature = 'pawn:check-due-dates';
-    protected $description = 'Send admin notifications when pawn due dates are near';
+    protected $description = 'Check for pawn items with approaching due dates and send notifications';
 
     public function handle()
     {
-        $from = Carbon::today();
-        $to   = Carbon::today()->addDays(3); // next 3 days
+        $admin = User::where('role', 'admin')->first();
 
-        $items = PawnItem::where('status', 'active')
-            ->whereBetween('due_date', [$from, $to])
-            ->get();
-
-        if ($items->isEmpty()) {
-            $this->info('No pawn items nearing due date.');
-            return Command::SUCCESS;
+        if (!$admin) {
+            $this->error('No admin user found!');
+            return;
         }
 
-        $admins = User::where('role', 'admin')->get();
+        // Get active pawn items with due dates in the next 7 days or overdue
+        $pawnItems = PawnItem::where('status', 'active')
+            ->whereDate('due_date', '<=', now()->addDays(7))
+            ->get();
 
-        foreach ($items as $item) {
-            foreach ($admins as $admin) {
-                $admin->notify(new PawnDueDateReminderNotification($item));
+        $notifiedCount = 0;
+
+        foreach ($pawnItems as $pawnItem) {
+            $daysLeft = now()->diffInDays($pawnItem->due_date, false);
+
+            // Only notify for items due in 7 days or less (including overdue)
+            if ($daysLeft <= 7) {
+                // Check if we already notified today for this item
+                $alreadyNotified = $admin->notifications()
+                    ->where('data->meta->ticket_no', $pawnItem->ticket_no ?? '#'.$pawnItem->id)
+                    ->where('data->meta->reminder_type', 'like', '%DUE%')
+                    ->whereDate('created_at', today())
+                    ->exists();
+
+                if (!$alreadyNotified) {
+                    $admin->notify(new PawnDueDateReminderNotification($pawnItem));
+                    $notifiedCount++;
+                }
             }
         }
 
-        $this->info('Pawn due date reminders sent.');
-        return Command::SUCCESS;
+        $this->info("Sent {$notifiedCount} due date reminder notifications.");
     }
 }
