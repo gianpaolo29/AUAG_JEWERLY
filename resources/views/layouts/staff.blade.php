@@ -188,7 +188,7 @@
                                 {{ auth()->user()->name }}
                             </div>
 
-                            <a href="{{ route('profile.edit') }}"
+                            <a href="{{ route('staff-profile.edit') }}"
                                class="block px-3 py-2 text-sm hover:bg-yellow-50 hover:text-yellow-800">
                                 Profile
                             </a>
