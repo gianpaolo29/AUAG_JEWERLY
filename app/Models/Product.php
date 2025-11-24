@@ -129,4 +129,9 @@ class Product extends Model
             && Favorite::where('user_id', auth()->id())
                 ->where('product_id', $this->id)->exists();
     }
+
+    public function transactionItems()
+    {
+        return $this->hasMany(TransactionItem::class, 'product_id');
+    }
 }
