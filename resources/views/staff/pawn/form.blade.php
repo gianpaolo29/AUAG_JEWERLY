@@ -68,13 +68,18 @@
                    placeholder="Example: 300">
         </div>
 
-        {{-- DUE DATE --}}
+        @php
+        $defaultDueDate = now()->addMonths(3)->format('Y-m-d');
+        @endphp
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
                 Due Date (Optional — defaults to 3 months)
             </label>
-            <input type="date" name="due_date"
-                   class="w-full border rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
+
+            <input type="date"
+                name="due_date"
+                value="{{ old('due_date', $defaultDueDate) }}"
+                class="w-full border rounded-lg px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
         </div>
 
         {{-- IMAGES --}}

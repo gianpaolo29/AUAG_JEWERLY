@@ -124,6 +124,9 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/staff/pawns', [StaffPawnController::class, 'index'])->name('staff.pawn.index');
     Route::get('/pawn/create', [StaffPawnController::class, 'create'])->name('staff.pawn.create');
     Route::post('/pawn', [StaffPawnController::class, 'store'])->name('staff.pawn.store');
+    Route::post('/pawn/{pawnItem}/redeem', [StaffPawnController::class, 'redeem'])
+    ->name('staff.pawn.redeem');
+
 
     // Repairs
     Route::get('/staff/repairs', [StaffRepairController::class, 'index'])->name('staff.repairs.index');

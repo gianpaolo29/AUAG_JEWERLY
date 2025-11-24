@@ -65,6 +65,21 @@ class StaffPawnController extends Controller
         return view('staff.pawn.form', compact('customers'));
     }
 
+    public function redeem(PawnItem $pawnItem)
+    {
+        if ($pawnItem->status === 'redeemed') {
+            return back()->with('error', 'This item is already redeemed.');
+        }
+
+        $pawnItem->update([
+            'status' => 'redeemed',
+            'redeemed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Pawn item successfully redeemed.');
+    }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
