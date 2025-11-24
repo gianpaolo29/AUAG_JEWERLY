@@ -89,7 +89,7 @@
                                 {{-- IMAGE --}}
                                 <td class="px-4 py-3">
                                     @if($product->pictureUrl)
-                                        <img src="/{{ $product->pictureUrl->url }}"
+                                        <img src="{{ asset('storage/'. $product->pictureUrl->url) }}"
                                              class="h-12 w-12 object-cover rounded-lg border shadow-sm">
                                     @else
                                         <div class="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-500">
