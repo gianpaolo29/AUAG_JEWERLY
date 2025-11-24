@@ -58,28 +58,46 @@ class ShopController extends Controller
                 if (auth()->check()) {
                     $user = auth()->user();
                     $query
-                        // 1. Prioritize favorited products
                         ->leftJoin('favorites as f', function ($join) use ($user) {
                             $join->on('f.product_id', '=', 'products.id')
                                 ->where('f.user_id', $user->id);
                         })
-
-                        // 2. Count user-specific views
                         ->leftJoin('product_views as pv', function ($join) use ($user) {
                             $join->on('pv.product_id', '=', 'products.id')
                                 ->where('pv.user_id', $user->id);
                         })
-                        ->select('products.*')
+                        ->select([
+                            'products.id',
+                            'products.name',
+                            'products.description',
+                            'products.material',
+                            'products.style',
+                            'products.price',
+                            'products.category_id',
+                            'products.view_count',
+                            'products.status',
+                            'products.created_at',
+                            'products.updated_at'
+                        ])
                         ->selectRaw('COUNT(f.product_id) as user_favorited')
                         ->selectRaw('COUNT(pv.product_id) as user_view_count')
-
-                        ->groupBy('products.id')
-
-                        // ORDER PRIORITY:
-                        ->orderByDesc('user_favorited')   // favorited first
-                        ->orderByDesc('user_view_count')  // then most viewed by user
-                        ->orderByDesc('view_count')       // then most viewed overall
-                        ->orderByDesc('products.created_at'); // fallback newest
+                        ->groupBy([
+                            'products.id',
+                            'products.name',
+                            'products.description',
+                            'products.material',
+                            'products.style',
+                            'products.price',
+                            'products.category_id',
+                            'products.view_count',
+                            'products.status',
+                            'products.created_at',
+                            'products.updated_at'
+                        ])
+                        ->orderByDesc('user_favorited')
+                        ->orderByDesc('user_view_count')
+                        ->orderByDesc('products.view_count')
+                        ->orderByDesc('products.created_at');
                 } else {
                     // If no user logged in → just use overall views + newest
                     $query->orderBy('view_count', 'desc')
