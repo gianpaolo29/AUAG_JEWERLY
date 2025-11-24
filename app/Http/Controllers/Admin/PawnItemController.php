@@ -117,6 +117,7 @@ class PawnItemController extends Controller
                 ]);
             }
         }
+        $this->notifyAdmins(new NewPawnItemNotification($pawnItem));
 
         return redirect()
             ->route('admin.pawn.index')

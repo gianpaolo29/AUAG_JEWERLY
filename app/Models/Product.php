@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use App\Models\PictureUrl;
 
 class Product extends Model
 {
@@ -17,37 +18,62 @@ class Product extends Model
         'description',
         'price',
         'quantity',
-        'status',
+        'status',  
+        'material',
+        'size',
+        'style',
     ];
 
     protected $casts = [
         'status' => 'boolean',
+        'price'  => 'decimal:2',
     ];
 
-    // 🔹 One image only, via morphOne
+    public const MATERIAL_OPTIONS = [
+        'gold',
+        'silver',
+        'stainless',
+    ];
+
+    public const STYLE_OPTIONS = [
+        'minimalist',
+        'vintage',
+        'classic',
+        'modern',
+        'luxury',
+        'casual',
+        'wedding'
+    ];
+
+    public function favouritedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'favorites')
+            ->withTimestamps();
+    }
+
     public function picture()
     {
         return $this->morphOne(PictureUrl::class, 'imageable');
     }
 
-    // 🔹 Clean, safe accessor
+    protected $appends = ['image_url'];
+
+
     public function getImageUrlAttribute(): string
-    {
-        // Safely get the url (null if no picture)
-        $path = optional($this->picture)->url;
+{
+    $path = $this->picture->url ?? null;
 
-        // Fallback placeholder if no image at all
-        if (! $path) {
-            return asset('images/placeholder-product.png');
-        }
+    if (!$path) {
+        return asset('images/placeholder-product.png');
+    }
 
-        // If already a full external URL
-        if (Str::startsWith($path, ['http://', 'https://'])) {
-            return $path;
-        }
+    // If full URL, return it
+    if (Str::startsWith($path, ['http://', 'https://'])) {
+        return $path;
+    }
 
-        // Otherwise assume it's a storage path
-        return asset('storage/'.ltrim($path, '/'));
+    // Now using public/
+    return asset($path);
     }
 
     public function category(): BelongsTo
@@ -55,6 +81,7 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    // If you still use these in other parts of the app:
     public function transactions()
     {
         return $this->hasMany(TransactionItem::class);
@@ -70,9 +97,15 @@ class Product extends Model
         return $this->hasMany(Repair::class);
     }
 
-    // Alias if you really want it
     public function pictureUrl()
     {
         return $this->picture();
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+    
+
 }

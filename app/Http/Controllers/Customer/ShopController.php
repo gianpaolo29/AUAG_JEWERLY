@@ -3,53 +3,86 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use App\Models\ProductView;
 
 class ShopController extends Controller
 {
     public function index(Request $request)
     {
-        // Load products + image + category
-        $q = Product::query()->with(['picture', 'category']);
-
-        // ---------- Category filter ----------
-        $catIds = collect((array) $request->input('category'))
-            ->filter(fn ($v) => is_numeric($v))
-            ->map(fn ($v) => (int) $v)
-            ->values()
-            ->all();
-
-        if (! empty($catIds)) {
-            $q->whereIn('category_id', $catIds);
+        $query = Product::with('category')->active();
+        
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('material', 'LIKE', "%{$search}%")
+                  ->orWhere('style', 'LIKE', "%{$search}%")
+                  ->orWhereHas('category', function($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  });
+            });
         }
 
-        // ---------- Price order (from radio) ----------
-        $po = $request->input('price_order');
-
-        if ($po === 'asc' || $po === 'desc') {
-            $q->orderBy('price', $po);
-        } else {
-            // ---------- Sort dropdown (fallback) ----------
-            $sort = $request->input('sort');
-
-            if ($sort === 'newest') {
-                $q->latest(); // created_at desc
-            } else {
-                $q->orderBy('name'); // default A–Z
-            }
+        // Price filter
+        if ($request->has('min_price') && $request->min_price != '') {
+            $query->where('price', '>=', $request->min_price);
         }
 
-        // ---------- Pagination ----------
-        $products = $q->paginate(12)->appends($request->query());
+        if ($request->has('max_price') && $request->max_price != '') {
+            $query->where('price', '<=', $request->max_price);
+        }
 
-        // ---------- Active filter counter ----------
-        $activeFilterCount = (filled($po) ? 1 : 0) + count($catIds);
+        // Category filter
+        if ($request->has('category')) {
+            $query->whereIn('category_id', (array)$request->category);
+        }
 
-        // ---------- Categories for filter UI ----------
-        $categories = Category::orderBy('name')->get(['id', 'name']);
+        // Sorting
+        switch ($request->get('sort', 'newest')) {
+            case 'price-low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price-high':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'popular':
+                $query->orderBy('views', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
 
-        return view('customer.shop.index', compact('products', 'categories', 'activeFilterCount'));
+        $products = $query->paginate(12);
+        $categories = Category::all();
+
+        // Get user's favorite product IDs if logged in
+        $favoriteIds = [];
+        if (Auth::check()) {
+            $favoriteIds = Auth::user()->favorites()->pluck('product_id')->toArray();
+        }
+
+        return view('customer.shop.index', compact('products', 'categories', 'favoriteIds'));
     }
+
+    public function trackView(Product $product)
+{
+    $product->increment('view_count');
+
+    return response()->json([
+        'success' => true,
+        'views'   => $product->view_count,
+    ]);
+}
 }

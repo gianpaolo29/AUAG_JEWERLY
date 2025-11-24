@@ -89,7 +89,7 @@ class RepairController extends Controller
                 'url' => 'repairs/' . $imageName,
             ]);
         }
-
+        $this->notifyAdmins(new NewRepairRequestNotification($repair));
         return redirect()
             ->route('admin.repairs.index')
             ->with('success', 'Repair created successfully.');
@@ -200,6 +200,6 @@ class RepairController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Repair marked as completed and transaction recorded.');
+        return back()->with('success', 'Transaction Completed');
     }
 }
