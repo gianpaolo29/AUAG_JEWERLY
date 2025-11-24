@@ -22,30 +22,32 @@
                         $navItems = [
                             ['url' => '/', 'label' => 'Home'],
                             ['url' => '/shop', 'label' => 'Shop'],
-                            ['url' => '#about', 'label' => 'About'],
-                            ['url' => '#contact', 'label' => 'Contact'],
-                            ['url' => '/appraisal', 'label' => 'Appraisals'],
+                            ['url' => '/#about', 'label' => 'About'],
+                            ['url' => '/#contact', 'label' => 'Contact'],
                         ];
                     @endphp
 
                     @foreach($navItems as $item)
-                        @if(str_starts_with($item['url'], '#'))
-                            <a href="{{ $item['url'] }}"
-                               class="relative font-medium text-white/80 hover:text-white transition-colors duration-200
-                                      group/nav scroll-smooth"
-                               onclick="scrollToSection('{{ $item['url'] }}')">
-                                {{ $item['label'] }}
-                                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover/nav:w-full"></span>
-                            </a>
-                        @else
-                            <a href="{{ url($item['url']) }}"
-                               class="relative font-medium text-white/80 hover:text-white transition-colors duration-200
-                                      {{ request()->is(trim($item['url'], '/').'*') ? 'text-white' : '' }}
-                                      group/nav">
-                                {{ $item['label'] }}
-                                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover/nav:w-full {{ request()->is(trim($item['url'], '/').'*') ? 'w-full' : '' }}"></span>
-                            </a>
-                        @endif
+                        @php
+                            $isHash = str_starts_with($item['url'], '#');
+
+                            // FIXED: proper active detection
+                            if ($item['url'] === '/') {
+                                $isActive = request()->is('/');
+                            } else {
+                                $isActive = !$isHash && request()->is(ltrim($item['url'], '/').'*');
+                            }
+                        @endphp
+
+                        <a href="{{ $isHash ? $item['url'] : url($item['url']) }}"
+                           class="relative font-medium transition-colors duration-200 group/nav-item
+              {{ $isActive ? 'text-white' : 'text-white/80 hover:text-white' }}">
+                            {{ $item['label'] }}
+
+                            <span class="absolute -bottom-1 left-0 h-0.5 bg-white transition-all duration-300
+                     w-0 group-hover/nav-item:w-full {{ $isActive ? 'w-full' : '' }}">
+        </span>
+                        </a>
                     @endforeach
                 </div>
             </nav>
