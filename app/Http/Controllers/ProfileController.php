@@ -22,7 +22,7 @@ class ProfileController extends Controller
     }
 
     public function editStaff(Request $request): View
-    {
+    {yield
         return view('profile.staff-edit', [
             'user' => $request->user(),
         ]);

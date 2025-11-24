@@ -52,9 +52,8 @@ class Product extends Model
         parent::boot();
 
         static::updated(function ($product) {
-            // Check if quantity changed and is below threshold (e.g., 10 items)
             if ($product->isDirty('quantity') && $product->quantity <= 10) {
-                // Get the admin user (assuming you have only one)
+
                 $admin = User::where('role', 'admin')->first();
 
                 if ($admin) {
@@ -83,12 +82,6 @@ class Product extends Model
             return asset('images/placeholder-product.png');
         }
 
-        // If full URL, return it
-        // if (Str::startsWith($path, ['http://', 'https://'])) {
-        //     return $path;
-        // }
-
-        // Now using public/
         return asset('storage/' . $path);
     }
 
