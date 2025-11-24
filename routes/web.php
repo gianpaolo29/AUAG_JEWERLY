@@ -23,6 +23,7 @@ use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\StaffProductController;
 use App\Http\Controllers\Staff\StaffTransactionController;
 use App\Http\Controllers\Staff\StaffPawnController;
+use App\Http\Controllers\Staff\StaffRepairController;
 
 
 
@@ -125,9 +126,19 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
         ->name('staff.transactions.store');
     Route::get('/staff/transactions/{transaction}', [StaffTransactionController::class, 'show'])
         ->name('staff.transactions.show');
-    Route::get('/staff/pawn', [StaffPawnController::class, 'index'])->name('staff.pawn.index');
+    Route::get('/staff/pawns', [StaffPawnController::class, 'index'])->name('staff.pawn.index');
     Route::get('/pawn/create', [StaffPawnController::class, 'create'])->name('staff.pawn.create');
     Route::post('/pawn', [StaffPawnController::class, 'store'])->name('staff.pawn.store');
+
+        // Repairs
+    Route::get('/staff/repairs',                [StaffRepairController::class, 'index'])->name('staff.repairs.index');
+    Route::get('/staff/repairs/create',         [StaffRepairController::class, 'create'])->name('staff.repairs.create');
+    Route::post('/staff/repairs',               [StaffRepairController::class, 'store'])->name('staff.repairs.store');
+    Route::get('/staff/repairs/{repair}/edit',  [StaffRepairController::class, 'edit'])->name('staff.repairs.edit');
+    Route::put('/staff/repairs/{repair}',       [StaffRepairController::class, 'update'])->name('staff.repairs.update');
+    Route::delete('/staff/repairs/{repair}',    [StaffRepairController::class, 'destroy'])->name('staff.repairs.destroy');
+    Route::post('/staff/repairs/{repair}/complete', [StaffRepairController::class, 'markComplete'])
+        ->name('staff.repairs.complete');
 
 });
 require __DIR__.'/auth.php';

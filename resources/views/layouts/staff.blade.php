@@ -49,8 +49,8 @@
             ['url' => '/staff/dashboard', 'label' => 'Dashboard'],
             ['url' => '/staff/products', 'label' => 'Products'],
             ['url' => '/staff/transactions', 'label' => 'Transactions'],
-            ['url' => '#contact', 'label' => 'Pawn'],
-            ['url' => '/appraisal', 'label' => 'Repair'],
+            ['url' => '/staff/pawns', 'label' => 'Pawn'],
+            ['url' => '/staff/repairs', 'label' => 'Repair'],
         ];
     @endphp
 

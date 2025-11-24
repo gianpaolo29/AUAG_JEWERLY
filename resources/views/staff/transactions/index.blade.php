@@ -153,7 +153,7 @@
                                             'total' => $t->items->sum('line_total'),
                                         ]))"
                                             class="p-2 rounded hover:bg-indigo-50 text-indigo-600">
-                                            View
+                                            👁️
                                         </button>
                                     </td>
                                 </tr>
