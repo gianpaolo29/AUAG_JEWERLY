@@ -523,8 +523,7 @@
                                 <form :action="'/favorites/' + selectedProduct.id + '/toggle'" method="POST" @click.stop>
     @csrf
     <button type="submit"
-        class="w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2"
-            :class="{{ $product->is_favorite }} ? 'bg-red-500 text-white' : 'gradient-bg text-white'"
+        :class="`w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2 ${selectedProduct.is_favorite ? 'bg-red-500 text-white' : 'gradient-bg text-white'}`"
         @click="toggleFavorite(selectedProduct.id)">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
