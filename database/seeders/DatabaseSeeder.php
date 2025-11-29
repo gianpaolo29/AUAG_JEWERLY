@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,9 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            CustomerSeeder::class,
-
-        ]);
+        // Directly call the factory here
+        User::factory()
+            ->count(50)
+            ->state([
+                'role' => 'customer',   // set role field
+            ])
+            ->create();
     }
 }
