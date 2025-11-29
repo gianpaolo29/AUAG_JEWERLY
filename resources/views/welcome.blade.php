@@ -38,25 +38,21 @@
 
   @include('layouts.navigation')
 
-  <!-- Modern Hero Section - FIXED: Text moved down -->
   <section class="relative min-h-screen overflow-hidden">
-    <!-- Background with subtle overlay -->
     <div class="absolute inset-0">
       <img src="/Model.webp"
-           alt="Jewelry on marble"
-           class="w-full h-full object-cover object-center" />
+            alt="Jewelry on marble"
+            class="w-full h-full object-cover object-center" />
       <div class="absolute inset-0 hero-gradient"></div>
     </div>
 
     <div class="relative z-10 max-w-7xl mx-auto h-full px-6 flex items-end justify-center text-center pb-32">
       <div class="max-w-4xl space-y-8">
-        <!-- Animated badge -->
         <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-6 py-3 border border-white/30">
           <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
           <span class="text-white/90 text-sm font-medium">Since 2024 - Crafting Timeless Elegance</span>
         </div>
 
-        <!-- Main heading with gradient - MOVED DOWN -->
         <div class="max-w-4xl pt-20">
         <h1 class="font-serif text-white text-5xl md:text-7xl font-semibold leading-tight">
           Timeless Elegance,<br/> Crafted to Perfection
@@ -64,7 +60,6 @@
         <p class="text-white/90 mt-5 text-lg">Discover our exquisite collection of handcrafted jewelry</p>
         </div>
 
-        <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12">
           <a href="{{ url('/shop') }}"
              class="group relative overflow-hidden bg-white text-gray-900 px-8 py-4 rounded-2xl font-medium text-lg hover:scale-105 transition-all duration-300 shadow-2xl">
@@ -73,8 +68,8 @@
           </a>
 
           <a href="#about"
-             onclick="scrollToSection('#about')"
-             class="group border-2 border-white/50 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 backdrop-blur-sm">
+              onclick="scrollToSection('#about')"
+              class="group border-2 border-white/50 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 backdrop-blur-sm">
             <span class="flex items-center gap-2">
               Our Story
               <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +81,6 @@
       </div>
     </div>
 
-    <!-- Scroll indicator -->
     <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2">
       <div class="animate-bounce">
         <svg class="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +90,6 @@
     </div>
   </section>
 
-  <!-- Featured Collections -->
   <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
     <div class="max-w-7xl mx-auto px-4">
       <div class="text-center mb-16">
@@ -105,7 +98,6 @@
       </div>
 
       <div class="grid md:grid-cols-3 gap-8">
-        <!-- Collection 1 -->
         <div class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-50 to-orange-100 p-8 hover:shadow-2xl transition-all duration-500">
           <div class="relative z-10">
             <h3 class="font-serif text-2xl text-gray-900 mb-4">Signature Collection</h3>
@@ -120,7 +112,6 @@
           <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-gradient-to-r from-rose-200 to-orange-200 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
         </div>
 
-        <!-- Collection 2 -->
         <div class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50 to-cyan-100 p-8 hover:shadow-2xl transition-all duration-500">
           <div class="relative z-10">
             <h3 class="font-serif text-2xl text-gray-900 mb-4">Heritage Pieces</h3>
@@ -135,7 +126,6 @@
           <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-gradient-to-r from-blue-200 to-cyan-200 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
         </div>
 
-        <!-- Collection 3 -->
         <div class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-100 p-8 hover:shadow-2xl transition-all duration-500">
           <div class="relative z-10">
             <h3 class="font-serif text-2xl text-gray-900 mb-4">Modern Classics</h3>
@@ -153,7 +143,6 @@
     </div>
   </section>
 
-  <!-- Best Sellers (carousel) - FIXED: Removed Add to Cart button -->
   <section class="max-w-7xl mx-auto px-4 py-20">
     <div class="text-center mb-10">
       <h2 class="font-serif text-4xl">Best Sellers</h2>
@@ -173,7 +162,7 @@
       </button>
 
       <div id="track"
-           class="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pr-2">
+            class="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pr-2">
         @foreach($bestSellers as $product)
           <article class="snap-center min-w-[85%] sm:min-w-[48%] lg:min-w-[31%] bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300">
               <div class="aspect-square flex items-center justify-center bg-gray-50">
@@ -195,7 +184,6 @@
     </div>
   </section>
 
-  <!-- About Section -->
   <section id="about" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4">
       <div class="grid lg:grid-cols-2 gap-16 items-center">
