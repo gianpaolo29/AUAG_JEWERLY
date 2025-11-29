@@ -11,7 +11,7 @@ class AnalyticsController extends Controller
 {
     public function index(Request $request)
     {
-        // --- DATE RANGE FILTER (for charts & funnel) ---
+        // --- DATE RANGE FILTER (for most charts & funnel) ---
         // accepted: today | 7d | 30d | all
         $range = $request->input('range', '30d');
 
@@ -19,47 +19,134 @@ class AnalyticsController extends Controller
             if ($range === 'today') {
                 $query->whereDate($column, today());
             } elseif ($range === '7d') {
-                $query->where($column, '>=', now()->subDays(6));
+                $query->where($column, '>=', now()->subDays(6)->startOfDay());
             } elseif ($range === '30d') {
-                $query->where($column, '>=', now()->subDays(29));
+                $query->where($column, '>=', now()->subDays(29)->startOfDay());
             }
-
             // 'all' = no filter
             return $query;
         };
 
         $rangeLabel = match ($range) {
             'today' => 'Today',
-            '7d' => 'Last 7 Days',
-            '30d' => 'Last 30 Days',
+            '7d'    => 'Last 7 Days',
+            '30d'   => 'Last 30 Days',
             default => 'All Time',
         };
 
-        // --- SALES ANALYTICS (cards - all time) ---
+        // Helper: % change between current & previous
+        $percentChange = function (float $current, float $previous): float {
+            if ($previous > 0) {
+                return round((($current - $previous) / $previous) * 100, 1);
+            }
+            return $current > 0 ? 100.0 : 0.0;
+        };
 
-        $totalRevenue = DB::table('transactions')
-            ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
-            ->where('transactions.type', 'Buy')
+        // Base revenue query (Buy transactions only)
+        $revenueBaseQuery = function () {
+            return DB::table('transactions')
+                ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
+                ->where('transactions.type', 'Buy');
+        };
+
+        // ----------------------------------------------------
+        // TOP METRICS – TODAY / WEEK / MONTH + SPARKLINES
+        // ----------------------------------------------------
+
+        // TODAY vs YESTERDAY
+        $todayStart     = now()->startOfDay();
+        $todayEnd       = now()->endOfDay();
+        $yesterdayStart = now()->subDay()->startOfDay();
+        $yesterdayEnd   = now()->subDay()->endOfDay();
+
+        $todayRevenue = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$todayStart, $todayEnd])
             ->sum('transaction_items.line_total');
 
-        $todayRevenue = DB::table('transactions')
-            ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
-            ->where('transactions.type', 'Buy')
-            ->whereDate('transactions.created_at', today())
+        $yesterdayRevenue = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$yesterdayStart, $yesterdayEnd])
             ->sum('transaction_items.line_total');
 
-        $weekRevenue = DB::table('transactions')
-            ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
-            ->where('transactions.type', 'Buy')
-            ->where('transactions.created_at', '>=', now()->startOfWeek())
+        $todayRevenueChange = $percentChange($todayRevenue, $yesterdayRevenue);
+
+        // Today sparkline (hourly)
+        $todayRows = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$todayStart, $todayEnd])
+            ->selectRaw('HOUR(transactions.created_at) as hour, SUM(transaction_items.line_total) as total')
+            ->groupBy('hour')
+            ->pluck('total', 'hour');
+
+        $todayRevenueData = [];
+        for ($h = 0; $h < 24; $h++) {
+            $todayRevenueData[] = (float) ($todayRows[$h] ?? 0);
+        }
+
+        // THIS WEEK vs LAST WEEK (week-to-date)
+        $weekStart      = now()->startOfWeek();
+        $weekEnd        = now()->endOfDay();
+        $prevWeekStart  = (clone $weekStart)->subWeek();
+        $prevWeekEnd    = (clone $weekStart)->subDay();
+
+        $weekRevenue = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$weekStart, $weekEnd])
             ->sum('transaction_items.line_total');
 
-        $monthRevenue = DB::table('transactions')
-            ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
-            ->where('transactions.type', 'Buy')
-            ->whereBetween('transactions.created_at', [now()->startOfMonth(), now()->endOfMonth()])
+        $prevWeekRevenue = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$prevWeekStart, $prevWeekEnd])
             ->sum('transaction_items.line_total');
 
+        $weekRevenueChange = $percentChange($weekRevenue, $prevWeekRevenue);
+
+        // Week sparkline (current week, by day)
+        $weekRows = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$weekStart, $weekEnd])
+            ->selectRaw('DATE(transactions.created_at) as day, SUM(transaction_items.line_total) as total')
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $weekRevenueData = [];
+        for ($i = 0; $i < 7; $i++) {
+            $day = $weekStart->copy()->addDays($i)->toDateString();
+            $weekRevenueData[] = (float) ($weekRows[$day] ?? 0);
+        }
+
+        // THIS MONTH vs LAST MONTH (month-to-date)
+        $monthStart      = now()->startOfMonth();
+        $monthEnd        = now()->endOfDay();
+        $prevMonthStart  = (clone $monthStart)->subMonth()->startOfMonth();
+        $prevMonthEnd    = (clone $monthStart)->subDay();
+
+        $monthRevenue = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$monthStart, $monthEnd])
+            ->sum('transaction_items.line_total');
+
+        $prevMonthRevenue = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$prevMonthStart, $prevMonthEnd])
+            ->sum('transaction_items.line_total');
+
+        $monthRevenueChange = $percentChange($monthRevenue, $prevMonthRevenue);
+
+        // Month sparkline (last 30 days, by day)
+        $last30Start = now()->subDays(29)->startOfDay();
+        $last30End   = now()->endOfDay();
+
+        $monthRows = $revenueBaseQuery()
+            ->whereBetween('transactions.created_at', [$last30Start, $last30End])
+            ->selectRaw('DATE(transactions.created_at) as day, SUM(transaction_items.line_total) as total')
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $monthRevenueData = [];
+        for ($i = 0; $i < 30; $i++) {
+            $day = $last30Start->copy()->addDays($i)->toDateString();
+            $monthRevenueData[] = (float) ($monthRows[$day] ?? 0);
+        }
+
+        // All-time total revenue
+        $totalRevenue = $revenueBaseQuery()
+            ->sum('transaction_items.line_total');
+
+        // Buy count (all time) for overall AOV
         $buyCount = DB::table('transactions')
             ->where('type', 'Buy')
             ->count();
@@ -68,24 +155,68 @@ class AnalyticsController extends Controller
             ? round($totalRevenue / $buyCount, 2)
             : 0;
 
-        // --- SALES TREND (filtered by range) ---
+        // ----------------------------------------------------
+        // TOTAL ORDERS (range) + % CHANGE vs prior period
+        // ----------------------------------------------------
+        if ($range === 'all') {
+            $totalOrders      = $buyCount;
+            $totalOrdersChange = 0;
+        } else {
+            // derive [rangeStart, rangeEnd] and [prevRangeStart, prevRangeEnd]
+            switch ($range) {
+                case 'today':
+                    $rangeStart      = $todayStart;
+                    $rangeEnd        = $todayEnd;
+                    $prevRangeStart  = $yesterdayStart;
+                    $prevRangeEnd    = $yesterdayEnd;
+                    break;
 
-        $salesByDayQuery = DB::table('transactions')
-            ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
-            ->where('transactions.type', 'Buy')
+                case '7d':
+                    $rangeStart      = now()->subDays(6)->startOfDay();
+                    $rangeEnd        = now()->endOfDay();
+                    $prevRangeStart  = now()->subDays(13)->startOfDay();
+                    $prevRangeEnd    = now()->subDays(7)->endOfDay();
+                    break;
+
+                case '30d':
+                default:
+                    $rangeStart      = now()->subDays(29)->startOfDay();
+                    $rangeEnd        = now()->endOfDay();
+                    $prevRangeStart  = now()->subDays(59)->startOfDay();
+                    $prevRangeEnd    = now()->subDays(30)->endOfDay();
+                    break;
+            }
+
+            $totalOrders = DB::table('transactions')
+                ->where('type', 'Buy')
+                ->whereBetween('created_at', [$rangeStart, $rangeEnd])
+                ->count();
+
+            $prevOrders = DB::table('transactions')
+                ->where('type', 'Buy')
+                ->whereBetween('created_at', [$prevRangeStart, $prevRangeEnd])
+                ->count();
+
+            $totalOrdersChange = $percentChange($totalOrders, $prevOrders);
+        }
+
+        // ----------------------------------------------------
+        // SALES TREND (filtered by range)
+        // ----------------------------------------------------
+        $salesByDayQuery = $revenueBaseQuery()
             ->selectRaw('DATE(transactions.created_at) as day, SUM(transaction_items.line_total) as total')
             ->groupBy('day')
             ->orderBy('day');
 
         $rangeFilter($salesByDayQuery, 'transactions.created_at');
 
-        $salesByDay = $salesByDayQuery->get();
+        $salesByDay       = $salesByDayQuery->get();
+        $salesByDayLabels = $salesByDay->pluck('day')->map(fn($d) => Carbon::parse($d)->format('M d'));
+        $salesByDayData   = $salesByDay->pluck('total');
 
-        $salesByDayLabels = $salesByDay->pluck('day')->map(fn ($d) => Carbon::parse($d)->format('M d'));
-        $salesByDayData = $salesByDay->pluck('total');
-
-        // --- PRODUCT / INVENTORY ANALYTICS ---
-
+        // ----------------------------------------------------
+        // PRODUCT / INVENTORY ANALYTICS
+        // ----------------------------------------------------
         $totalProducts = DB::table('products')->count();
 
         $publishedProducts = DB::table('products')
@@ -104,8 +235,7 @@ class AnalyticsController extends Controller
             ->get();
 
         $materialLabels = $materials->pluck('material');
-        $materialData = $materials->pluck('count');
-        $topMaterial = $materials->sortByDesc('count')->first();
+        $materialData   = $materials->pluck('count');
 
         // Revenue per category (filtered by range)
         $revenueByCategoryQuery = DB::table('transaction_items')
@@ -119,10 +249,9 @@ class AnalyticsController extends Controller
 
         $rangeFilter($revenueByCategoryQuery, 'transactions.created_at');
 
-        $revenueByCategory = $revenueByCategoryQuery->get();
-
+        $revenueByCategory       = $revenueByCategoryQuery->get();
         $revenueByCategoryLabels = $revenueByCategory->pluck('category');
-        $revenueByCategoryData = $revenueByCategory->pluck('total_sales');
+        $revenueByCategoryData   = $revenueByCategory->pluck('total_sales');
 
         // Top-selling products (filtered by range)
         $topProductsQuery = DB::table('transaction_items')
@@ -138,8 +267,9 @@ class AnalyticsController extends Controller
 
         $topProducts = $topProductsQuery->get();
 
-        // --- CUSTOMER ANALYTICS (cards) ---
-
+        // ----------------------------------------------------
+        // CUSTOMER ANALYTICS
+        // ----------------------------------------------------
         $totalCustomers = DB::table('users')
             ->where('role', 'customer')
             ->count();
@@ -149,20 +279,18 @@ class AnalyticsController extends Controller
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
-        // --- PAWN ANALYTICS (filtered by range) ---
-
+        // ----------------------------------------------------
+        // PAWN / REPAIR STATUS (filtered by range)
+        // ----------------------------------------------------
         $pawnStatusQuery = DB::table('pawn_items')
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status');
 
         $rangeFilter($pawnStatusQuery, 'created_at');
 
-        $pawnStatusRaw = $pawnStatusQuery->get();
-
+        $pawnStatusRaw    = $pawnStatusQuery->get();
         $pawnStatusLabels = $pawnStatusRaw->pluck('status');
-        $pawnStatusData = $pawnStatusRaw->pluck('total');
-
-        // --- REPAIR ANALYTICS (filtered by range) ---
+        $pawnStatusData   = $pawnStatusRaw->pluck('total');
 
         $repairStatusQuery = DB::table('repairs')
             ->selectRaw('status, COUNT(*) as total')
@@ -170,13 +298,13 @@ class AnalyticsController extends Controller
 
         $rangeFilter($repairStatusQuery, 'created_at');
 
-        $repairStatusRaw = $repairStatusQuery->get();
-
+        $repairStatusRaw    = $repairStatusQuery->get();
         $repairStatusLabels = $repairStatusRaw->pluck('status');
-        $repairStatusData = $repairStatusRaw->pluck('total');
+        $repairStatusData   = $repairStatusRaw->pluck('total');
 
-        // --- STAFF PERFORMANCE (filtered by range) ---
-
+        // ----------------------------------------------------
+        // STAFF PERFORMANCE (filtered by range)
+        // ----------------------------------------------------
         $staffSalesQuery = DB::table('transactions')
             ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
             ->join('users', 'transactions.staff_id', '=', 'users.id')
@@ -188,13 +316,13 @@ class AnalyticsController extends Controller
 
         $rangeFilter($staffSalesQuery, 'transactions.created_at');
 
-        $staffSales = $staffSalesQuery->get();
-
+        $staffSales       = $staffSalesQuery->get();
         $staffSalesLabels = $staffSales->pluck('name');
-        $staffSalesData = $staffSales->pluck('total_sales');
+        $staffSalesData   = $staffSales->pluck('total_sales');
 
-        // --- FAVORITES & VIEWS (filtered by range) ---
-
+        // ----------------------------------------------------
+        // FAVORITES & VIEWS (filtered by range)
+        // ----------------------------------------------------
         $mostFavoritedQuery = DB::table('favorites')
             ->join('products', 'favorites.product_id', '=', 'products.id')
             ->selectRaw('products.name, COUNT(*) as total_favorites')
@@ -217,8 +345,9 @@ class AnalyticsController extends Controller
 
         $mostViewed = $mostViewedQuery->get();
 
-        // --- CONVERSION FUNNEL (views → favorites → orders) ---
-
+        // ----------------------------------------------------
+        // CONVERSION FUNNEL (views → favorites → orders)
+        // ----------------------------------------------------
         $viewsCountQuery = DB::table('product_views');
         $rangeFilter($viewsCountQuery, 'created_at');
         $viewsCount = $viewsCountQuery->count();
@@ -230,118 +359,110 @@ class AnalyticsController extends Controller
         $ordersCountQuery = DB::table('transactions')
             ->where('type', 'Buy');
         $rangeFilter($ordersCountQuery, 'created_at');
-        $ordersCount = $ordersCountQuery->count(); // number of orders
+        $ordersCount = $ordersCountQuery->count();
 
         $funnelLabels = ['Views', 'Favorites', 'Orders'];
-        $funnelData = [
+        $funnelData   = [
             $viewsCount,
             $favoritesCount,
             $ordersCount,
         ];
 
-        // --- SIMPLE "AI" SUGGESTIONS ---
-
-        $aiSuggestions = [];
-
-        if ($lowStockCount > 0) {
-            $aiSuggestions[] = 'Some products are low on stock. Use AI to auto-flag items that might sell out soon based on past sales.';
-        }
-
-        if ($topMaterial) {
-            $aiSuggestions[] = "Most of your catalog uses <strong>{$topMaterial->material}</strong>. Train recommendations to push similar-material items to interested customers.";
-        }
-
-        if ($avgOrderValue > 0 && $avgOrderValue < 2000) {
-            $aiSuggestions[] = 'Average order value is ₱'.number_format($avgOrderValue, 2).'. Try AI-powered “bundle suggestions” or upsell at checkout.';
-        }
-
-        if ($monthRevenue > 0 && $todayRevenue == 0) {
-            $aiSuggestions[] = 'No sales today yet. Use AI to identify your top customers and send them targeted offers.';
-        }
-
-        if ($mostFavorited->count() > 0) {
-            $aiSuggestions[] = 'Your most favorited products are perfect candidates for remarketing ads and homepage highlights.';
-        }
-
-        if (empty($aiSuggestions)) {
-            $aiSuggestions[] = 'Data looks stable. Next step: connect AI to build smart product recommendations and dynamic pricing tests.';
-        }
-
-        // --- QUICK ACTIONS (ADMIN SHORTCUTS) ---
-
+        // ----------------------------------------------------
+        // QUICK ACTIONS
+        // ----------------------------------------------------
         $quickActions = [
             [
-                'label' => 'Create New Product',
+                'label'       => 'Create New Product',
                 'description' => 'Add a new jewelry item to your inventory.',
-                'href' => route('admin.products.create'),
+                'href'        => route('admin.products.create'),
             ],
             [
-                'label' => 'View All Products',
+                'label'       => 'View All Products',
                 'description' => 'Manage stock, prices, and visibility.',
-                'href' => route('admin.products.index'),
+                'href'        => route('admin.products.index'),
             ],
             [
-                'label' => 'View Pawn Items',
+                'label'       => 'View Pawn Items',
                 'description' => 'Monitor active, redeemed, and forfeited pawn items.',
-                'href' => route('admin.pawn.index'),
+                'href'        => route('admin.pawn.index'),
             ],
             [
-                'label' => 'View Repairs',
+                'label'       => 'View Repairs',
                 'description' => 'Check pending and completed repair jobs.',
-                'href' => route('admin.repairs.index'),
+                'href'        => route('admin.repairs.index'),
             ],
             [
-                'label' => 'View Transactions',
+                'label'       => 'View Transactions',
                 'description' => 'Review all buy/sell transactions.',
-                'href' => route('admin.transactions.index'),
+                'href'        => route('admin.transactions.index'),
             ],
             [
-                'label' => 'View Customers',
+                'label'       => 'View Customers',
                 'description' => 'See your customer list and profiles.',
-                'href' => route('admin.customers.index'),
+                'href'        => route('admin.customers.index'),
             ],
         ];
 
         return view('admin.analytics', [
-            'range' => $range,
+            'range'      => $range,
             'rangeLabel' => $rangeLabel,
 
-            'totalRevenue' => $totalRevenue,
-            'todayRevenue' => $todayRevenue,
-            'weekRevenue' => $weekRevenue,
-            'monthRevenue' => $monthRevenue,
-            'avgOrderValue' => $avgOrderValue,
+            // Top metric cards
+            'totalRevenue'        => $totalRevenue,
+            'todayRevenue'        => $todayRevenue,
+            'weekRevenue'         => $weekRevenue,
+            'monthRevenue'        => $monthRevenue,
+            'avgOrderValue'       => $avgOrderValue,
+
+            'todayRevenueChange'  => $todayRevenueChange,
+            'weekRevenueChange'   => $weekRevenueChange,
+            'monthRevenueChange'  => $monthRevenueChange,
+
+            'todayRevenueData'    => $todayRevenueData,
+            'weekRevenueData'     => $weekRevenueData,
+            'monthRevenueData'    => $monthRevenueData,
+
+            'totalOrders'         => $totalOrders ?? 0,
+            'totalOrdersChange'   => $totalOrdersChange ?? 0,
+
+            // Sales trend
             'salesByDayLabels' => $salesByDayLabels,
-            'salesByDayData' => $salesByDayData,
+            'salesByDayData'   => $salesByDayData,
 
-            'totalProducts' => $totalProducts,
-            'publishedProducts' => $publishedProducts,
-            'lowStockCount' => $lowStockCount,
-            'materialLabels' => $materialLabels,
-            'materialData' => $materialData,
+            // Products / inventory
+            'totalProducts'           => $totalProducts,
+            'publishedProducts'       => $publishedProducts,
+            'lowStockCount'           => $lowStockCount,
+            'materialLabels'          => $materialLabels,
+            'materialData'            => $materialData,
             'revenueByCategoryLabels' => $revenueByCategoryLabels,
-            'revenueByCategoryData' => $revenueByCategoryData,
-            'topProducts' => $topProducts,
+            'revenueByCategoryData'   => $revenueByCategoryData,
+            'topProducts'             => $topProducts,
 
-            'totalCustomers' => $totalCustomers,
+            // Customers
+            'totalCustomers'        => $totalCustomers,
             'newCustomersThisMonth' => $newCustomersThisMonth,
 
-            'pawnStatusLabels' => $pawnStatusLabels,
-            'pawnStatusData' => $pawnStatusData,
-            'repairStatusLabels' => $repairStatusLabels,
-            'repairStatusData' => $repairStatusData,
+            // Pawn / repair
+            'pawnStatusLabels'  => $pawnStatusLabels,
+            'pawnStatusData'    => $pawnStatusData,
+            'repairStatusLabels'=> $repairStatusLabels,
+            'repairStatusData'  => $repairStatusData,
 
-            'staffSalesLabels' => $staffSalesLabels,
-            'staffSalesData' => $staffSalesData,
+            // Staff performance
+            'staffSalesLabels'  => $staffSalesLabels,
+            'staffSalesData'    => $staffSalesData,
 
-            'mostFavorited' => $mostFavorited,
-            'mostViewed' => $mostViewed,
+            // Favorites / views
+            'mostFavorited'     => $mostFavorited,
+            'mostViewed'        => $mostViewed,
 
-            'funnelLabels' => $funnelLabels,
-            'funnelData' => $funnelData,
+            // Funnel
+            'funnelLabels'      => $funnelLabels,
+            'funnelData'        => $funnelData,
 
-            'aiSuggestions' => $aiSuggestions,
-            'quickActions' => $quickActions,
+            'quickActions'      => $quickActions,
         ]);
     }
 }
