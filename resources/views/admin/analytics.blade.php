@@ -292,6 +292,20 @@
                 </div>
             </section>
 
+            <section class="space-y-6 mt-6">
+                <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+                        Frequently Bought Together (All Time)
+                    </h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        (Minimum support: {{ 5 }} transactions).
+                    </p>
+                    <div class="h-80">
+                        <canvas id="frequentCombosChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
             
             {{-- QUICK ACTIONS --}}
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -589,6 +603,45 @@
                     plugins: { legend: { display: false } },
                     scales: { y: { ticks: { precision: 0 } } }
                 });
+            }
+
+            const combosCtx = document.getElementById('frequentCombosChart');
+            if (combosCtx) {
+                const comboLabels = @json($frequentComboLabels ?? []);
+                const comboData   = @json($frequentComboSupport ?? []);
+
+                if (comboLabels.length > 0) {
+                    renderChart(combosCtx, 'bar', {
+                        labels: comboLabels,
+                        datasets: [{
+                            label: 'Number of Buy Transactions',
+                            data: comboData,
+                            borderWidth: 1,
+                            backgroundColor: primaryColor,
+                        }]
+                    }, {
+                        indexAxis: 'y', // horizontal bar chart
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.raw + ' transactions';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    });
+                }
             }
         });
     </script>

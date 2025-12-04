@@ -13,6 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'python' => [
+    'binary' => env('PYTHON_BINARY', 'python'),
+    ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

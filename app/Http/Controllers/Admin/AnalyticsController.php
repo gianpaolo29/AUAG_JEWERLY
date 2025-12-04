@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\EclatService;
+use App\Models\Product;
 
 class AnalyticsController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, EclatService $eclat)
     {
         // --- DATE RANGE FILTER (for most charts & funnel) ---
         // accepted: today | 7d | 30d | all
@@ -404,6 +406,50 @@ class AnalyticsController extends Controller
             ],
         ];
 
+    $minSupport = 4; // adjust: minimum # of transactions for a combo
+    $raw = $eclat->mine($minSupport);
+
+    $itemsets = $raw['frequent_itemsets'] ?? [];
+
+    // Only combos with at least 2 products (pairs, triplets, etc.)
+    $itemsets = array_filter($itemsets, function ($set) {
+        return isset($set['items']) && count($set['items']) >= 2;
+    });
+
+    // Sort by support desc (already sorted in Python, but just in case)
+    usort($itemsets, function ($a, $b) {
+        return ($b['support'] ?? 0) <=> ($a['support'] ?? 0);
+    });
+
+    // Take top 10 combos
+    $itemsets = array_slice($itemsets, 0, 5);
+
+    // Collect all product IDs used
+        $allProductIds = collect($itemsets)
+        ->pluck('items')
+        ->flatten()
+        ->unique()
+        ->values()
+        ->all();
+
+        $productNames = Product::whereIn('id', $allProductIds)->pluck('name', 'id');
+
+        $frequentComboLabels = [];
+        $frequentComboSupport = [];
+
+        foreach ($itemsets as $set) {
+        $ids = $set['items'] ?? [];
+        $support = $set['support'] ?? 0;
+
+        // Join product names: "Ring A + Necklace B + ..."
+        $label = collect($ids)->map(function ($id) use ($productNames) {
+            return $productNames[$id] ?? "Product {$id}";
+        })->implode(' , ');
+
+        $frequentComboLabels[] = $label;
+        $frequentComboSupport[] = $support;
+    }
+
         return view('admin.analytics', [
             'range'      => $range,
             'rangeLabel' => $rangeLabel,
@@ -463,6 +509,9 @@ class AnalyticsController extends Controller
             'funnelData'        => $funnelData,
 
             'quickActions'      => $quickActions,
+
+            'frequentComboLabels'  => $frequentComboLabels,
+            'frequentComboSupport' => $frequentComboSupport,
         ]);
     }
 }
