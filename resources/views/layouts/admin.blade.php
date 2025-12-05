@@ -12,20 +12,26 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ asset('Auag.jpg') }}">
-    <!-- SweetAlert2 CSS & JS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
-    {{-- NOTE: Alpine.js Collapse is needed for the Users dropdown smooth animation --}}
+    {{-- Third-party CSS --}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.5.1/flowbite.min.css" rel="stylesheet" />
+
+    {{-- Your app (Tailwind etc.) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- SweetAlert2 CSS --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    {{-- JS libraries --}}
     <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/flowbite@2.3.0/dist/flowbite.min.js"></script>
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.5.1/flowbite.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    @stack('scripts')
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- SweetAlert2 JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @stack('scripts')
 
     <style>
         [x-cloak] { display: none !important; }
@@ -34,6 +40,8 @@
         .sidebar-tooltip {
             pointer-events: none;
             z-index: 9999;
+            transform: translateY(-50%);
+            white-space: nowrap;
         }
 
         .sidebar-tooltip::before {
@@ -45,13 +53,40 @@
             border: 6px solid transparent;
             border-right-color: #1f2937;
         }
+
+        /* Smooth transitions */
+        .sidebar-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Better scrollbar for sidebar */
+        .sidebar-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 2px;
+        }
+
+        .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* Improved main content transition */
+        .main-content-transition {
+            transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
-<body class="h-full antialiased"
+<body class="h-full antialiased bg-gray-50"
     x-data="{
         isSidebarOpen: false,
         isDesktopSidebarCollapsed: localStorage.getItem('isDesktopSidebarCollapsed') === 'true',
-        // Tooltip management
         activeTooltip: null,
         tooltipText: '',
         tooltipPosition: { x: 0, y: 0 }
@@ -62,62 +97,59 @@
     <div x-show="isSidebarOpen" class="relative z-50 lg:hidden" x-cloak>
         {{-- Backdrop --}}
         <div x-show="isSidebarOpen"
-             x-transition:enter="transition-opacity duration-300 ease-linear"
+             x-transition:enter="transition-opacity ease-linear duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity duration-300 ease-linear"
+             x-transition:leave="transition-opacity ease-linear duration-300"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="isSidebarOpen = false"
-             class="fixed inset-0 bg-gray-900/80">
+             class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm">
         </div>
 
         {{-- Sidebar panel --}}
         <div x-show="isSidebarOpen"
-             x-transition:enter="transition duration-300 ease-in-out transform"
+             x-transition:enter="transition-transform ease-in-out duration-300"
              x-transition:enter-start="-translate-x-full"
              x-transition:enter-end="translate-x-0"
-             x-transition:leave="transition duration-300 ease-in-out transform"
+             x-transition:leave="transition-transform ease-in-out duration-300"
              x-transition:leave-start="translate-x-0"
              x-transition:leave-end="-translate-x-full"
-             class="fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-1">
+             class="fixed inset-y-0 left-0 z-50 w-full max-w-xs">
 
             {{-- Close button --}}
             <div class="absolute top-0 left-full flex w-16 justify-center pt-5">
-                <button type="button" @click="isSidebarOpen = false" class="-m-2.5 p-2.5 focus:outline-none">
+                <button type="button" @click="isSidebarOpen = false" 
+                        class="-m-2.5 p-2.5 text-white hover:text-gray-300 focus:outline-none">
                     <span class="sr-only">Close sidebar</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                         aria-hidden="true" class="size-6 text-white">
-                        <path d="M6 18 18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
+                    <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            {{-- Mobile Sidebar Content - UPDATED TO MATCH DESKTOP COLOR --}}
-            <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 px-6 pb-4">
-                <div class="relative flex h-16 shrink-0 items-center">
+            {{-- Mobile Sidebar Content --}}
+            <div class="flex h-full flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 px-6 pb-4 sidebar-scrollbar">
+                <div class="flex h-16 shrink-0 items-center">
                     <img src="/Auag.jpg" alt="AUAG Jewelry" class="h-8 w-auto rounded-md" />
                     <span class="ml-3 text-sm font-semibold tracking-[0.2em] text-gray-100 uppercase">
                         Admin
                     </span>
                 </div>
 
-                <nav class="relative flex flex-1 flex-col">
-                    <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                <nav class="flex flex-1 flex-col">
+                    <ul class="flex flex-1 flex-col gap-y-7">
                         <li>
-                            <ul role="list" class="-mx-2 space-y-1">
+                            <ul class="-mx-2 space-y-1">
                                 {{-- Dashboard --}}
                                 <li>
                                     <a href="{{ route('admin.dashboard') }}"
-                                       class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                       class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                             stroke-width="1.5" aria-hidden="true"
-                                             class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                            <path
-                                                d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="size-6 shrink-0 {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                                         </svg>
                                         Dashboard
                                     </a>
@@ -127,21 +159,18 @@
                                 <li x-data="{ openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }} }">
                                     <button type="button"
                                         @click="openUsers = !openUsers"
-                                        class="w-full group flex items-center justify-between gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                        class="w-full group flex items-center justify-between gap-x-3 rounded-md p-2 text-sm font-semibold
                                             {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                                         <span class="flex items-center gap-x-3">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="1.5" aria-hidden="true"
-                                                class="size-6 shrink-0
-                                                    {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                                <path
-                                                    d="M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0ZM4.5 9.75A2.25 2.25 0 0 0 2.25 12v.75A2.25 2.25 0 0 0 4.5 15h4.75a4.5 4.5 0 0 1 4.5 4.5v.378a9.337 9.337 0 0 0 4.121-.952A4.125 4.125 0 0 0 18 13.5V12a2.25 2.25 0 0 0-2.25-2.25h-11Z"
-                                                    stroke-linecap="round" stroke-linejoin="round" />
+                                            <svg class="size-6 shrink-0 {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0ZM4.5 9.75A2.25 2.25 0 0 0 2.25 12v.75A2.25 2.25 0 0 0 4.5 15h4.75a4.5 4.5 0 0 1 4.5 4.5v.378a9.337 9.337 0 0 0 4.121-.952A4.125 4.125 0 0 0 18 13.5V12a2.25 2.25 0 0 0-2.25-2.25h-11Z" />
                                             </svg>
                                             <span>Users</span>
                                         </span>
 
-                                        <svg x-bind:class="openUsers ? 'rotate-180 text-indigo-400' : 'text-gray-400'"
+                                        <svg :class="openUsers ? 'rotate-180 text-indigo-400' : 'text-gray-400'"
                                             class="size-4 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06L10.53 12.53a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" />
@@ -151,14 +180,13 @@
                                     <div x-show="openUsers"
                                         x-collapse
                                         class="mt-1 space-y-1 pl-9">
-                                        {{-- UPDATED: Same size as parent --}}
                                         <a href="{{ route('admin.customers.index') }}"
-                                           class="block rounded-md px-2 py-1.5 text-sm/6 font-semibold text-left
+                                           class="block rounded-md px-2 py-1.5 text-sm font-semibold
                                             {{ request()->routeIs('admin.customers.*') ? 'bg-indigo-900/30 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                                             Customers
                                         </a>
                                         <a href="{{ route('admin.staff.index') }}"
-                                           class="block rounded-md px-2 py-1.5 text-sm/6 font-semibold text-left
+                                           class="block rounded-md px-2 py-1.5 text-sm font-semibold
                                             {{ request()->routeIs('admin.staff.*') ? 'bg-indigo-900/30 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                                             Staff
                                         </a>
@@ -168,15 +196,12 @@
                                 {{-- Products --}}
                                 <li>
                                     <a href="{{ route('admin.products.index') }}"
-                                       class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                       class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.products.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                             stroke-width="1.5" aria-hidden="true"
-                                             class="size-6 shrink-0
-                                                {{ request()->routeIs('admin.products.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                            <path
-                                                d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
-                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="size-6 shrink-0 {{ request()->routeIs('admin.products.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                                         </svg>
                                         Products
                                     </a>
@@ -185,13 +210,11 @@
                                 {{-- Transactions --}}
                                 <li>
                                     <a href="{{ route('admin.transactions.index') }}"
-                                       class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                       class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.transactions.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                             stroke-width="1.5" aria-hidden="true"
-                                             class="size-6 shrink-0
-                                                {{ request()->routeIs('admin.transactions.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                            <path d="M3 7h18M8 3h8M5 11h14v10H5z" stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="size-6 shrink-0 {{ request()->routeIs('admin.transactions.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M8 3h8M5 11h14v10H5z" />
                                         </svg>
                                         Transactions
                                     </a>
@@ -200,13 +223,11 @@
                                 {{-- Pawn --}}
                                 <li>
                                     <a href="{{ route('admin.pawn.index') }}"
-                                       class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                       class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.pawn.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                             stroke-width="1.5" aria-hidden="true"
-                                             class="size-6 shrink-0
-                                                {{ request()->routeIs('admin.pawn.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                            <path d="M12 3 4 9v12h16V9l-8-6z" stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="size-6 shrink-0 {{ request()->routeIs('admin.pawn.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 9v12h16V9l-8-6z" />
                                         </svg>
                                         Pawn
                                     </a>
@@ -215,13 +236,11 @@
                                 {{-- Repairs --}}
                                 <li>
                                     <a href="{{ route('admin.repairs.index') }}"
-                                       class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                       class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.repairs.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                             stroke-width="1.5" aria-hidden="true"
-                                             class="size-6 shrink-0
-                                                {{ request()->routeIs('admin.repairs.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                            <path d="M4 21h4l11-11a2.828 2.828 0 0 0-4-4L4 17v4z" stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="size-6 shrink-0 {{ request()->routeIs('admin.repairs.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h4l11-11a2.828 2.828 0 0 0-4-4L4 17v4z" />
                                         </svg>
                                         Repairs
                                     </a>
@@ -230,18 +249,30 @@
                                 {{-- Analytics --}}
                                 <li>
                                     <a href="{{ route('admin.analytics') }}"
-                                       class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+                                       class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.analytics.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                             stroke-width="1.5" aria-hidden="true"
-                                             class="size-6 shrink-0
-                                                {{ request()->routeIs('admin.analytics.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                            <path d="M4 19h16M6 16v-6M12 19V5M18 19v-9" stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="size-6 shrink-0 {{ request()->routeIs('admin.analytics.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16M6 16v-6M12 19V5M18 19v-9" />
                                         </svg>
                                         Analytics
                                     </a>
                                 </li>
                             </ul>
+                        </li>
+                        
+                        {{-- Logout --}}
+                        <li class="mt-auto">
+                            <button type="button"
+                                    @click="confirmLogout()"
+                                    class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold text-red-300 hover:bg-red-950/40 hover:text-red-200 w-full">
+                                <svg class="size-6 shrink-0 text-red-400 group-hover:text-red-300"
+                                     fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3-3m0 0 3 3m-3-3v12" />
+                                </svg>
+                                Logout
+                            </button>
                         </li>
                     </ul>
                 </nav>
@@ -249,14 +280,13 @@
         </div>
     </div>
 
-    {{-- Static sidebar for desktop (collapsible) - FIXED ALIGNMENT AND SCROLL --}}
-    <div
-        class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col bg-gradient-to-b from-gray-900 to-gray-950 transition-all duration-300 ease-in-out overflow-hidden"
-        x-bind:class="isDesktopSidebarCollapsed ? 'lg:w-20' : 'lg:w-72'">
-        <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-800 bg-gray-950/95 px-4 pb-4">
-            {{-- Logo - FIXED ALIGNMENT --}}
-            <div class="flex h-14 shrink-0 items-center"
-                 x-bind:class="isDesktopSidebarCollapsed ? 'justify-center' : 'justify-start'">
+    {{-- Static sidebar for desktop --}}
+    <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 sidebar-transition"
+         :class="isDesktopSidebarCollapsed ? 'lg:w-20' : 'lg:w-72'">
+        <div class="flex grow flex-col gap-y-5 overflow-y-auto px-4 pb-4 sidebar-scrollbar">
+            {{-- Logo --}}
+            <div class="flex h-16 shrink-0 items-center"
+                 :class="isDesktopSidebarCollapsed ? 'justify-center' : 'justify-start'">
                 <img src="/Auag.jpg" alt="AUAG Jewelry" class="h-8 w-auto rounded-md" />
                 <span x-show="!isDesktopSidebarCollapsed"
                       x-transition:enter="transition ease-out duration-300"
@@ -271,78 +301,77 @@
             </div>
 
             <nav class="flex flex-1 flex-col">
-                <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                <ul class="flex flex-1 flex-col gap-y-7">
                     <li>
-                        <ul role="list" class="-mx-2 space-y-1">
+                        <ul class="-mx-2 space-y-1">
                             {{-- Dashboard --}}
                             <li>
                                 <a href="{{ route('admin.dashboard') }}"
-                                   x-data="{ showTooltip: false }"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Dashboard'; tooltipText = 'Dashboard'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                       activeTooltip = 'Dashboard'; 
+                                       tooltipText = 'Dashboard'; 
+                                       const rect = $el.getBoundingClientRect(); 
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
-                                   class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                   class="group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.dashboard') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                   x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path
-                                            d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                                            stroke-linecap="round" stroke-linejoin="round" />
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ request()->routeIs('admin.dashboard') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                                     </svg>
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="truncate transition-opacity duration-300 ease-in-out">
+                                          class="truncate sidebar-transition">
                                         Dashboard
                                     </span>
                                 </a>
                             </li>
 
                             {{-- Users (dropdown) --}}
-                            <li x-data="{
-                                    openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }}
-                                }">
-
+                            <li x-data="{ openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }} }">
                                 <button type="button"
-                                    x-data="{ showTooltip: false }"
-                                    @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Users'; tooltipText = 'Users'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                    @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                        activeTooltip = 'Users'; 
+                                        tooltipText = 'Users'; 
+                                        const rect = $el.getBoundingClientRect(); 
+                                        tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                    }"
                                     @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                     @click="openUsers = !openUsers"
-                                    class="w-full group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                    class="w-full group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                    x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path
-                                            d="M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0ZM4.5 9.75A2.25 2.25 0 0 0 2.25 12v.75A2.25 2.25 0 0 0 4.5 15h4.75a4.5 4.5 0 0 1 4.5 4.5v.378a9.337 9.337 0 0 0 4.121-.952A4.125 4.125 0 0 0 18 13.5V12a2.25 2.25 0 0 0-2.25-2.25h-11Z"
-                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0ZM4.5 9.75A2.25 2.25 0 0 0 2.25 12v.75A2.25 2.25 0 0 0 4.5 15h4.75a4.5 4.5 0 0 1 4.5 4.5v.378a9.337 9.337 0 0 0 4.121-.952A4.125 4.125 0 0 0 18 13.5V12a2.25 2.25 0 0 0-2.25-2.25h-11Z" />
                                     </svg>
 
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="flex-1 truncate transition-opacity duration-300 ease-in-out text-left">
+                                          class="flex-1 truncate sidebar-transition text-left">
                                         Users
                                     </span>
                                     <svg x-show="!isDesktopSidebarCollapsed"
-                                         x-bind:class="openUsers ? 'rotate-180 text-indigo-400' : 'text-gray-400'"
+                                         :class="openUsers ? 'rotate-180 text-indigo-400' : 'text-gray-400'"
                                          class="size-4 transition-transform shrink-0" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" clip-rule="evenodd"
                                             d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06L10.53 12.53a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" />
                                     </svg>
                                 </button>
 
-                                {{-- Submenu when expanded - UPDATED: Same size as parent --}}
+                                {{-- Submenu --}}
                                 <div x-show="openUsers && !isDesktopSidebarCollapsed"
                                      x-collapse
                                      class="mt-1 space-y-1 pl-10">
                                     <a href="{{ route('admin.customers.index') }}"
-                                       class="block rounded-md px-2 py-1.5 text-sm/6 font-semibold text-left
+                                       class="block rounded-md px-2 py-1.5 text-sm font-semibold
                                             {{ request()->routeIs('admin.customers.*') ? 'bg-indigo-900/30 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                                         Customers
                                     </a>
                                     <a href="{{ route('admin.staff.index') }}"
-                                       class="block rounded-md px-2 py-1.5 text-sm/6 font-semibold text-left
+                                       class="block rounded-md px-2 py-1.5 text-sm font-semibold
                                             {{ request()->routeIs('admin.staff.*') ? 'bg-indigo-900/30 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                                         Staff
                                     </a>
@@ -352,22 +381,23 @@
                             {{-- Products --}}
                             <li>
                                 <a href="{{ route('admin.products.index') }}"
-                                   x-data="{ showTooltip: false }"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Products'; tooltipText = 'Products'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                       activeTooltip = 'Products'; 
+                                       tooltipText = 'Products'; 
+                                       const rect = $el.getBoundingClientRect(); 
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
-                                   class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                   class="group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.products.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                   x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.products.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path
-                                            d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
-                                            stroke-linecap="round" stroke-linejoin="round" />
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ request()->routeIs('admin.products.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                                     </svg>
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="truncate transition-opacity duration-300 ease-in-out">
+                                          class="truncate sidebar-transition">
                                         Products
                                     </span>
                                 </a>
@@ -376,20 +406,22 @@
                             {{-- Transactions --}}
                             <li>
                                 <a href="{{ route('admin.transactions.index') }}"
-                                   x-data="{ showTooltip: false }"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Transactions'; tooltipText = 'Transactions'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                       activeTooltip = 'Transactions'; 
+                                       tooltipText = 'Transactions'; 
+                                       const rect = $el.getBoundingClientRect(); 
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
-                                   class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                   class="group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.transactions.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                   x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.transactions.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path d="M3 7h18M8 3h8M5 11h14v10H5z" stroke-linecap="round" stroke-linejoin="round" />
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ request()->routeIs('admin.transactions.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M8 3h8M5 11h14v10H5z" />
                                     </svg>
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="truncate transition-opacity duration-300 ease-in-out">
+                                          class="truncate sidebar-transition">
                                         Transactions
                                     </span>
                                 </a>
@@ -398,20 +430,22 @@
                             {{-- Pawn --}}
                             <li>
                                 <a href="{{ route('admin.pawn.index') }}"
-                                   x-data="{ showTooltip: false }"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Pawn'; tooltipText = 'Pawn'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                       activeTooltip = 'Pawn'; 
+                                       tooltipText = 'Pawn'; 
+                                       const rect = $el.getBoundingClientRect(); 
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
-                                   class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                   class="group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.pawn.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                   x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.pawn.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path d="M12 3 4 9v12h16V9l-8-6z" stroke-linecap="round" stroke-linejoin="round" />
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ request()->routeIs('admin.pawn.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 9v12h16V9l-8-6z" />
                                     </svg>
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="truncate transition-opacity duration-300 ease-in-out">
+                                          class="truncate sidebar-transition">
                                         Pawn
                                     </span>
                                 </a>
@@ -420,20 +454,22 @@
                             {{-- Repairs --}}
                             <li>
                                 <a href="{{ route('admin.repairs.index') }}"
-                                   x-data="{ showTooltip: false }"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Repairs'; tooltipText = 'Repairs'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                       activeTooltip = 'Repairs'; 
+                                       tooltipText = 'Repairs'; 
+                                       const rect = $el.getBoundingClientRect(); 
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
-                                   class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                   class="group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.repairs.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                   x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.repairs.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path d="M4 21h4l11-11a2.828 2.828 0 0 0-4-4L4 17v4z" stroke-linecap="round" stroke-linejoin="round" />
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ request()->routeIs('admin.repairs.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h4l11-11a2.828 2.828 0 0 0-4-4L4 17v4z" />
                                     </svg>
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="truncate transition-opacity duration-300 ease-in-out">
+                                          class="truncate sidebar-transition">
                                         Repairs
                                     </span>
                                 </a>
@@ -442,20 +478,22 @@
                             {{-- Analytics --}}
                             <li>
                                 <a href="{{ route('admin.analytics') }}"
-                                   x-data="{ showTooltip: false }"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Analytics'; tooltipText = 'Analytics'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                       activeTooltip = 'Analytics'; 
+                                       tooltipText = 'Analytics'; 
+                                       const rect = $el.getBoundingClientRect(); 
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
-                                   class="group flex items-center rounded-md py-2 text-sm/6 font-semibold
+                                   class="group flex items-center rounded-md py-2 text-sm font-semibold
                                         {{ request()->routeIs('admin.analytics.*') ? 'bg-indigo-900/50 text-indigo-300' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}"
-                                   x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="1.5" aria-hidden="true"
-                                         class="size-6 shrink-0
-                                            {{ request()->routeIs('admin.analytics.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}">
-                                        <path d="M4 19h16M6 16v-6M12 19V5M18 19v-9" stroke-linecap="round" stroke-linejoin="round" />
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                                    <svg class="size-6 shrink-0 {{ request()->routeIs('admin.analytics.*') ? 'text-indigo-400' : 'text-gray-400 group-hover:text-indigo-300' }}"
+                                         fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16M6 16v-6M12 19V5M18 19v-9" />
                                     </svg>
                                     <span x-show="!isDesktopSidebarCollapsed"
-                                          class="truncate transition-opacity duration-300 ease-in-out">
+                                          class="truncate sidebar-transition">
                                         Analytics
                                     </span>
                                 </a>
@@ -466,21 +504,23 @@
                     {{-- Logout --}}
                     <li class="mt-auto">
                         <button type="button"
-                                x-data="{ showTooltip: false }"
-                                @mouseenter="if (isDesktopSidebarCollapsed) { activeTooltip = 'Logout'; tooltipText = 'Logout'; const rect = $el.getBoundingClientRect(); tooltipPosition = { x: rect.left + rect.width, y: rect.top + rect.height / 2 }; }"
+                                @mouseenter="if (isDesktopSidebarCollapsed) { 
+                                    activeTooltip = 'Logout'; 
+                                    tooltipText = 'Logout'; 
+                                    const rect = $el.getBoundingClientRect(); 
+                                    tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                }"
                                 @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                 @click="confirmLogout()"
-                                class="group flex items-center w-full rounded-md py-2 text-sm/6 font-semibold text-red-300 hover:bg-red-950/40 hover:text-red-200"
-                                x-bind:class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="1.5" aria-hidden="true"
-                                 class="size-6 shrink-0 text-red-400 group-hover:text-red-300">
-                                <path
-                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3-3m0 0 3 3m-3-3v12"
-                                    stroke-linecap="round" stroke-linejoin="round" />
+                                class="group flex items-center w-full rounded-md py-2 text-sm font-semibold text-red-300 hover:bg-red-950/40 hover:text-red-200"
+                                :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start px-3 gap-x-3'">
+                            <svg class="size-6 shrink-0 text-red-400 group-hover:text-red-300"
+                                 fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3-3m0 0 3 3m-3-3v12" />
                             </svg>
                             <span x-show="!isDesktopSidebarCollapsed"
-                                  class="truncate transition-opacity duration-300 ease-in-out">
+                                  class="truncate sidebar-transition">
                                 Logout
                             </span>
                         </button>
@@ -499,79 +539,70 @@
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
          class="fixed sidebar-tooltip rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/5"
-         x-bind:style="`left: ${tooltipPosition.x}px; top: ${tooltipPosition.y}px; transform: translateY(-50%);`"
+         :style="`left: ${tooltipPosition.x}px; top: ${tooltipPosition.y}px;`"
          x-cloak>
         <span x-text="tooltipText"></span>
     </div>
 
     {{-- MAIN AREA --}}
-    <div
-        class="min-h-screen bg-gray-50 transition-all duration-300 ease-in-out"
-        x-bind:class="isDesktopSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'">
+    <div class="min-h-screen bg-gray-50 main-content-transition"
+         :class="isDesktopSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'">
 
         {{-- Top bar --}}
-        <div
-            class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white/95 px-4 shadow-xs backdrop-blur-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:gap-x-6 sm:px-6 lg:px-8">
 
             {{-- Mobile sidebar toggle --}}
             <button type="button" @click="isSidebarOpen = true"
                     class="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden">
                 <span class="sr-only">Open sidebar</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"
-                     class="size-6">
-                    <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                          stroke-linecap="round" stroke-linejoin="round" />
+                <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
             </button>
 
             {{-- Desktop sidebar toggle --}}
             <button type="button" @click="isDesktopSidebarCollapsed = !isDesktopSidebarCollapsed"
                     class="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 hidden lg:block">
-                <span class="sr-only">Toggle desktop sidebar</span>
-                <svg x-show="isDesktopSidebarCollapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.5" aria-hidden="true" class="size-6">
-                    <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                          stroke-linecap="round" stroke-linejoin="round" />
+                <span class="sr-only">Toggle sidebar</span>
+                <svg x-show="isDesktopSidebarCollapsed" class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
-                <svg x-show="!isDesktopSidebarCollapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.5" aria-hidden="true" class="size-6">
+                <svg x-show="!isDesktopSidebarCollapsed" class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                 </svg>
             </button>
 
-            <div aria-hidden="true" class="hidden sm:block h-6 w-px bg-gray-200"></div>
+            <div class="hidden sm:block h-6 w-px bg-gray-200"></div>
 
             <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                 <div class="flex items-center gap-x-4 lg:gap-x-6 ml-auto">
+                    {{-- Notifications --}}
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="relative p-2 text-gray-600 hover:text-gray-900">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                                 aria-hidden="true" class="size-6">
-                                <path
-                                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-                                    stroke-linecap="round" stroke-linejoin="round" />
+                        <button @click="open = !open" class="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none">
+                            <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                             </svg>
                             @auth
                                 @if(auth()->user()->unreadNotifications->count() > 0)
                                     <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                                                {{ auth()->user()->unreadNotifications->count() }}
-                                            </span>
+                                        {{ auth()->user()->unreadNotifications->count() }}
+                                    </span>
                                 @endif
                             @endauth
                         </button>
 
                         <div x-show="open" @click.away="open = false"
-                             class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                             class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
                             <div class="p-4 border-b flex justify-between items-center">
-                                <h3 class="font-semibold">Notifications</h3>
+                                <h3 class="font-semibold text-gray-900">Notifications</h3>
                                 @if(auth()->user()->unreadNotifications->count() > 0)
                                     <form action="/admin/notifications/read-all" method="POST">
                                         @csrf
-                                        <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">
+                                        <button type="submit" class="text-sm text-blue-600 hover:text-blue-800 focus:outline-none">
                                             Mark all as read
                                         </button>
                                     </form>
-
                                 @endif
                             </div>
                             <div class="max-h-96 overflow-y-auto">
@@ -580,7 +611,7 @@
                     {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}"
                                          onclick="window.location.href='{{ $notification->data['url'] ?? '#' }}'">
                                         <div class="flex justify-between items-start">
-                                            <p class="font-semibold text-sm">{{ $notification->data['title'] ?? 'Notification' }}</p>
+                                            <p class="font-semibold text-sm text-gray-900">{{ $notification->data['title'] ?? 'Notification' }}</p>
                                             @if(!$notification->read_at)
                                                 <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
                                             @endif
@@ -596,23 +627,22 @@
                             </div>
                         </div>
                     </div>
-                    <div aria-hidden="true" class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200"></div>
+                    
+                    <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200"></div>
 
                     {{-- Profile dropdown --}}
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="relative flex items-center">
-                            <span class="absolute -inset-1.5"></span>
+                        <button @click="open = !open" class="flex items-center focus:outline-none">
                             <span class="sr-only">Open user menu</span>
                             <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                                 alt="" class="size-8 rounded-full bg-gray-50 outline -outline-offset-1 outline-black/5" />
-                            <span class="hidden lg:flex lg:items-center">
-                                <span aria-hidden="true" class="ml-4 text-sm/6 font-semibold text-gray-900">
+                                 alt="Profile" class="size-8 rounded-full bg-gray-50 ring-2 ring-gray-200" />
+                            <span class="hidden lg:flex lg:items-center ml-3">
+                                <span class="text-sm font-semibold text-gray-900">
                                     {{ auth()->user()->name ?? 'Admin' }}
                                 </span>
-                                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
-                                     class="ml-2 size-5 text-gray-400">
+                                <svg class="ml-2 size-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" clip-rule="evenodd"
-                                          d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L10.53 12.53a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 0-1.06Z" />
+                                          d="M5.22 8.22a.75.75 0 0 1 1.06.02L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L10.53 12.53a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" />
                                 </svg>
                             </span>
                         </button>
@@ -620,12 +650,18 @@
                         {{-- Dropdown menu --}}
                         <div x-show="open"
                              @click.outside="open = false"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
                              class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                             <div class="px-4 py-2 text-sm text-gray-700 border-b">
                                 {{ auth()->user()->email ?? '' }}
                             </div>
                             <button @click="confirmLogout()"
-                                    class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
+                                    class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 focus:outline-none">
                                 Sign out
                             </button>
                         </div>
@@ -636,45 +672,37 @@
 
         {{-- Flash Notification --}}
         @if(session('success') || session('error'))
-        <div
-            x-data="{ show: true }"
-            x-init="setTimeout(() => show = false, 4000)"
-            x-show="show"
-            x-transition.opacity.duration.300ms
-            aria-live="assertive"
-            class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-[9999]"
-        >
+        <div x-data="{ show: true }"
+             x-init="setTimeout(() => show = false, 4000)"
+             x-show="show"
+             x-transition.opacity.duration.300ms
+             aria-live="assertive"
+             class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-[9999]">
             <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
-                <div
-                    class="pointer-events-auto w-full max-w-sm rounded-lg bg-white shadow-lg outline-1 outline-black/5 transition duration-300 ease-out transform"
-                    x-transition:enter="transform ease-out duration-300"
-                    x-transition:enter-start="translate-y-2 opacity-0 sm:translate-x-2 sm:translate-y-0"
-                    x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                >
+                <div class="pointer-events-auto w-full max-w-sm rounded-lg bg-white shadow-lg ring-1 ring-black/5"
+                     x-transition:enter="transform ease-out duration-300"
+                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-x-2 sm:translate-y-0"
+                     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0">
                     <div class="p-4">
                         <div class="flex items-start">
                             <div class="shrink-0">
                                 @if(session('success'))
-                                <svg class="size-6 text-green-500" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round" />
+                                <svg class="size-6 text-green-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>
                                 @else
-                                <svg class="size-6 text-red-500" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path d="M12 9v3m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke-linecap="round" stroke-linejoin="round"/>
+                                <svg class="size-6 text-red-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>
                                 @endif
                             </div>
 
                             <div class="ml-3 w-0 flex-1 pt-0.5">
                                 <p class="text-sm font-medium text-gray-900">
-                                    @if(session('success'))
-                                        Success
-                                    @else
-                                        Error
-                                    @endif
+                                    @if(session('success')) Success @else Error @endif
                                 </p>
                                 <p class="mt-1 text-sm text-gray-500">
                                     {{ session('success') ?? session('error') }}
@@ -684,18 +712,15 @@
                             <div class="ml-4 flex shrink-0">
                                 <button type="button" @click="show = false"
                                         class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none">
-                                    <span class="sr-only">Close notification</span>
-                                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-5">
-                                        <path
-                                            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                                    <span class="sr-only">Close</span>
+                                    <svg class="size-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                                     </svg>
                                 </button>
                             </div>
-
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
         @endif
@@ -706,7 +731,6 @@
                 {{ $slot }}
             </div>
         </main>
-
     </div>
 
     {{-- Hidden logout form --}}
@@ -715,18 +739,24 @@
     </form>
 
     <script>
-        // SweetAlert logout confirmation
         function confirmLogout() {
             Swal.fire({
-                title: 'Are you sure?',
-                text: "You will be logged out of your account!",
-                icon: 'warning',
+                title: 'Ready to leave?',
+                text: "Are you sure you want to log out?",
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, logout!',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, log out',
                 cancelButtonText: 'Cancel',
-                reverseButtons: true
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-xl shadow-2xl',
+                    title: 'text-gray-900 font-semibold',
+                    htmlContainer: 'text-gray-600',
+                    confirmButton: 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg',
+                    cancelButton: 'px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('logout-form').submit();

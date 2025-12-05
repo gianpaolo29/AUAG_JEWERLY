@@ -60,15 +60,28 @@
         </style>
     </x-slot>
 
-    {{-- Success/Error Messages --}}
+        {{-- Success Message --}}
     @if (session('success'))
-        <div class="fixed top-4 right-4 z-50 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg animate-fade-in">
+        <div
+            x-data="{ show: true }"
+            x-init="setTimeout(() => show = false, 1500)" {{-- 1.5 seconds --}}
+            x-show="show"
+            x-transition.opacity.duration.300ms
+            class="fixed top-4 right-4 z-50 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg animate-fade-in"
+        >
             {{ session('success') }}
         </div>
     @endif
 
+    {{-- Error Message --}}
     @if (session('error'))
-        <div class="fixed top-4 right-4 z-50 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg animate-fade-in">
+        <div
+            x-data="{ show: true }"
+            x-init="setTimeout(() => show = false, 1500)" {{-- 1.5 seconds --}}
+            x-show="show"
+            x-transition.opacity.duration.300ms
+            class="fixed top-4 right-4 z-50 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg animate-fade-in"
+        >
             {{ session('error') }}
         </div>
     @endif

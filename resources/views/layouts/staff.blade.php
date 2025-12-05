@@ -12,6 +12,8 @@
 
     {{-- Alpine.js --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -189,17 +191,16 @@
                                 {{ auth()->user()->name }}
                             </div>
 
-                            <a href="{{ route('staff-profile.edit') }}"
+                            <a href="{{ route('staff.profile.edit') }}"
                                class="block px-3 py-2 text-sm hover:bg-yellow-50 hover:text-yellow-800">
                                 Profile
                             </a>
 
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button class="block w-full text-left px-3 py-2 text-sm hover:bg-yellow-50 hover:text-yellow-800">
-                                    Log Out
-                                </button>
-                            </form>
+                            <button type="button"
+                                    @click="openProfile = false; confirmLogout()"
+                                    class="block w-full text-left px-3 py-2 text-sm hover:bg-yellow-50 hover:text-yellow-800">
+                                Log Out
+                            </button>
                         </div>
                     </div>
                 @endauth
@@ -270,17 +271,16 @@
                         <div class="text-xs text-white/60">{{ auth()->user()->email }}</div>
                     </div>
 
-                    <a href="{{ route('profile.edit') }}"
+                    <a href="{{ route('staff.profile.edit') }}"
                        class="block py-3 px-4 text-white/80 hover:text-yellow-400 hover:bg-white/5">
                         Profile
                     </a>
 
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button class="block w-full text-left py-3 px-4 text-white/80 hover:text-yellow-400 hover:bg-white/5">
-                            Log Out
-                        </button>
-                    </form>
+                    <button type="button"
+                            onclick="confirmLogout()"
+                            class="hidden md:block ml-1 px-4 py-2 rounded-full bg-yellow-400 text-gray-900 text-sm font-semibold hover:bg-yellow-300 transition">
+                        Log Out
+                    </button>
                 </div>
             @endauth
 
@@ -307,13 +307,45 @@
 <main class="pt-20">
     {{ $slot }}
 </main>
+{{-- Global hidden logout form --}}
+<form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+    @csrf
+</form>
 
 <script>
-function scrollToSection(sectionId) {
-    const el = document.querySelector(sectionId);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
-</script>
+    function scrollToSection(sectionId) {
+        const el = document.querySelector(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
 
+    function confirmLogout() {
+        Swal.fire({
+            title: 'Ready to Leave?',
+            text: "You will be logged out of your current session.",
+            icon: 'warning',
+            iconColor: '#ef4444',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#4b5563',
+            confirmButtonText: 'Yes, sign me out',
+            cancelButtonText: 'Stay logged in',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup: 'rounded-xl shadow-xl',
+                title: 'text-gray-900',
+                htmlContainer: 'text-gray-600'
+            },
+            background: '#f9fafb',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('logout-form').submit();
+            }
+        });
+    }
+
+</script>
 </body>
 </html>
+
+

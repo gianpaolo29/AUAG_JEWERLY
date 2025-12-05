@@ -17,6 +17,7 @@ use App\Http\Controllers\Customer\FavoriteController;
 use App\Http\Controllers\Customer\ShopController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StaffProfileController;
 use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Staff\StaffPawnController;
 use App\Http\Controllers\Staff\StaffProductController;
@@ -46,7 +47,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::get('/staff/profile', [ProfileController::class, 'editStaff'])->name('staff-profile.edit');
+    Route::get('/staff/profile', [StaffProfileController::class, 'edit'])->name('staff.profile.edit');
+    Route::patch('/staff/profile', [StaffProfileController::class, 'update'])->name('staff.profile.update');
+    Route::delete('/staff/profile', [StaffProfileController::class, 'destroy'])->name('staff.profile.destroy');
+    
     
 });
 
