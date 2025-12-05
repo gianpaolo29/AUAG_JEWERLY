@@ -42,7 +42,6 @@ class Product extends Model
         'modern',
         'luxury',
         'casual',
-        'wedding',
     ];
 
     protected $appends = ['image_url', 'is_favorite'];
