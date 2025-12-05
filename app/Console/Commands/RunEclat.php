@@ -16,7 +16,7 @@ class RunEclat extends Command
     {
         $minSupport = (int) $this->option('min_support');
 
-        // 1) Get Buy transactions + products from MySQL
+
         $this->info('Fetching Buy transactions from database...');
 
         $rows = DB::table('transactions as t')
@@ -32,7 +32,7 @@ class RunEclat extends Command
             return Command::SUCCESS;
         }
 
-        // Build PHP array: [ "transaction_id" => [product_ids...] ]
+
         $transactions = [];
 
         foreach ($rows as $row) {
@@ -42,7 +42,7 @@ class RunEclat extends Command
                 $transactions[$tid] = [];
             }
 
-            // Avoid duplicates per transaction
+           
             if (! in_array((int) $row->product_id, $transactions[$tid], true)) {
                 $transactions[$tid][] = (int) $row->product_id;
             }
@@ -53,7 +53,7 @@ class RunEclat extends Command
             'min_support'  => $minSupport,
         ]);
 
-        // 2) Run Python script
+
         $python = config('services.python.binary');
         $script = base_path('scripts/eclat_miner.py');
 

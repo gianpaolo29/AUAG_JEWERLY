@@ -3,10 +3,7 @@ import json
 from collections import defaultdict
 
 def eclat(prefix, items, min_support, freq_itemsets):
-    """
-    Recursive ECLAT algorithm.
-    items: list of (item, tidset)
-    """
+
     while items:
         item, tidset = items.pop()
         support = len(tidset)
@@ -20,7 +17,6 @@ def eclat(prefix, items, min_support, freq_itemsets):
             "support": support,
         })
 
-        # Build new candidate items by intersecting TID-sets
         new_items = []
         for other_item, other_tidset in items:
             inter = tidset & other_tidset
@@ -40,11 +36,10 @@ def main():
     transactions = data.get("transactions", {})  # { "1": [13,16], ... }
     min_support = int(data.get("min_support", 2))
 
-    # Build vertical representation: item -> set of transaction IDs (TID-set)
     item_tidset = defaultdict(set)
 
     for tid_str, items in transactions.items():
-        tid = int(tid_str)  # or keep as string, but int is fine
+        tid = int(tid_str)
         for item in items:
             item_tidset[int(item)].add(tid)
 
@@ -53,7 +48,6 @@ def main():
 
     eclat([], items_list, min_support, freq_itemsets)
 
-    # Optional: sort results (by support desc)
     freq_itemsets.sort(key=lambda x: (-x["support"], x["items"]))
 
     print(json.dumps({"frequent_itemsets": freq_itemsets}))

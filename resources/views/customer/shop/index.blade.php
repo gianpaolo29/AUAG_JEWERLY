@@ -60,11 +60,11 @@
         </style>
     </x-slot>
 
-        {{-- Success Message --}}
+    {{-- Success Message --}}
     @if (session('success'))
         <div
             x-data="{ show: true }"
-            x-init="setTimeout(() => show = false, 1500)" {{-- 1.5 seconds --}}
+            x-init="setTimeout(() => show = false, 1500)"
             x-show="show"
             x-transition.opacity.duration.300ms
             class="fixed top-4 right-4 z-50 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg animate-fade-in"
@@ -77,7 +77,7 @@
     @if (session('error'))
         <div
             x-data="{ show: true }"
-            x-init="setTimeout(() => show = false, 1500)" {{-- 1.5 seconds --}}
+            x-init="setTimeout(() => show = false, 1500)"
             x-show="show"
             x-transition.opacity.duration.300ms
             class="fixed top-4 right-4 z-50 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg animate-fade-in"
@@ -121,8 +121,8 @@
                                 <div class="relative">
                                     <input type="text"
                                            name="search"
-                                           value="{{ request('search') }}"
                                            x-model="searchQuery"
+                                           value="{{ request('search') }}"
                                            placeholder="Search products..."
                                            class="w-full pl-12 pr-4 py-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
                                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -134,8 +134,20 @@
                                 <input type="hidden" name="sort" x-model="sort">
                                 <input type="hidden" name="min_price" x-model="filters.min_price">
                                 <input type="hidden" name="max_price" x-model="filters.max_price">
-                                <template x-for="category in filters.categories" :key="category">
+
+                                {{-- Hidden categories --}}
+                                <template x-for="category in filters.categories" :key="'c-'+category">
                                     <input type="hidden" name="category[]" :value="category">
+                                </template>
+
+                                {{-- Hidden materials --}}
+                                <template x-for="material in filters.materials" :key="'m-'+material">
+                                    <input type="hidden" name="material[]" :value="material">
+                                </template>
+
+                                {{-- Hidden styles --}}
+                                <template x-for="style in filters.styles" :key="'s-'+style">
+                                    <input type="hidden" name="style[]" :value="style">
                                 </template>
                             </form>
                         </div>
@@ -153,7 +165,7 @@
                     </div>
 
                     {{-- Product Count & View Toggle --}}
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                         <p class="text-gray-600 dark:text-gray-400 font-medium">
                             Showing <span class="text-gray-900 dark:text-white">{{ $products->count() }}</span> of <span class="text-gray-900 dark:text-white">{{ $products->total() }}</span> products
                             @if(request('search'))
@@ -224,12 +236,12 @@
                                             </h3>
                                             <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">{{ $product->size }}</p>
                                         </div>
-                                        <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center justify-between mb-4 space-x-2">
                                             <span class="text-xl font-bold text-gray-900 dark:text-white">
                                                 ₱{{ number_format($product->price, 2) }}
                                             </span>
-                                            <span class="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $product->style }}</span>
-                                            <span class="text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $product->material }}</span>
+                                            <span class="text-xs sm:text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $product->style }}</span>
+                                            <span class="text-xs sm:text-sm text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $product->material }}</span>
                                         </div>
 
                                         {{-- Action Buttons --}}
@@ -240,15 +252,15 @@
                                             </button>
 
                                             <form action="{{ route('favorites.toggle', $product) }}" method="POST" @click.stop>
-    @csrf
-    <button type="submit"
-        class="w-12 h-12 flex items-center justify-center rounded-xl shadow-sm smooth-transition"
-        :class="{{ $product->is_favorite }} ? 'bg-red-500 text-white' : 'gradient-bg text-white'">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-        </svg>
-    </button>
-</form>
+                                                @csrf
+                                                <button type="submit"
+                                                    class="w-12 h-12 flex items-center justify-center rounded-xl shadow-sm smooth-transition"
+                                                    :class="{{ $product->is_favorite }} ? 'bg-red-500 text-white' : 'gradient-bg text-white'">
+                                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -272,7 +284,7 @@
                                         Try adjusting your filters to find what you're looking for.
                                     @endif
                                 </p>
-                                @if(request('search') || request('category') || request('min_price') || request('max_price'))
+                                @if(request('search') || request('category') || request('min_price') || request('max_price') || request('material') || request('style'))
                                     <a href="{{ route('shop.index') }}" class="inline-flex items-center px-6 py-3 gradient-bg text-white rounded-xl hover:opacity-90 smooth-transition font-medium shadow-sm">
                                         Clear filters
                                     </a>
@@ -306,7 +318,7 @@
                         {{-- Filters Form --}}
                         <form method="GET" action="{{ route('shop.index') }}" id="filterForm">
                             <input type="hidden" name="sort" x-model="sort">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
+                            <input type="hidden" name="search" x-model="searchQuery">
 
                             {{-- Price Range --}}
                             <div class="mb-6">
@@ -333,11 +345,16 @@
                                 </div>
                             </div>
 
+                            @php 
+                                $selectedCats = (array) request('category', []); 
+                                $selectedMaterials = (array) request('material', []);
+                                $selectedStyles = (array) request('style', []);
+                            @endphp
+
                             {{-- Categories --}}
                             <div class="mb-6">
                                 <h4 class="font-medium text-gray-900 dark:text-white mb-4">Categories</h4>
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
-                                    @php $selectedCats = (array) request('category', []); @endphp
                                     @forelse ($categories as $cat)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
                                             <input type="checkbox"
@@ -350,6 +367,46 @@
                                         </label>
                                     @empty
                                         <p class="text-sm text-gray-500">No categories found.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            {{-- Materials --}}
+                            <div class="mb-6">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4">Materials</h4>
+                                <div class="space-y-3 max-h-60 overflow-y-auto">
+                                    @forelse ($materials as $material)
+                                        <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
+                                            <input type="checkbox"
+                                                   name="material[]"
+                                                   value="{{ $material }}"
+                                                   x-model="filters.materials"
+                                                   @checked(in_array($material, $selectedMaterials))
+                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ $material }}</span>
+                                        </label>
+                                    @empty
+                                        <p class="text-sm text-gray-500">No materials found.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            {{-- Styles --}}
+                            <div class="mb-6">
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4">Style</h4>
+                                <div class="space-y-3 max-h-60 overflow-y-auto">
+                                    @forelse ($styles as $style)
+                                        <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
+                                            <input type="checkbox"
+                                                   name="style[]"
+                                                   value="{{ $style }}"
+                                                   x-model="filters.styles"
+                                                   @checked(in_array($style, $selectedStyles))
+                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ $style }}</span>
+                                        </label>
+                                    @empty
+                                        <p class="text-sm text-gray-500">No styles found.</p>
                                     @endforelse
                                 </div>
                             </div>
@@ -397,7 +454,7 @@
                 <div class="p-6">
                     <form method="GET" action="{{ route('shop.index') }}" id="mobileFilterForm">
                         <input type="hidden" name="sort" x-model="sort">
-                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="search" x-model="searchQuery">
 
                         <div class="space-y-8">
                             {{-- Price Range --}}
@@ -434,6 +491,42 @@
                                                    @checked(in_array($cat->id, request('category', [])))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
                                             <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ $cat->name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Materials (Mobile) --}}
+                            <div>
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4">Materials</h4>
+                                <div class="space-y-3 max-h-60 overflow-y-auto">
+                                    @foreach ($materials as $material)
+                                        <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
+                                            <input type="checkbox"
+                                                   name="material[]"
+                                                   value="{{ $material }}"
+                                                   x-model="filters.materials"
+                                                   @checked(in_array($material, (array) request('material', [])))
+                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ $material }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Styles (Mobile) --}}
+                            <div>
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-4">Style</h4>
+                                <div class="space-y-3 max-h-60 overflow-y-auto">
+                                    @foreach ($styles as $style)
+                                        <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
+                                            <input type="checkbox"
+                                                   name="style[]"
+                                                   value="{{ $style }}"
+                                                   x-model="filters.styles"
+                                                   @checked(in_array($style, (array) request('style', [])))
+                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ $style }}</span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -526,7 +619,7 @@
                                         <h4 class="font-medium text-gray-900 dark:text-white mb-1">Available Quantity</h4>
                                         <p class="text-gray-600 dark:text-gray-400" x-text="selectedProduct.quantity || 0"></p>
                                         <h4 class="font-medium text-gray-900 dark:text-white mb-1">Size</h4>
-                                        <p class="text-gray-600 dark:text-gray-400" x-text="selectedProduct.size || 'N/A"></p>
+                                        <p class="text-gray-600 dark:text-gray-400" x-text="selectedProduct.size || 'N/A'"></p>
                                     </div>
                                 </div>
                             </div>
@@ -534,17 +627,16 @@
                             {{-- Action Buttons --}}
                             <div class="flex gap-3">
                                 <form :action="'/favorites/' + selectedProduct.id + '/toggle'" method="POST" @click.stop>
-    @csrf
-    <button type="submit"
-        :class="`w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2 ${selectedProduct.is_favorite ? 'bg-red-500 text-white' : 'gradient-bg text-white'}`"
-        @click="toggleFavorite(selectedProduct.id)">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-        </svg>
-        <span x-text="selectedProduct.is_favorite ? 'Remove Favorite' : 'Add to Favorite'"></span>
-    </button>
-</form>
-
+                                    @csrf
+                                    <button type="submit"
+                                        :class="`w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2 ${selectedProduct.is_favorite ? 'bg-red-500 text-white' : 'gradient-bg text-white'}`"
+                                        @click="toggleFavorite(selectedProduct.id)">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                        </svg>
+                                        <span x-text="selectedProduct.is_favorite ? 'Remove Favorite' : 'Add to Favorite'"></span>
+                                    </button>
+                                </form>
 
                                 <button @click="productModalOpen = false"
                                         class="flex-1 px-4 py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-700 smooth-transition font-medium shadow-sm">
@@ -558,100 +650,113 @@
         </div>
     </div>
 
-<script>
-    function shop() {
-    return {
-        productModalOpen: false,
-        openFilters: false,
-        searchQuery: '{{ request('search', '') }}',
-        sort: '{{ request('sort', 'newest') }}',
-        gridView: 'grid',
-        favorites: [],
-        selectedProduct: {},
-        filters: {
-            min_price: '{{ request('min_price', '') }}',
-            max_price: '{{ request('max_price', '') }}',
-            categories: @json(request('category', []))
-        },
+    <script>
+        function shop() {
+            return {
+                productModalOpen: false,
+                openFilters: false,
+                searchQuery: @json(request('search', '')),
+                sort: @json(request('sort', 'newest')),
+                gridView: 'grid',
+                favorites: [],
+                selectedProduct: {},
+                categoryOptions: @json($categories->pluck('name', 'id')),
+                filters: {
+                    min_price: @json(request('min_price', '')),
+                    max_price: @json(request('max_price', '')),
+                    categories: @json((array) request('category', [])),
+                    materials: @json((array) request('material', [])),
+                    styles: @json((array) request('style', [])),
+                },
 
-        init() {
-                // Convert filter categories
-                this.filters.categories = this.filters.categories.map(cat => cat.toString());
+                init() {
+                    this.filters.categories = this.filters.categories.map(cat => cat.toString());
+                    this.filters.materials = this.filters.materials.map(m => m.toString());
+                    this.filters.styles = this.filters.styles.map(s => s.toString());
 
-                // 1. Load localStorage favorites
-                const saved = localStorage.getItem('favorites');
-                this.favorites = saved ? JSON.parse(saved).map(id => Number(id)) : [];
+                    const saved = localStorage.getItem('favorites');
+                    this.favorites = saved ? JSON.parse(saved).map(id => Number(id)) : [];
 
-                // 2. Load backend favorites from Blade
-                const backendFavorites = @json($favoriteIds).map(id => Number(id));
+                    const backendFavorites = @json($favoriteIds).map(id => Number(id));
+                    backendFavorites.forEach(id => {
+                        if (!this.favorites.includes(id)) {
+                            this.favorites.push(id);
+                        }
+                    });
 
-                // 3. Merge backend favorites into local favorites
-                backendFavorites.forEach(id => {
-                    if (!this.favorites.includes(id)) {
-                        this.favorites.push(id);
+                    localStorage.setItem('favorites', JSON.stringify(this.favorites));
+                },
+
+                loadFavorites() {
+                    const saved = localStorage.getItem('favorites');
+
+                    if (!saved) {
+                        this.favorites = [];
+                        return;
                     }
-                });
 
-                // 4. Save merged results
-                localStorage.setItem('favorites', JSON.stringify(this.favorites));
+                    this.favorites = JSON.parse(saved).map(id => Number(id));
+                },
+
+                saveFavorites() {
+                    localStorage.setItem('favorites', JSON.stringify(this.favorites));
+                },
+
+                toggleFavorite(productId) {
+                    productId = Number(productId);
+
+                    const index = this.favorites.indexOf(productId);
+
+                    if (index > -1) {
+                        this.favorites.splice(index, 1);
+                    } else {
+                        this.favorites.push(productId);
+                    }
+
+                    this.saveFavorites();
+                },
+
+                openProductModal(product) {
+                    product.id = Number(product.id);
+                    this.selectedProduct = product;
+                    this.productModalOpen = true;
+
+                    axios.post(`/product/view/${product.id}`);
+                },
+
+                applyFilters() {
+                    document.getElementById('searchForm').submit();
+                },
+
+                clearFilters() {
+                    this.sort = 'newest';
+                    this.searchQuery = '';
+                    this.filters = {
+                        min_price: '',
+                        max_price: '',
+                        categories: [],
+                        materials: [],
+                        styles: [],
+                    };
+                    window.location.href = '{{ route('shop.index') }}';
+                },
+
+                hasActiveFilters() {
+                    return !!(
+                        this.searchQuery ||
+                        this.filters.min_price ||
+                        this.filters.max_price ||
+                        (this.filters.categories && this.filters.categories.length) ||
+                        (this.filters.materials && this.filters.materials.length) ||
+                        (this.filters.styles && this.filters.styles.length)
+                    );
+                },
+
+                categoryLabel(id) {
+                    id = id.toString();
+                    return this.categoryOptions[id] || ('Category ' + id);
+                },
             }
-            ,
-
-        loadFavorites() {
-            const saved = localStorage.getItem('favorites');
-
-            if (!saved) {
-                this.favorites = [];
-                return;
-            }
-
-            // 🔥 MOST IMPORTANT FIX: ALWAYS convert to numeric IDs
-            this.favorites = JSON.parse(saved).map(id => Number(id));
-        },
-
-        saveFavorites() {
-            // ensure only numbers stored
-            localStorage.setItem('favorites', JSON.stringify(this.favorites));
-        },
-
-        toggleFavorite(productId) {
-            productId = Number(productId); // 🔥 convert to number always
-
-            const index = this.favorites.indexOf(productId);
-
-            if (index > -1) {
-                this.favorites.splice(index, 1);
-            } else {
-                this.favorites.push(productId);
-            }
-
-            this.saveFavorites();
-        },
-
-        openProductModal(product) {
-            product.id = Number(product.id);
-            this.selectedProduct = product;
-
-            this.productModalOpen = true;
-
-            axios.post(`/product/view/${product.id}`)
-        },
-
-        applyFilters() {
-            document.getElementById('searchForm').submit();
-        },
-
-        clearFilters() {
-            this.sort = 'newest';
-            this.searchQuery = '';
-            this.filters = {
-                min_price: '',
-                max_price: '',
-                categories: []
-            };
-            window.location.href = '{{ route('shop.index') }}';
         }
-    }
-}
-</script>
+    </script>
 </x-app-layout>

@@ -17,10 +17,6 @@ class EclatService
         $this->scriptPath   = base_path('scripts/eclat_miner.py');
     }
 
-    /**
-     * Build transactions array from DB:
-     * [ "transaction_id" => [product_id, ...], ... ]
-     */
     protected function buildTransactions(): array
     {
         $rows = DB::table('transactions as t')
@@ -50,10 +46,6 @@ class EclatService
         return $transactions;
     }
 
-    /**
-     * Call Python ECLAT and return the raw result array.
-     * returns: ['frequent_itemsets' => [ ['items'=>[...], 'support'=>N], ... ]]
-     */
     public function mine(int $minSupport = 2): array
     {
         $transactions = $this->buildTransactions();
@@ -81,21 +73,18 @@ class EclatService
         return $data ?: ['frequent_itemsets' => []];
     }
 
-    /**
-     * Get recommended products for a given product ID (in memory only).
-     */
     public function recommendForProduct(int $productId, int $minSupport = 2, int $limit = 4)
     {
         $result   = $this->mine($minSupport);
         $itemsets = $result['frequent_itemsets'] ?? [];
 
-        $scores = []; // product_id => accumulated score
+        $scores = []; 
 
         foreach ($itemsets as $set) {
             $items   = $set['items'] ?? [];
             $support = $set['support'] ?? 0;
 
-            // Only use itemsets that contain the target product
+
             if (! in_array($productId, $items, true)) {
                 continue;
             }
@@ -114,10 +103,9 @@ class EclatService
         }
 
         if (empty($scores)) {
-            return collect(); // empty Laravel collection
+            return collect(); 
         }
 
-        // Sort by score desc
         arsort($scores);
         $topIds = array_slice(array_keys($scores), 0, $limit);
 

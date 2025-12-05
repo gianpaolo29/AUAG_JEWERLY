@@ -16,7 +16,7 @@ class ShopController extends Controller
         $query = Product::with('category')->active();
 
         // Search filter
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
@@ -30,17 +30,27 @@ class ShopController extends Controller
         }
 
         // Price filter
-        if ($request->has('min_price') && $request->min_price != '') {
+        if ($request->filled('min_price')) {
             $query->where('price', '>=', $request->min_price);
         }
 
-        if ($request->has('max_price') && $request->max_price != '') {
+        if ($request->filled('max_price')) {
             $query->where('price', '<=', $request->max_price);
         }
 
         // Category filter
-        if ($request->has('category')) {
+        if ($request->has('category') && $request->category) {
             $query->whereIn('category_id', (array) $request->category);
+        }
+
+        // Material filter
+        if ($request->has('material') && $request->material) {
+            $query->whereIn('material', (array) $request->material);
+        }
+
+        // Style filter
+        if ($request->has('style') && $request->style) {
+            $query->whereIn('style', (array) $request->style);
         }
 
         // Sorting
@@ -48,15 +58,19 @@ class ShopController extends Controller
             case 'price-low':
                 $query->orderBy('price', 'asc');
                 break;
+
             case 'price-high':
                 $query->orderBy('price', 'desc');
                 break;
+
             case 'popular':
                 $query->orderBy('view_count', 'desc');
                 break;
+
             case 'recommended':
                 if (auth()->check()) {
                     $user = auth()->user();
+
                     $query
                         ->leftJoin('favorites as f', function ($join) use ($user) {
                             $join->on('f.product_id', '=', 'products.id')
@@ -77,7 +91,9 @@ class ShopController extends Controller
                             'products.view_count',
                             'products.status',
                             'products.created_at',
-                            'products.updated_at'
+                            'products.updated_at',
+                            'products.quantity',
+                            'products.size',
                         ])
                         ->selectRaw('COUNT(f.product_id) as user_favorited')
                         ->selectRaw('COUNT(pv.product_id) as user_view_count')
@@ -92,7 +108,9 @@ class ShopController extends Controller
                             'products.view_count',
                             'products.status',
                             'products.created_at',
-                            'products.updated_at'
+                            'products.updated_at',
+                            'products.quantity',
+                            'products.size',
                         ])
                         ->orderByDesc('user_favorited')
                         ->orderByDesc('user_view_count')
@@ -104,6 +122,7 @@ class ShopController extends Controller
                         ->orderBy('created_at', 'desc');
                 }
                 break;
+
             case 'newest':
             default:
                 $query->orderBy('created_at', 'desc');
@@ -113,13 +132,34 @@ class ShopController extends Controller
         $products = $query->paginate(12);
         $categories = Category::all();
 
+        // Distinct materials & styles for filters
+        $materials = Product::active()
+            ->whereNotNull('material')
+            ->where('material', '!=', '')
+            ->distinct()
+            ->orderBy('material')
+            ->pluck('material');
+
+        $styles = Product::active()
+            ->whereNotNull('style')
+            ->where('style', '!=', '')
+            ->distinct()
+            ->orderBy('style')
+            ->pluck('style');
+
         // Get user's favorite product IDs if logged in
         $favoriteIds = [];
         if (Auth::check()) {
             $favoriteIds = Auth::user()->favorites()->pluck('product_id')->toArray();
         }
 
-        return view('customer.shop.index', compact('products', 'categories', 'favoriteIds'));
+        return view('customer.shop.index', compact(
+            'products',
+            'categories',
+            'favoriteIds',
+            'materials',
+            'styles'
+        ));
     }
 
     public function trackView(Product $product)
