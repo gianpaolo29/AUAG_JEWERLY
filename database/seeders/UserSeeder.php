@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         // Create Admin User
         User::firstOrCreate(
             [
-                'email' => 'admin1000@gmail.com',
+                'email' => 'admin1@gmail.com',
             ],
             [
                 'name' => 'Gian Mulingbayan',
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
         // Create Staff User
         User::firstOrCreate(
             [
-                'email' => 'neil.armstrong@gmail.com.com',
+                'email' => 'neil.armstrong@gmail.com',
             ],
             [
                 'name' => 'Neil Armstrong',
@@ -56,12 +56,11 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // 🔥 Create 100 random customer users
-        User::factory()
-            ->count(100)
-            ->state([
-                'role' => 'customer',
-            ])
-            ->create();
+        // User::factory()
+        //     ->count(100)
+        //     ->state([
+        //         'role' => 'customer',
+        //     ])
+        //     ->create();
     }
 }

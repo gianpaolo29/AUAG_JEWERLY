@@ -61,7 +61,7 @@ class RunEclat extends Command
 
         $process = new Process([$python, $script]);
         $process->setInput($payload);
-        $process->setTimeout(300); // 5 minutes max, adjust if needed
+        $process->setTimeout(300); 
         $process->run();
 
         if (! $process->isSuccessful()) {
