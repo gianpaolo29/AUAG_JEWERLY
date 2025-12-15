@@ -47,7 +47,7 @@
             width: 100%;
             height: 100%;
             /* Ensure this path is correct for your Laravel setup */
-            background-image: radial-gradient(circle at center, rgba(0,0,0,0.4), #000000), url("{{ asset('storage/BG.jpg') }}");
+            background-image: radial-gradient(circle at center, rgba(0,0,0,0.4), #000000), url("{{ asset('BG.jpg') }}");
             background-repeat: no-repeat;
             background-position: center;
             background-size: cover;

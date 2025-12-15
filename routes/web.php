@@ -32,7 +32,7 @@ use App\Http\Controllers\GoldSpotPriceController;
 /* These routes are defining the endpoints for different functionalities in the application: */
     // Route::get('/api/gold/spot', GoldSpotPriceController::class)->name('gold.spot');
     // Route::get('/gold', function () {return view('gold-index');})->name('gold.index');
-    // Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'callback']);
