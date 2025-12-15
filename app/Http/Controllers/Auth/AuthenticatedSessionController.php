@@ -48,7 +48,6 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('staff.dashboard'));
         }
 
-        return redirect()->intended(route('home'));
     }
 
     /**

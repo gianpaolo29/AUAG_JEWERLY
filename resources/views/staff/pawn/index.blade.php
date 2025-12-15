@@ -1,4 +1,17 @@
 <x-staff-layout title="Pawn Items">
+@if (session('download_pawn_id'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const url = "{{ route('staff.pawn.download', ['pawn' => session('download_pawn_id')]) }}";
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', '');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        });
+    </script>
+@endif
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <div class="flex flex-col gap-6">

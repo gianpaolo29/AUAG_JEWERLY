@@ -17,6 +17,11 @@ return [
     'binary' => env('PYTHON_BINARY', 'python'),
     ],
 
+    'goldapi' => [
+    'key'        => env('GOLDAPI_KEY'),
+    'usd_to_php' => env('USD_TO_PHP_RATE', 59.6),
+],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

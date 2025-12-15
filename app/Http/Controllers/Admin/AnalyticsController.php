@@ -3,17 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Services\EclatService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\EclatService;
-use App\Models\Product;
 
 class AnalyticsController extends Controller
 {
     public function index(Request $request, EclatService $eclat)
     {
-        // --- DATE RANGE FILTER (for most charts & funnel) ---
         // accepted: today | 7d | 30d | all
         $range = $request->input('range', '30d');
 
@@ -36,7 +35,6 @@ class AnalyticsController extends Controller
             default => 'All Time',
         };
 
-        // Helper: % change between current & previous
         $percentChange = function (float $current, float $previous): float {
             if ($previous > 0) {
                 return round((($current - $previous) / $previous) * 100, 1);
@@ -44,7 +42,7 @@ class AnalyticsController extends Controller
             return $current > 0 ? 100.0 : 0.0;
         };
 
-        // Base revenue query (Buy transactions only)
+        // Buy revenue base query
         $revenueBaseQuery = function () {
             return DB::table('transactions')
                 ->join('transaction_items', 'transactions.id', '=', 'transaction_items.transaction_id')
@@ -52,154 +50,227 @@ class AnalyticsController extends Controller
         };
 
         // ----------------------------------------------------
-        // TOP METRICS – TODAY / WEEK / MONTH + SPARKLINES
+        // RANGE WINDOW (current vs previous) + spark mode
         // ----------------------------------------------------
+        switch ($range) {
+            case 'today':
+                $rangeStart = now()->startOfDay();
+                $rangeEnd   = now()->endOfDay();
+                $prevStart  = now()->subDay()->startOfDay();
+                $prevEnd    = now()->subDay()->endOfDay();
+                $sparkMode  = 'hour';
+                $sparkCount = 24;
+                break;
 
-        // TODAY vs YESTERDAY
-        $todayStart     = now()->startOfDay();
-        $todayEnd       = now()->endOfDay();
-        $yesterdayStart = now()->subDay()->startOfDay();
-        $yesterdayEnd   = now()->subDay()->endOfDay();
+            case '7d':
+                $rangeStart = now()->subDays(6)->startOfDay();
+                $rangeEnd   = now()->endOfDay();
+                $prevStart  = now()->subDays(13)->startOfDay();
+                $prevEnd    = now()->subDays(7)->endOfDay();
+                $sparkMode  = 'day';
+                $sparkCount = 7;
+                break;
 
-        $todayRevenue = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$todayStart, $todayEnd])
-            ->sum('transaction_items.line_total');
+            case '30d':
+                $rangeStart = now()->subDays(29)->startOfDay();
+                $rangeEnd   = now()->endOfDay();
+                $prevStart  = now()->subDays(59)->startOfDay();
+                $prevEnd    = now()->subDays(30)->endOfDay();
+                $sparkMode  = 'day';
+                $sparkCount = 30;
+                break;
 
-        $yesterdayRevenue = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$yesterdayStart, $yesterdayEnd])
-            ->sum('transaction_items.line_total');
-
-        $todayRevenueChange = $percentChange($todayRevenue, $yesterdayRevenue);
-
-        // Today sparkline (hourly)
-        $todayRows = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$todayStart, $todayEnd])
-            ->selectRaw('HOUR(transactions.created_at) as hour, SUM(transaction_items.line_total) as total')
-            ->groupBy('hour')
-            ->pluck('total', 'hour');
-
-        $todayRevenueData = [];
-        for ($h = 0; $h < 24; $h++) {
-            $todayRevenueData[] = (float) ($todayRows[$h] ?? 0);
+            case 'all':
+            default:
+                $rangeStart = null;
+                $rangeEnd   = null;
+                $prevStart  = null;
+                $prevEnd    = null;
+                $sparkMode  = 'month';
+                $sparkCount = 12;
+                break;
         }
 
-        // THIS WEEK vs LAST WEEK (week-to-date)
-        $weekStart      = now()->startOfWeek();
-        $weekEnd        = now()->endOfDay();
-        $prevWeekStart  = (clone $weekStart)->subWeek();
-        $prevWeekEnd    = (clone $weekStart)->subDay();
-
-        $weekRevenue = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$weekStart, $weekEnd])
-            ->sum('transaction_items.line_total');
-
-        $prevWeekRevenue = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$prevWeekStart, $prevWeekEnd])
-            ->sum('transaction_items.line_total');
-
-        $weekRevenueChange = $percentChange($weekRevenue, $prevWeekRevenue);
-
-        // Week sparkline (current week, by day)
-        $weekRows = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$weekStart, $weekEnd])
-            ->selectRaw('DATE(transactions.created_at) as day, SUM(transaction_items.line_total) as total')
-            ->groupBy('day')
-            ->pluck('total', 'day');
-
-        $weekRevenueData = [];
-        for ($i = 0; $i < 7; $i++) {
-            $day = $weekStart->copy()->addDays($i)->toDateString();
-            $weekRevenueData[] = (float) ($weekRows[$day] ?? 0);
-        }
-
-        // THIS MONTH vs LAST MONTH (month-to-date)
-        $monthStart      = now()->startOfMonth();
-        $monthEnd        = now()->endOfDay();
-        $prevMonthStart  = (clone $monthStart)->subMonth()->startOfMonth();
-        $prevMonthEnd    = (clone $monthStart)->subDay();
-
-        $monthRevenue = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$monthStart, $monthEnd])
-            ->sum('transaction_items.line_total');
-
-        $prevMonthRevenue = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$prevMonthStart, $prevMonthEnd])
-            ->sum('transaction_items.line_total');
-
-        $monthRevenueChange = $percentChange($monthRevenue, $prevMonthRevenue);
-
-        // Month sparkline (last 30 days, by day)
-        $last30Start = now()->subDays(29)->startOfDay();
-        $last30End   = now()->endOfDay();
-
-        $monthRows = $revenueBaseQuery()
-            ->whereBetween('transactions.created_at', [$last30Start, $last30End])
-            ->selectRaw('DATE(transactions.created_at) as day, SUM(transaction_items.line_total) as total')
-            ->groupBy('day')
-            ->pluck('total', 'day');
-
-        $monthRevenueData = [];
-        for ($i = 0; $i < 30; $i++) {
-            $day = $last30Start->copy()->addDays($i)->toDateString();
-            $monthRevenueData[] = (float) ($monthRows[$day] ?? 0);
-        }
-
-        // All-time total revenue
-        $totalRevenue = $revenueBaseQuery()
-            ->sum('transaction_items.line_total');
-
-        // Buy count (all time) for overall AOV
-        $buyCount = DB::table('transactions')
-            ->where('type', 'Buy')
-            ->count();
-
-        $avgOrderValue = $buyCount > 0
-            ? round($totalRevenue / $buyCount, 2)
-            : 0;
-
-        // ----------------------------------------------------
-        // TOTAL ORDERS (range) + % CHANGE vs prior period
-        // ----------------------------------------------------
-        if ($range === 'all') {
-            $totalOrders      = $buyCount;
-            $totalOrdersChange = 0;
-        } else {
-            // derive [rangeStart, rangeEnd] and [prevRangeStart, prevRangeEnd]
-            switch ($range) {
-                case 'today':
-                    $rangeStart      = $todayStart;
-                    $rangeEnd        = $todayEnd;
-                    $prevRangeStart  = $yesterdayStart;
-                    $prevRangeEnd    = $yesterdayEnd;
-                    break;
-
-                case '7d':
-                    $rangeStart      = now()->subDays(6)->startOfDay();
-                    $rangeEnd        = now()->endOfDay();
-                    $prevRangeStart  = now()->subDays(13)->startOfDay();
-                    $prevRangeEnd    = now()->subDays(7)->endOfDay();
-                    break;
-
-                case '30d':
-                default:
-                    $rangeStart      = now()->subDays(29)->startOfDay();
-                    $rangeEnd        = now()->endOfDay();
-                    $prevRangeStart  = now()->subDays(59)->startOfDay();
-                    $prevRangeEnd    = now()->subDays(30)->endOfDay();
-                    break;
+        $applyBetween = function ($query, string $column, $start, $end) {
+            if ($start && $end) {
+                $query->whereBetween($column, [$start, $end]);
             }
+            return $query;
+        };
 
-            $totalOrders = DB::table('transactions')
+        // ----------------------------------------------------
+        // TOP CARDS (ALL FILTERED BY RANGE)
+        // Revenue, Orders, AOV + sparklines + % change
+        // Plus Items Sold, Unique Buyers
+        // ----------------------------------------------------
+
+        // Revenue (range)
+        $rangeRevenueQ = $revenueBaseQuery();
+        $applyBetween($rangeRevenueQ, 'transactions.created_at', $rangeStart, $rangeEnd);
+        $rangeRevenue = (float) $rangeRevenueQ->sum('transaction_items.line_total');
+
+        // Revenue (prev)
+        $prevRevenue = 0.0;
+        if ($prevStart && $prevEnd) {
+            $prevRevenueQ = $revenueBaseQuery();
+            $applyBetween($prevRevenueQ, 'transactions.created_at', $prevStart, $prevEnd);
+            $prevRevenue = (float) $prevRevenueQ->sum('transaction_items.line_total');
+        }
+
+        $rangeRevenueChange = ($prevStart && $prevEnd)
+            ? $percentChange($rangeRevenue, $prevRevenue)
+            : 0.0;
+
+        // Orders (range)
+        $rangeOrdersQ = DB::table('transactions')->where('type', 'Buy');
+        $applyBetween($rangeOrdersQ, 'created_at', $rangeStart, $rangeEnd);
+        $rangeOrders = (int) $rangeOrdersQ->count();
+
+        // Orders (prev)
+        $prevOrders = 0;
+        if ($prevStart && $prevEnd) {
+            $prevOrdersQ = DB::table('transactions')->where('type', 'Buy');
+            $applyBetween($prevOrdersQ, 'created_at', $prevStart, $prevEnd);
+            $prevOrders = (int) $prevOrdersQ->count();
+        }
+
+        $rangeOrdersChange = ($prevStart && $prevEnd)
+            ? $percentChange($rangeOrders, $prevOrders)
+            : 0.0;
+
+        // AOV (range)
+        $rangeAov = $rangeOrders > 0 ? round($rangeRevenue / $rangeOrders, 2) : 0.0;
+        $prevAov  = $prevOrders > 0 ? round($prevRevenue / $prevOrders, 2) : 0.0;
+
+        $rangeAovChange = ($prevStart && $prevEnd)
+            ? $percentChange($rangeAov, $prevAov)
+            : 0.0;
+
+        // Items Sold (range)
+        $itemsSoldQ = DB::table('transaction_items')
+            ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->where('transactions.type', 'Buy');
+        $applyBetween($itemsSoldQ, 'transactions.created_at', $rangeStart, $rangeEnd);
+        $itemsSold = (int) $itemsSoldQ->sum('transaction_items.quantity');
+
+        // Items Sold (prev)
+        $prevItemsSold = 0;
+        if ($prevStart && $prevEnd) {
+            $prevItemsSoldQ = DB::table('transaction_items')
+                ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+                ->where('transactions.type', 'Buy');
+            $applyBetween($prevItemsSoldQ, 'transactions.created_at', $prevStart, $prevEnd);
+            $prevItemsSold = (int) $prevItemsSoldQ->sum('transaction_items.quantity');
+        }
+
+        $itemsSoldChange = ($prevStart && $prevEnd)
+            ? $percentChange($itemsSold, $prevItemsSold)
+            : 0.0;
+
+        // Unique Buyers (range) - requires transactions.customer_id
+        $uniqueBuyersQ = DB::table('transactions')
+            ->where('type', 'Buy')
+            ->whereNotNull('customer_id');
+        $applyBetween($uniqueBuyersQ, 'created_at', $rangeStart, $rangeEnd);
+        $uniqueBuyers = (int) $uniqueBuyersQ->distinct()->count('customer_id');
+
+        // Unique Buyers (prev)
+        $prevUniqueBuyers = 0;
+        if ($prevStart && $prevEnd) {
+            $prevUniqueBuyersQ = DB::table('transactions')
+                ->where('type', 'Buy')
+                ->whereNotNull('customer_id');
+            $applyBetween($prevUniqueBuyersQ, 'created_at', $prevStart, $prevEnd);
+            $prevUniqueBuyers = (int) $prevUniqueBuyersQ->distinct()->count('customer_id');
+        }
+
+        $uniqueBuyersChange = ($prevStart && $prevEnd)
+            ? $percentChange($uniqueBuyers, $prevUniqueBuyers)
+            : 0.0;
+
+        // ----------------------------------------------------
+        // SPARKLINES (Revenue / Orders / AOV)
+        // - today => hourly
+        // - 7d/30d => daily
+        // - all => monthly last 12 months
+        // ----------------------------------------------------
+        $rangeRevenueData = [];
+        $rangeOrdersData  = [];
+        $rangeAovData     = [];
+
+        if ($sparkMode === 'hour') {
+            $rowsRev = $revenueBaseQuery()
+                ->whereBetween('transactions.created_at', [$rangeStart, $rangeEnd])
+                ->selectRaw('HOUR(transactions.created_at) as k, SUM(transaction_items.line_total) as total')
+                ->groupBy('k')
+                ->pluck('total', 'k');
+
+            $rowsOrd = DB::table('transactions')
                 ->where('type', 'Buy')
                 ->whereBetween('created_at', [$rangeStart, $rangeEnd])
-                ->count();
+                ->selectRaw('HOUR(created_at) as k, COUNT(*) as total')
+                ->groupBy('k')
+                ->pluck('total', 'k');
 
-            $prevOrders = DB::table('transactions')
+            for ($i = 0; $i < 24; $i++) {
+                $r = (float) ($rowsRev[$i] ?? 0);
+                $o = (int) ($rowsOrd[$i] ?? 0);
+
+                $rangeRevenueData[] = $r;
+                $rangeOrdersData[]  = $o;
+                $rangeAovData[]     = $o > 0 ? round($r / $o, 2) : 0;
+            }
+        } elseif ($sparkMode === 'day') {
+            $rowsRevQ = $revenueBaseQuery();
+            $applyBetween($rowsRevQ, 'transactions.created_at', $rangeStart, $rangeEnd);
+            $rowsRev = $rowsRevQ
+                ->selectRaw('DATE(transactions.created_at) as k, SUM(transaction_items.line_total) as total')
+                ->groupBy('k')
+                ->pluck('total', 'k');
+
+            $rowsOrdQ = DB::table('transactions')->where('type', 'Buy');
+            $applyBetween($rowsOrdQ, 'created_at', $rangeStart, $rangeEnd);
+            $rowsOrd = $rowsOrdQ
+                ->selectRaw('DATE(created_at) as k, COUNT(*) as total')
+                ->groupBy('k')
+                ->pluck('total', 'k');
+
+            for ($i = 0; $i < $sparkCount; $i++) {
+                $day = $rangeStart->copy()->addDays($i)->toDateString();
+                $r = (float) ($rowsRev[$day] ?? 0);
+                $o = (int) ($rowsOrd[$day] ?? 0);
+
+                $rangeRevenueData[] = $r;
+                $rangeOrdersData[]  = $o;
+                $rangeAovData[]     = $o > 0 ? round($r / $o, 2) : 0;
+            }
+        } else {
+            $sparkStart = now()->subMonths(11)->startOfMonth();
+            $sparkEnd   = now()->endOfMonth();
+
+            $rowsRev = $revenueBaseQuery()
+                ->whereBetween('transactions.created_at', [$sparkStart, $sparkEnd])
+                ->selectRaw('DATE_FORMAT(transactions.created_at, "%Y-%m") as k, SUM(transaction_items.line_total) as total')
+                ->groupBy('k')
+                ->pluck('total', 'k');
+
+            $rowsOrd = DB::table('transactions')
                 ->where('type', 'Buy')
-                ->whereBetween('created_at', [$prevRangeStart, $prevRangeEnd])
-                ->count();
+                ->whereBetween('created_at', [$sparkStart, $sparkEnd])
+                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as k, COUNT(*) as total')
+                ->groupBy('k')
+                ->pluck('total', 'k');
 
-            $totalOrdersChange = $percentChange($totalOrders, $prevOrders);
+            for ($i = 0; $i < 12; $i++) {
+                $k = $sparkStart->copy()->addMonths($i)->format('Y-m');
+
+                $r = (float) ($rowsRev[$k] ?? 0);
+                $o = (int) ($rowsOrd[$k] ?? 0);
+
+                $rangeRevenueData[] = $r;
+                $rangeOrdersData[]  = $o;
+                $rangeAovData[]     = $o > 0 ? round($r / $o, 2) : 0;
+            }
         }
 
         // ----------------------------------------------------
@@ -213,7 +284,7 @@ class AnalyticsController extends Controller
         $rangeFilter($salesByDayQuery, 'transactions.created_at');
 
         $salesByDay       = $salesByDayQuery->get();
-        $salesByDayLabels = $salesByDay->pluck('day')->map(fn($d) => Carbon::parse($d)->format('M d'));
+        $salesByDayLabels = $salesByDay->pluck('day')->map(fn ($d) => Carbon::parse($d)->format('M d'));
         $salesByDayData   = $salesByDay->pluck('total');
 
         // ----------------------------------------------------
@@ -270,16 +341,13 @@ class AnalyticsController extends Controller
         $topProducts = $topProductsQuery->get();
 
         // ----------------------------------------------------
-        // CUSTOMER ANALYTICS
+        // CUSTOMER ANALYTICS (Total = all-time, New = range-based)
         // ----------------------------------------------------
-        $totalCustomers = DB::table('users')
-            ->where('role', 'customer')
-            ->count();
+        $totalCustomers = DB::table('customers')->count();
 
-        $newCustomersThisMonth = DB::table('users')
-            ->where('role', 'customer')
-            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-            ->count();
+        $newCustomersInRangeQ = DB::table('customers');
+        $applyBetween($newCustomersInRangeQ, 'created_at', $rangeStart, $rangeEnd);
+        $newCustomersInRange = (int) $newCustomersInRangeQ->count();
 
         // ----------------------------------------------------
         // PAWN / REPAIR STATUS (filtered by range)
@@ -300,9 +368,9 @@ class AnalyticsController extends Controller
 
         $rangeFilter($repairStatusQuery, 'created_at');
 
-        $repairStatusRaw    = $repairStatusQuery->get();
-        $repairStatusLabels = $repairStatusRaw->pluck('status');
-        $repairStatusData   = $repairStatusRaw->pluck('total');
+        $repairStatusRaw     = $repairStatusQuery->get();
+        $repairStatusLabels  = $repairStatusRaw->pluck('status');
+        $repairStatusData    = $repairStatusRaw->pluck('total');
 
         // ----------------------------------------------------
         // STAFF PERFORMANCE (filtered by range)
@@ -348,29 +416,6 @@ class AnalyticsController extends Controller
         $mostViewed = $mostViewedQuery->get();
 
         // ----------------------------------------------------
-        // CONVERSION FUNNEL (views → favorites → orders)
-        // ----------------------------------------------------
-        $viewsCountQuery = DB::table('product_views');
-        $rangeFilter($viewsCountQuery, 'created_at');
-        $viewsCount = $viewsCountQuery->count();
-
-        $favoritesCountQuery = DB::table('favorites');
-        $rangeFilter($favoritesCountQuery, 'created_at');
-        $favoritesCount = $favoritesCountQuery->count();
-
-        $ordersCountQuery = DB::table('transactions')
-            ->where('type', 'Buy');
-        $rangeFilter($ordersCountQuery, 'created_at');
-        $ordersCount = $ordersCountQuery->count();
-
-        $funnelLabels = ['Views', 'Favorites', 'Orders'];
-        $funnelData   = [
-            $viewsCount,
-            $favoritesCount,
-            $ordersCount,
-        ];
-
-        // ----------------------------------------------------
         // QUICK ACTIONS
         // ----------------------------------------------------
         $quickActions = [
@@ -406,31 +451,30 @@ class AnalyticsController extends Controller
             ],
         ];
 
-    $minSupport = 4; // adjust: minimum # of transactions for a combo
-    $raw = $eclat->mine($minSupport);
+        // ----------------------------------------------------
+        // Frequently Bought Together (kept ALL TIME)
+        // ----------------------------------------------------
+        $minSupport = 5;
+        $raw = $eclat->mine($minSupport);
 
-    $itemsets = $raw['frequent_itemsets'] ?? [];
+        $itemsets = $raw['frequent_itemsets'] ?? [];
 
-    // Only combos with at least 2 products (pairs, triplets, etc.)
-    $itemsets = array_filter($itemsets, function ($set) {
-        return isset($set['items']) && count($set['items']) >= 2;
-    });
+        $itemsets = array_filter($itemsets, function ($set) {
+            return isset($set['items']) && count($set['items']) >= 2;
+        });
 
-    // Sort by support desc (already sorted in Python, but just in case)
-    usort($itemsets, function ($a, $b) {
-        return ($b['support'] ?? 0) <=> ($a['support'] ?? 0);
-    });
+        usort($itemsets, function ($a, $b) {
+            return ($b['support'] ?? 0) <=> ($a['support'] ?? 0);
+        });
 
-    // Take top 10 combos
-    $itemsets = array_slice($itemsets, 0, 5);
+        $itemsets = array_slice($itemsets, 0, 5);
 
-    // Collect all product IDs used
         $allProductIds = collect($itemsets)
-        ->pluck('items')
-        ->flatten()
-        ->unique()
-        ->values()
-        ->all();
+            ->pluck('items')
+            ->flatten()
+            ->unique()
+            ->values()
+            ->all();
 
         $productNames = Product::whereIn('id', $allProductIds)->pluck('name', 'id');
 
@@ -438,39 +482,39 @@ class AnalyticsController extends Controller
         $frequentComboSupport = [];
 
         foreach ($itemsets as $set) {
-        $ids = $set['items'] ?? [];
-        $support = $set['support'] ?? 0;
+            $ids = $set['items'] ?? [];
+            $support = $set['support'] ?? 0;
 
-        // Join product names: "Ring A + Necklace B + ..."
-        $label = collect($ids)->map(function ($id) use ($productNames) {
-            return $productNames[$id] ?? "Product {$id}";
-        })->implode(' , ');
+            $label = collect($ids)->map(function ($id) use ($productNames) {
+                return $productNames[$id] ?? "Product {$id}";
+            })->implode(' , ');
 
-        $frequentComboLabels[] = $label;
-        $frequentComboSupport[] = $support;
-    }
+            $frequentComboLabels[] = $label;
+            $frequentComboSupport[] = $support;
+        }
 
         return view('admin.analytics', [
             'range'      => $range,
             'rangeLabel' => $rangeLabel,
 
-            // Top metric cards
-            'totalRevenue'        => $totalRevenue,
-            'todayRevenue'        => $todayRevenue,
-            'weekRevenue'         => $weekRevenue,
-            'monthRevenue'        => $monthRevenue,
-            'avgOrderValue'       => $avgOrderValue,
+            // Top cards (range-based)
+            'rangeRevenue'        => $rangeRevenue,
+            'rangeRevenueChange'  => $rangeRevenueChange,
+            'rangeRevenueData'    => $rangeRevenueData,
 
-            'todayRevenueChange'  => $todayRevenueChange,
-            'weekRevenueChange'   => $weekRevenueChange,
-            'monthRevenueChange'  => $monthRevenueChange,
+            'rangeOrders'         => $rangeOrders,
+            'rangeOrdersChange'   => $rangeOrdersChange,
+            'rangeOrdersData'     => $rangeOrdersData,
 
-            'todayRevenueData'    => $todayRevenueData,
-            'weekRevenueData'     => $weekRevenueData,
-            'monthRevenueData'    => $monthRevenueData,
+            'rangeAov'            => $rangeAov,
+            'rangeAovChange'      => $rangeAovChange,
+            'rangeAovData'        => $rangeAovData,
 
-            'totalOrders'         => $totalOrders ?? 0,
-            'totalOrdersChange'   => $totalOrdersChange ?? 0,
+            'itemsSold'           => $itemsSold,
+            'itemsSoldChange'     => $itemsSoldChange,
+
+            'uniqueBuyers'        => $uniqueBuyers,
+            'uniqueBuyersChange'  => $uniqueBuyersChange,
 
             // Sales trend
             'salesByDayLabels' => $salesByDayLabels,
@@ -487,31 +531,29 @@ class AnalyticsController extends Controller
             'topProducts'             => $topProducts,
 
             // Customers
-            'totalCustomers'        => $totalCustomers,
-            'newCustomersThisMonth' => $newCustomersThisMonth,
+            'totalCustomers'     => $totalCustomers,
+            'newCustomersInRange'=> $newCustomersInRange,
 
             // Pawn / repair
-            'pawnStatusLabels'  => $pawnStatusLabels,
-            'pawnStatusData'    => $pawnStatusData,
-            'repairStatusLabels'=> $repairStatusLabels,
-            'repairStatusData'  => $repairStatusData,
+            'pawnStatusLabels'   => $pawnStatusLabels,
+            'pawnStatusData'     => $pawnStatusData,
+            'repairStatusLabels' => $repairStatusLabels,
+            'repairStatusData'   => $repairStatusData,
 
             // Staff performance
-            'staffSalesLabels'  => $staffSalesLabels,
-            'staffSalesData'    => $staffSalesData,
+            'staffSalesLabels'   => $staffSalesLabels,
+            'staffSalesData'     => $staffSalesData,
 
             // Favorites / views
-            'mostFavorited'     => $mostFavorited,
-            'mostViewed'        => $mostViewed,
+            'mostFavorited'      => $mostFavorited,
+            'mostViewed'         => $mostViewed,
 
-            // Funnel
-            'funnelLabels'      => $funnelLabels,
-            'funnelData'        => $funnelData,
+            'quickActions'       => $quickActions,
 
-            'quickActions'      => $quickActions,
-
-            'frequentComboLabels'  => $frequentComboLabels,
-            'frequentComboSupport' => $frequentComboSupport,
+            // Frequent combos
+            'minSupport'            => $minSupport,
+            'frequentComboLabels'   => $frequentComboLabels,
+            'frequentComboSupport'  => $frequentComboSupport,
         ]);
     }
 }

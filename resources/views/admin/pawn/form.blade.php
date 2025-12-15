@@ -1,377 +1,401 @@
-@php
-    /** @var \App\Models\PawnItem $pawnItem */
-    $isEdit = $pawnItem->exists;
-    $title  = $isEdit ? "Edit Pawn Item #{$pawnItem->id}" : 'New Pawn Item';
+<x-admin-layout :title="$isEdit ? 'Edit Pawn Item' : 'Add Pawn Item'">
 
-    // --- DUE DATE LOGIC START ---
-    $dueValue = old('due_date');
-
-    if (!$dueValue) {
-        if ($isEdit && $pawnItem->due_date) {
-            // Edit mode: use existing due date
-            $dueValue = \Illuminate\Support\Carbon::parse($pawnItem->due_date)->format('Y-m-d');
-        } elseif (!$isEdit) {
-            // New item: default to 3 months from now
-            $dueValue = now()->addMonths(3)->format('Y-m-d');
+    {{-- PRINT STYLES --}}
+    <style>
+        @media print {
+            /* Hide everything by default */
+            body * {
+                visibility: hidden;
+            }
+            /* Show only the receipt */
+            #printable-receipt, #printable-receipt * {
+                visibility: visible;
+            }
+            /* Position receipt at the top */
+            #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            /* Hide buttons and navigation */
+            .no-print {
+                display: none !important;
+            }
         }
-    }
-    // --- DUE DATE LOGIC END ---
+    </style>
 
-    // Existing pictures for edit (id + full url)
-    $existingPictures = ($pawnItem->pictures ?? collect())->map(fn($pic) => [
-    'id'  => $pic->id,
-    'url' => asset('storage/' .$pic->url),
-]);
-@endphp
+    <div class="w-full px-4 sm:px-6 py-6 no-print">
 
-<x-admin-layout :title="$title">
-    <div class="flex flex-col gap-6"
-         x-data="pawnCustomerSelect(
-            @js($customers->map(fn($c) => ['id' => $c->id, 'name' => $c->name])),
-            {{ old('customer_id', $pawnItem->customer_id) ? (int) old('customer_id', $pawnItem->customer_id) : 'null' }}
-         )">
-
-        {{-- HEADER --}}
-        <div class="flex items-center justify-between">
+        {{-- Header --}}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 mb-6 gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">{{ $title }}</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Manage pawn item details below.
+                <h1 class="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">
+                    {{ $isEdit ? 'Edit Pawn Item' : 'Add Pawn Item' }}
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ $isEdit ? 'Update details or print receipt.' : 'Create a new pawn entry.' }}
                 </p>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('admin.pawn.index') }}"
-                   class="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100">
-                    Cancel
-                </a>
-                <button type="submit" form="pawn-item-form"
-                        class="px-5 py-2 rounded-lg bg-orange-600 text-white font-semibold hover:bg-orange-700 shadow-lg transition duration-150 ease-in-out">
-                    {{ $isEdit ? 'Save Changes' : 'Create Pawn Item' }}
-                </button>
-            </div>
+
+            <a href="{{ route('admin.pawn.index') }}"
+               class="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition shadow-sm">
+                ← Back
+            </a>
         </div>
 
-        {{-- ERRORS --}}
+        {{-- Errors --}}
         @if ($errors->any())
-            <div class="mb-6 rounded-xl border border-red-300 bg-red-50 p-4 text-red-700 text-sm">
-                <p class="font-semibold mb-2">Please fix the following:</p>
-                <ul class="list-disc list-inside space-y-1">
-                    @foreach ($errors->all() as $err)
-                        <li>{{ $err }}</li>
+            <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm" role="alert">
+                <div class="flex items-center gap-2 font-bold mb-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Please fix the following:
+                </div>
+                <ul class="list-disc ml-5 space-y-1">
+                    @foreach ($errors->all() as $e)
+                        <li>{{ $e }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        {{-- FORM CARD --}}
-        <div class="bg-white rounded-xl shadow-xl border border-gray-100 divide-y divide-gray-200">
-            <form id="pawn-item-form"
-                  method="POST"
-                  action="{{ $isEdit ? route('admin.pawn.update', $pawnItem) : route('admin.pawn.store') }}"
-                  enctype="multipart/form-data">
-                @csrf
-                @if($isEdit)
-                    @method('PUT')
-                @endif
+        <form
+            method="POST"
+            action="{{ $isEdit ? route('admin.pawn.update', $pawnItem) : route('admin.pawn.store') }}"
+            enctype="multipart/form-data"
+            class="space-y-6"
+            x-data="{
+                tab: '{{ old('customer_mode', 'existing') }}',
+                price: '{{ old('price', $pawnItem->price ?? '') }}',
+                interest: '{{ old('interest_cost', $pawnItem->interest_cost ?? '') }}',
 
-                {{-- SECTION: PAWN DETAILS --}}
-                <div class="p-6 space-y-6">
-                    <h2 class="text-lg font-semibold text-gray-900 border-b pb-2 mb-4 -mt-2">Pawn Information</h2>
+                // Function to compute 3% interest
+                computeInterest() {
+                    let p = parseFloat(this.price);
+                    if(!isNaN(p) && p > 0) {
+                        this.interest = (p * 0.03).toFixed(2);
+                    } else {
+                        this.interest = '';
+                    }
+                }
+            }"
+        >
+            @csrf
+            @if($isEdit)
+                @method('PUT')
+            @endif
 
-                    {{-- CUSTOMER SELECT WITH SEARCH --}}
-                    <div class="space-y-1">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Customer <span class="text-red-500">*</span>
-                        </label>
+            <input type="hidden" name="customer_mode" :value="tab">
 
-                        {{-- Hidden field actually submitted --}}
-                        <input type="hidden" name="customer_id" :value="selectedId" required>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                        <div class="relative mt-1">
-                            <button type="button"
-                                    @click="open = !open"
-                                    class="w-full flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm hover:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-500 transition duration-150">
-                                <span class="text-gray-900" x-text="selectedName || 'Select customer'"></span>
-                                <svg class="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.5">
-                                    <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </button>
+                {{-- LEFT COLUMN: CUSTOMER & PAWN DETAILS --}}
+                <div class="lg:col-span-2 space-y-6">
 
-                            <div x-show="open"
-                                 x-transition
-                                 @click.outside="open = false"
-                                 x-cloak
-                                 class="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-xl">
+                    {{-- Customer Card --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+                        <div class="flex items-center justify-between mb-5 border-b border-gray-50 pb-3">
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-gray-800 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                Customer Information
+                            </h2>
 
-                                <div class="p-2 border-b border-gray-100">
-                                    <input type="text"
-                                           x-model="search"
-                                           placeholder="Search customer..."
-                                           class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500">
-                                </div>
-
-                                <ul class="max-h-60 overflow-y-auto text-sm">
-                                    <template x-for="c in filteredCustomers" :key="c.id">
-                                        <li>
-                                            <button type="button"
-                                                    @click="selectCustomer(c)"
-                                                    class="w-full text-left px-3 py-2 text-gray-800 hover:bg-orange-50/70 transition duration-100">
-                                                <span x-text="c.name"></span>
-                                            </button>
-                                        </li>
-                                    </template>
-
-                                    <template x-if="filteredCustomers.length === 0">
-                                        <li class="px-3 py-2 text-sm text-gray-400">
-                                            No customers found.
-                                        </li>
-                                    </template>
-                                </ul>
+                            <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                                <button type="button"
+                                        class="px-3 py-1 text-xs font-bold rounded-md transition-all"
+                                        :class="tab === 'existing' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'"
+                                        @click="tab='existing'">
+                                    Existing
+                                </button>
+                                <button type="button"
+                                        class="px-3 py-1 text-xs font-bold rounded-md transition-all"
+                                        :class="tab === 'new' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'"
+                                        @click="tab='new'">
+                                    Register New
+                                </button>
                             </div>
                         </div>
 
-                        <p class="text-xs text-gray-400 mt-1">
-                            Start typing to search and select a customer.
-                        </p>
-                    </div>
-
-                    {{-- TITLE --}}
-                    <div class="space-y-1">
-                        <label for="title" class="block text-sm font-medium text-gray-700">
-                            Title <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="title" name="title" required
-                               value="{{ old('title', $pawnItem->title) }}"
-                               class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                               placeholder="e.g. 18k Gold Necklace">
-                    </div>
-
-                    {{-- DESCRIPTION --}}
-                    <div class="space-y-1">
-                        <label for="description" class="block text-sm font-medium text-gray-700">
-                            Description
-                        </label>
-                        <textarea id="description" name="description" rows="3"
-                                  class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                                  placeholder="Details about the item (brand, weight, specs)...">{{ old('description', $pawnItem->description) }}</textarea>
-                    </div>
-
-                    {{-- PRICE (Principal) + BASE INTEREST --}}
-                    <div class="grid md:grid-cols-2 gap-4">
-                        {{-- PRICE / PRINCIPAL --}}
-                        <div class="space-y-1">
-                            <label for="price" class="block text-sm font-medium text-gray-700">
-                                Principal (Price) (₱) <span class="text-red-500">*</span>
+                        {{-- Existing Customer --}}
+                        <div x-show="tab === 'existing'" x-transition>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                Search Customer <span class="text-red-500">*</span>
                             </label>
-                            <div class="relative mt-1">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₱</span>
-                                <input type="number" step="0.01" min="0" required
-                                       id="price" name="price"
-                                       value="{{ old('price', $pawnItem->price) }}"
-                                       class="block w-full rounded-lg border-gray-300 pl-7 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                                       placeholder="0.00">
-                            </div>
-                        </div>
-
-                        {{-- BASE INTEREST --}}
-                        <div class="space-y-1">
-                            <label for="interest_cost" class="block text-sm font-medium text-gray-700">
-                                Base Interest (₱) <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative mt-1">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₱</span>
-                                <input type="number" step="0.01" min="0" required
-                                       id="interest_cost" name="interest_cost"
-                                       value="{{ old('interest_cost', $pawnItem->interest_cost ?? 0) }}"
-                                       class="block w-full rounded-lg border-gray-300 pl-7 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                                       placeholder="0.00">
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- DUE DATE + STATUS --}}
-                    <div class="grid md:grid-cols-2 gap-4">
-                        {{-- DUE DATE --}}
-                        <div class="space-y-1">
-                            <label for="due_date" class="block text-sm font-medium text-gray-700">
-                                Due Date <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date" id="due_date" name="due_date" required
-                                   value="{{ old('due_date', $dueValue) }}"
-                                   class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500">
-                            <p class="text-xs text-gray-400 mt-1">
-                                Default value is 3 months from today.
-                            </p>
-                        </div>
-
-                        {{-- STATUS --}}
-                        <div class="space-y-1">
-                            <label for="status" class="block text-sm font-medium text-gray-700">
-                                Status
-                            </label>
-                            @php
-                                $currentStatus = old('status', $pawnItem->status ?? 'active');
-                            @endphp
-                            <select id="status" name="status"
-                                    class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-orange-500 focus:ring-orange-500">
-                                <option value="active"    @selected($currentStatus === 'active')>Active</option>
-                                <option value="redeemed"  @selected($currentStatus === 'redeemed')>Redeemed</option>
-                                <option value="forfeited" @selected($currentStatus === 'forfeited')>Forfeited</option>
+                            <select name="customer_id"
+                                    :required="tab === 'existing'"
+                                    class="w-full rounded-xl border-gray-200 bg-gray-50 py-2.5 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                                <option value="">-- Select a customer --</option>
+                                @foreach($customers as $c)
+                                    <option value="{{ $c->id }}"
+                                        @selected(old('customer_id', $pawnItem->customer_id) == $c->id)>
+                                        {{ $c->name }} — {{ $c->email }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
+
+                        {{-- New Customer --}}
+                        <div x-show="tab === 'new'" x-transition class="grid gap-4 md:grid-cols-2">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Full Name <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="customer_name" value="{{ old('customer_name') }}"
+                                       :required="tab === 'new'"
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                                       placeholder="Enter full name">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Email
+                                </label>
+                                <input type="email" name="customer_email" value="{{ old('customer_email') }}"
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                                       placeholder="email@example.com">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Phone (Optional)
+                                </label>
+                                <input type="text" name="customer_contact_no" value="{{ old('customer_contact_no') }}"
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                                       placeholder="09xxxxxxxxx">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Pawn Details Card --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-800 mb-5 border-b border-gray-50 pb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                            Pawn Item Details
+                        </h2>
+
+                        <div class="grid gap-5 md:grid-cols-2">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Item Title <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="title" value="{{ old('title', $pawnItem->title) }}"
+                                       required
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                                       placeholder="e.g., 18K Gold Ring with Diamond">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Description
+                                </label>
+                                <textarea name="description" rows="3"
+                                          class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                                          placeholder="Weight, karats, condition, etc...">{{ old('description', $pawnItem->description) }}</textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Principal Amount <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span class="text-gray-500 sm:text-sm">₱</span>
+                                    </div>
+                                    <input type="number" step="0.01" name="price"
+                                           x-model="price"
+                                           @input="computeInterest()"
+                                           required
+                                           class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 pl-7 pr-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 font-bold text-gray-900"
+                                           placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Interest (3%)
+                                </label>
+                                <div class="relative">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span class="text-gray-500 sm:text-sm">₱</span>
+                                    </div>
+                                    <input type="number" step="0.01" name="interest_cost"
+                                           x-model="interest"
+                                           class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 pl-7 pr-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/50"
+                                           placeholder="0.00">
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1">Auto-calculated (can be overridden)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Due Date (Default: +3 Months)
+                                </label>
+                                <input type="date" name="due_date"
+                                       value="{{ old('due_date', $pawnItem->due_date ? $pawnItem->due_date->format('Y-m-d') : date('Y-m-d', strtotime('+3 months'))) }}"
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                                    Status
+                                </label>
+                                <select name="status"
+                                        class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                                    @foreach(['active' => 'Active', 'redeemed' => 'Redeemed', 'forfeited' => 'Forfeited'] as $val => $label)
+                                        <option value="{{ $val }}" @selected(old('status', $pawnItem->status ?: 'active') === $val)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {{-- SECTION: PICTURES --}}
-                <div class="p-6 space-y-4"
-                     x-data="pawnPictures(@js($existingPictures))">
-                    <h2 class="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Item Pictures</h2>
+                {{-- RIGHT COLUMN: IMAGES & ACTION --}}
+                <div class="space-y-6">
 
-                    <p class="text-sm text-gray-500">
-                        Upload images of the pawned item to help identify it. You can add multiple pictures.
-                    </p>
+                    {{-- Actions --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5 flex flex-col gap-3">
+                        <button type="submit"
+                                class="w-full inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-3 text-sm font-bold text-white shadow-lg hover:to-yellow-700 transition transform active:scale-[0.98]">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            {{ $isEdit ? 'Update Pawn Item' : 'Save Pawn Item' }}
+                        </button>
 
-                    {{-- FILE INPUT (hidden) --}}
-                    <input type="file"
-                           x-ref="fileInput"
-                           name="images[]"
-                           multiple
-                           accept="image/*"
-                           class="hidden"
-                           @change="handleFiles($event)">
-
-                    <button type="button"
-                            @click="$refs.fileInput.click()"
-                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 border-dashed border-gray-300 text-sm font-medium text-gray-700 hover:border-orange-400 hover:bg-orange-50/20 transition duration-150">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        Add Pictures
-                    </button>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pt-2">
-                        {{-- EXISTING PICS --}}
-                        <template x-for="pic in existing" :key="pic.id">
-                            <div class="relative group aspect-square"
-                                 :class="{ 'opacity-50 ring-2 ring-red-500': pic.remove }">
-                                <img :src="pic.url"
-                                     class="w-full h-full object-cover rounded-lg border border-gray-200 transition duration-150"
-                                     alt="Existing picture">
-                                <button type="button"
-                                        @click="toggleRemoveExisting(pic.id)"
-                                        class="absolute top-1 right-1 size-7 flex items-center justify-center bg-white/90 border border-gray-300 rounded-full text-xs text-gray-700 shadow-md transition duration-150 hover:scale-105"
-                                        :class="{ 'bg-red-600 text-white hover:bg-red-700': pic.remove, 'hover:bg-red-500 hover:text-white': !pic.remove }">
-                                    <span x-show="!pic.remove" class="text-base font-semibold">✕</span>
-                                    <svg x-show="pic.remove" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9c1.69 0 3.32.74 4.51 2.05L18 8"></path>
-                                        <path d="M14 4v5h5"></path>
-                                    </svg>
-                                </button>
-
-                                {{-- Hidden fields to tell backend keep/remove --}}
-                                <template x-if="!pic.remove">
-                                    <input type="hidden"
-                                                 name="keep_images[]"
-                                                 :value="pic.id"
-                                                 >
-                                </template>
-
-                                <template x-if="pic.remove">
-                                    <input type="hidden"
-                                           name="remove_images[]"
-                                           :value="pic.id"
-                                           x-if="pic.remove">
-                                </template>
-
-                            </div>
-                        </template>
-
-                        {{-- NEW PICS PREVIEW --}}
-                        <template x-for="(img, index) in previews" :key="index">
-                            <div class="relative group aspect-square">
-                                <img :src="img.url"
-                                     class="w-full h-full object-cover rounded-lg border-2 border-orange-400"
-                                     alt="New picture preview">
-                                <button type="button"
-                                        @click="removeNew(index)"
-                                        class="absolute top-1 right-1 size-7 flex items-center justify-center bg-white/90 border border-gray-300 rounded-full text-xs text-gray-700 shadow-md transition duration-150 hover:bg-red-500 hover:text-white hover:scale-105">
-                                    <span class="text-base font-semibold">✕</span>
-                                </button>
-                            </div>
-                        </template>
+                        @if($isEdit)
+                            <button type="button"
+                                    onclick="window.print()"
+                                    class="w-full inline-flex items-center justify-center rounded-xl border-2 border-gray-900 bg-white px-6 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 transition">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                Print Receipt
+                            </button>
+                        @endif
                     </div>
-                </div>
 
-            </form>
-        </div>
+                    {{-- Images Card --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-800 mb-5 border-b border-gray-50 pb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Images
+                        </h2>
+
+                        @if($isEdit && ($pawnItem->relationLoaded('pictures') ? $pawnItem->pictures->count() : $pawnItem->pictures()->count()))
+                            <div class="mb-5">
+                                <p class="text-xs font-bold text-gray-500 mb-2 uppercase">Existing</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    @foreach(($pawnItem->relationLoaded('pictures') ? $pawnItem->pictures : $pawnItem->pictures()->get()) as $pic)
+                                        <div class="relative group rounded-lg overflow-hidden border border-gray-200">
+                                            <img src="{{ asset('storage/' . ltrim($pic->url, '/')) }}" class="w-full h-24 object-cover">
+                                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                                <label class="flex items-center gap-1 cursor-pointer text-white text-xs">
+                                                    <input type="checkbox" name="remove_images[]" value="{{ $pic->id }}" class="rounded text-red-600 focus:ring-red-600">
+                                                    <span>Remove</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                                Upload New
+                            </label>
+                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                    <p class="text-xs text-gray-500">Click to upload images</p>
+                                </div>
+                                <input type="file" name="images[]" multiple class="hidden" />
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
     </div>
 
-    <script>
-        function pawnCustomerSelect(customers, initialId = null) {
-            return {
-                customers: customers || [],
-                search: '',
-                open: false,
-                selectedId: initialId ?? null,
+    {{-- HIDDEN PRINT RECEIPT TEMPLATE --}}
+    @if($isEdit)
+        <div id="printable-receipt" class="hidden p-8 font-serif text-black bg-white">
+            {{-- Header --}}
+            <div class="text-center mb-6 border-b-2 border-black pb-4">
+                <h1 class="text-3xl font-bold tracking-widest uppercase">AUAG Jewelry</h1>
+                <p class="text-sm">Official Pawnshop & Jewelry</p>
+                <p class="text-xs mt-1">123 Gold Street, Business District, City</p>
+                <h2 class="text-xl font-bold mt-4 uppercase border-2 border-black inline-block px-4 py-1">Pawn Ticket</h2>
+            </div>
 
-                get selectedName() {
-                    const found = this.customers.find(c => c.id === this.selectedId);
-                    return found ? found.name : '';
-                },
+            {{-- Details Grid --}}
+            <div class="flex justify-between items-start mb-6">
+                <div class="w-1/2">
+                    <p class="text-xs font-bold uppercase text-gray-500 mb-1">Customer Details</p>
+                    <p class="font-bold text-lg">{{ $pawnItem->customer->name ?? 'N/A' }}</p>
+                    <p class="text-sm">{{ $pawnItem->customer->email ?? '' }}</p>
+                    <p class="text-sm">{{ $pawnItem->customer->contact_no ?? '' }}</p>
+                </div>
+                <div class="w-1/2 text-right">
+                    <p class="text-xs font-bold uppercase text-gray-500 mb-1">Ticket Reference</p>
+                    <p class="font-bold text-lg">#{{ str_pad($pawnItem->id, 6, '0', STR_PAD_LEFT) }}</p>
+                    <p class="text-sm">Date: {{ $pawnItem->created_at->format('M d, Y') }}</p>
+                    <p class="text-sm font-bold text-red-600">Due: {{ optional($pawnItem->due_date)->format('M d, Y') }}</p>
+                </div>
+            </div>
 
-                get filteredCustomers() {
-                    if (!this.search) return this.customers;
-                    const term = this.search.toLowerCase();
-                    return this.customers.filter(c =>
-                        (c.name || '').toLowerCase().includes(term)
-                    );
-                },
+            {{-- Item Table --}}
+            <div class="border-2 border-black mb-6">
+                <div class="bg-gray-100 border-b border-black p-2 font-bold flex justify-between uppercase text-xs">
+                    <span>Item Description</span>
+                    <span>Valuation</span>
+                </div>
+                <div class="p-4 flex justify-between items-start min-h-[100px]">
+                    <div class="w-2/3 pr-4">
+                        <p class="font-bold text-lg">{{ $pawnItem->title }}</p>
+                        <p class="text-sm mt-1 whitespace-pre-wrap">{{ $pawnItem->description ?? 'No description provided.' }}</p>
+                    </div>
+                    <div class="w-1/3 text-right">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm">Principal:</span>
+                            <span class="font-bold">₱{{ number_format($pawnItem->price, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm">Interest (3%):</span>
+                            <span>₱{{ number_format($pawnItem->interest_cost, 2) }}</span>
+                        </div>
+                        <div class="border-t border-black mt-2 pt-2 flex justify-between">
+                            <span class="font-bold">NET PROCEEDS:</span>
+                            {{-- Usually Net Proceeds = Principal - Deductions. Assuming just Principal here for simplicity unless interest is deducted upfront --}}
+                            <span class="font-bold text-xl">₱{{ number_format($pawnItem->price, 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                selectCustomer(c) {
-                    this.selectedId = c.id;
-                    this.search = '';
-                    this.open = false;
-                },
-            };
-        }
+            {{-- Terms --}}
+            <div class="text-[10px] text-justify leading-tight text-gray-600 mb-8">
+                <p><strong>TERMS AND CONDITIONS:</strong> This pawn ticket is the receipt for the pledge. The pawner hereby accepts the appraisal of the item/s listed above. The pawnshop agrees to keep the pledged item/s in good condition. If the loan is not renewed or redeemed on or before the maturity date, the item/s will be sold to the public.</p>
+            </div>
 
-        function pawnPictures(existingPictures) {
-            return {
-                existing: (existingPictures || []).map(p => ({
-                    id: p.id,
-                    url: p.url,
-                    remove: false,
-                })),
-                previews: [],  // { url, file }
+            {{-- Signatures --}}
+            <div class="flex justify-between mt-12 pt-8">
+                <div class="text-center w-1/3">
+                    <div class="border-t border-black pt-2">
+                        <p class="font-bold uppercase">{{ auth()->user()->name ?? 'Authorized Staff' }}</p>
+                        <p class="text-xs">Processed By</p>
+                    </div>
+                </div>
+                <div class="text-center w-1/3">
+                    <div class="border-t border-black pt-2">
+                        <p class="font-bold uppercase">{{ $pawnItem->customer->name ?? 'Customer' }}</p>
+                        <p class="text-xs">Signature of Pawner</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
-                handleFiles(event) {
-                    const files = Array.from(event.target.files || []);
-                    this.previews = files.map(file => ({
-                        file,
-                        url: URL.createObjectURL(file),
-                    }));
-                    this.syncFileInput();
-                },
-
-                removeNew(index) {
-                    this.previews.splice(index, 1);
-                    this.syncFileInput();
-                },
-
-                syncFileInput() {
-                    const dt = new DataTransfer();
-                    this.previews.forEach(p => dt.items.add(p.file));
-                    this.$refs.fileInput.files = dt.files;
-                },
-
-                toggleRemoveExisting(id) {
-                    const pic = this.existing.find(p => p.id === id);
-                    if (pic) {
-                        pic.remove = !pic.remove;
-                    }
-                },
-            };
-        }
-    </script>
 </x-admin-layout>

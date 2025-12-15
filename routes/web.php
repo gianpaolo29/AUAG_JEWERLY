@@ -25,6 +25,14 @@ use App\Http\Controllers\Staff\StaffRepairController;
 use App\Http\Controllers\Staff\StaffTransactionController;
 use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GoldSpotPriceController;
+
+
+
+/* These routes are defining the endpoints for different functionalities in the application: */
+    // Route::get('/api/gold/spot', GoldSpotPriceController::class)->name('gold.spot');
+    // Route::get('/gold', function () {return view('gold-index');})->name('gold.index');
+    // Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
 Route::get('auth/google/callback', [GoogleController::class, 'callback']);
@@ -78,12 +86,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
     Route::get('transactions/{transaction}/show', [TransactionController::class, 'show'])->name('transactions.show');
+    Route::get('/transactions/{transaction}/download', [TransactionController::class, 'download'])->name('transactions.download');
+    Route::get('/transactions/{transaction}/receipt', [TransactionController::class, 'receipt'])->name('transactions.receipt');
+
     Route::get('/pawns', [PawnItemController::class, 'index'])->name('pawn.index');
     Route::get('/pawns/create', [PawnItemController::class, 'create'])->name('pawn.create');
     Route::post('/pawns', [PawnItemController::class, 'store'])->name('pawn.store');
-    Route::get('pawns/{pawnItem}/edit', [PawnItemController::class, 'edit'])->name('pawn.edit');
-    Route::put('pawns/{pawnItem}', [PawnItemController::class, 'update'])->name('pawn.update');
-    Route::post('pawns/{pawnItem}/redeem', [PawnItemController::class, 'redeem'])->name('pawn.redeem');
+
+    Route::get('/pawns/{transaction}', [PawnItemController::class, 'show'])->name('pawn.show');
+    Route::get('/pawns/{transaction}/receipt', [PawnItemController::class, 'receipt'])->name('pawn.receipt');
+    Route::get('/pawns/{transaction}/download', [PawnItemController::class, 'download'])->name('pawn.download');
+    Route::post('/pawns/{pawnItem}/redeem', [PawnItemController::class, 'redeem'])->name('pawn.redeem');
+
+
 
     Route::resource('repairs', RepairController::class)
         ->names([
@@ -106,31 +121,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 });
 
 Route::middleware(['auth', 'role:customer'])->group(function () {
-    Route::get('/customer/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
-    Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
-    Route::post('/favorites/{product}/toggle', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
-    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
-    Route::post('/product/view/{product}', [ShopController::class, 'trackView'])
-        ->name('product.view');
+ 
 });
 
 Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/staff/dashboard', [StaffDashboardController::class, 'index'])->name('staff.dashboard');
     Route::get('/staff/products', [StaffProductController::class, 'index'])->name('staff.products.index');
-    Route::get('/staff/transactions', [StaffTransactionController::class, 'index'])
-        ->name('staff.transactions.index');
-    Route::get('/staff/transactions/create', [StaffTransactionController::class, 'create'])
-        ->name('staff.transactions.create');
-    Route::post('/staff/transactions', [StaffTransactionController::class, 'store'])
-        ->name('staff.transactions.store');
-    Route::get('/staff/transactions/{transaction}', [StaffTransactionController::class, 'show'])
-        ->name('staff.transactions.show');
+    Route::get('/staff/transactions', [StaffTransactionController::class, 'index'])->name('staff.transactions.index');
+    Route::get('/staff/transactions/create', [StaffTransactionController::class, 'create'])->name('staff.transactions.create');
+    Route::post('/staff/transactions', [StaffTransactionController::class, 'store'])->name('staff.transactions.store');
+    Route::get('/staff/transactions/{transaction}', [StaffTransactionController::class, 'show'])->name('staff.transactions.show');
+    Route::get('/staff/transactions/{transaction}/receipt', [StaffTransactionController::class, 'receipt'])->name('staff.transactions.receipt');
+    Route::get('/staff/transactions/{transaction}/download',[StaffTransactionController::class, 'download'])->name('staff.transactions.download');
+    Route::get('/pawn/{pawn}/receipt', [StaffPawnController::class, 'receipt'])->name('staff.pawn.receipt');
+
+
     Route::get('/staff/pawns', [StaffPawnController::class, 'index'])->name('staff.pawn.index');
     Route::get('/pawn/create', [StaffPawnController::class, 'create'])->name('staff.pawn.create');
     Route::post('/pawn', [StaffPawnController::class, 'store'])->name('staff.pawn.store');
     Route::post('/pawn/{pawnItem}/redeem', [StaffPawnController::class, 'redeem'])
     ->name('staff.pawn.redeem');
-
+    Route::get('/staff/pawn/{pawn}/download', [StaffPawnController::class, 'download']) ->name('staff.pawn.download');
 
     // Repairs
     Route::get('/staff/repairs', [StaffRepairController::class, 'index'])->name('staff.repairs.index');

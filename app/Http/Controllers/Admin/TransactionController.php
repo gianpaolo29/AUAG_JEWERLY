@@ -5,228 +5,175 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Transaction;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\QueryException;
 
 class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $q = $request->string('q')->toString();
-        $type = $request->string('type')->toString();   // Buy / Pawn / Repair
-        $date = $request->date('date');                 // Y-m-d
+        $q    = $request->string('q')->trim()->toString();
+        $date = $request->input('date');
 
-        $transactions = Transaction::query()
-            ->with([
-                'customer:id,name,email',
-                'staff:id,name,email',
-
-                // Products (morphOne)
-                'items.product.picture',
-
-                // Pawn items (morphMany)
-                'items.pawnItem.pictures',
-
-                'items.repair.picture',
-            ])
-            ->withSum('items as total_amount', 'line_total')
+        $transactions = Transaction::with(['items.product', 'customer', 'staff'])
             ->when($q, function ($query) use ($q) {
-                $query->where(function ($inner) use ($q) {
-                    $inner->where('id', $q)
-                        ->orWhereHas('customer', function ($q2) use ($q) {
-                            $q2->where('name', 'like', "%{$q}%")
-                                ->orWhere('email', 'like', "%{$q}%");
-                        })
-                        ->orWhereHas('staff', function ($q2) use ($q) {
-                            $q2->where('name', 'like', "%{$q}%")
-                                ->orWhere('email', 'like', "%{$q}%");
-                        });
+                $query->where(function ($sub) use ($q) {
+                    if (ctype_digit($q)) {
+                        $id = (int) ltrim($q, '0');
+                        if ($id > 0) {
+                            $sub->orWhere('id', $id);
+                        }
+                    }
+
+                    $sub->orWhereHas('customer', function ($cq) use ($q) {
+                        $cq->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%");
+                    });
+
+                    $sub->orWhereHas('items.product', function ($pq) use ($q) {
+                        $pq->where('name', 'like', "%{$q}%");
+                    });
                 });
             })
-            ->when($type, fn ($query) => $query->where('type', $type))
-            ->when($date, fn ($query) => $query->whereDate('created_at', $date))
+            ->when($date, function ($query) use ($date) {
+                $query->whereDate('created_at', $date);
+            })
+            ->withSum('items as total_amount', 'line_total')
             ->latest()
             ->paginate(10)
-            ->withQueryString();
+            ->appends($request->only('q', 'date'));
 
-        return view('admin.transactions.index', compact('transactions', 'q', 'type', 'date'));
+        return view('admin.transactions.index', compact('transactions'));
     }
 
-    /* ----------------------------------------------------
-     | CREATE – Walk-in sale (no customer)
-     ---------------------------------------------------- */
     public function create()
     {
-        $transaction = new Transaction;
-        $staff = auth()->user();
-
-        $products = Product::query()
-            ->where('status', true)          // active
-            ->where('quantity', '>', 0)      // in stock
+        $products = Product::where('status', true)
+            ->where('quantity', '>', 0)
             ->orderBy('name')
             ->get()
-            ->map(function ($p) {
-                return [
-                    'id' => $p->id,
-                    'name' => $p->name,
-                    'price' => (float) $p->price,
-                    'stock' => (int) $p->quantity,   // your stock column
-                    'sku' => '',                   // you said no sku
-                    'unit' => '',                   // no unit
-                    'image_url' => $p->image_url,
-                ];
-            })
-            ->values();
+            ->map(fn ($p) => [
+                'id'        => $p->id,
+                'name'      => $p->name,
+                'price'     => (float) $p->price,
+                'stock'     => (int) $p->quantity,
+                'image_url' => $p->image_url,
+            ]);
 
-        return view('admin.transactions.form', compact('transaction', 'staff', 'products'));
-    }
+        $customers = Customer::orderBy('name')
+            ->get(['id', 'name', 'email', 'contact_no']);
 
-    public function show(Transaction $transaction)
-    {
-        $transaction->load([
-            'items.product.picture',
-            'customer',
-            'staff',
-        ]);
-
-        return view('admin.transactions.show', compact('transaction'));
+        return view('admin.transactions.form', compact('products', 'customers'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-        ]);
+        $mode = $request->input('customer_mode');
 
-        $transaction = Transaction::create([
-            'customer_id' => null,          // walk-in
-            'staff_id' => auth()->id(),
-            'type' => 'Buy',
-        ]);
+        $rules = [
+            'customer_mode'            => ['required', Rule::in(['existing', 'new'])],
+            'items'                    => ['required', 'array', 'min:1'],
+            'items.*.product_id'       => ['required', Rule::exists('products', 'id')],
+            'items.*.quantity'         => ['required', 'integer', 'min:1'],
+            'items.*.unit_price'       => ['required', 'numeric', 'min:0'],
+        ];
 
-        foreach ($validated['items'] as $item) {
-            $qty = (int) $item['quantity'];
-            $price = (float) $item['unit_price'];
-            $line = $qty * $price;
-
-            $transaction->items()->create([
-                'product_id' => $item['product_id'],
-                'pawn_item_id' => null,
-                'repair_id' => null,
-                'quantity' => $qty,
-                'unit_price' => $price,
-                'line_total' => $line,
-            ]);
-
-            // ↓ Optionally deduct quantity here
-            Product::where('id', $item['product_id'])->decrement('quantity', $qty);
+        if ($mode === 'existing') {
+            $rules['customer_id'] = ['required', 'integer', Rule::exists('customers', 'id')];
         }
 
-        // Optional: If you want to auto-inactivate product when quantity hits 0,
-        // you can run an extra update or handle it in Product model (see note below).
+        if ($mode === 'new') {
+            $rules['customer_name']  = ['required', 'string', 'max:255'];
+            $rules['customer_email'] = ['nullable', 'email', 'max:255']; // keep nullable
+            $rules['customer_phone'] = ['nullable', 'string', 'max:20'];
+        }
 
-        return redirect()
-            ->route('admin.transactions.index')
-            ->with('success', 'Sale recorded successfully.');
-    }
+        $validated   = $request->validate($rules);
+        $transaction = null;
 
-    /* ----------------------------------------------------
-     | EDIT – still walk-in, just editing items
-     ---------------------------------------------------- */
-    public function edit(Transaction $transaction)
-    {
-        $transaction->load(['items.product', 'staff']);
-        $staff = auth()->user();
-
-        $products = Product::query()
-            // status = active + quantity > 0
-            ->where('status', true)          // if status is tinyint(1) / boolean
-            ->where('quantity', '>', 0)
-            ->orderBy('name')
-            ->get()
-            ->map(function ($p) {
-                // Try to figure out image column gracefully
-                $rawPath = $p->image_url
-                    ?? $p->image
-                    ?? $p->image_path
-                    ?? null;
-
-                if ($rawPath) {
-                    $imageUrl = Str::startsWith($rawPath, ['http://', 'https://'])
-                        ? $rawPath
-                        : asset('storage/'.ltrim($rawPath, '/'));
+        try {
+            DB::transaction(function () use ($validated, $mode, &$transaction) {
+                if ($mode === 'existing') {
+                    $customerId = $validated['customer_id'];
                 } else {
-                    $imageUrl = asset('images/placeholder-product.png');
+                    $customer = Customer::create([
+                        'name'       => $validated['customer_name'],
+                        'email'      => $validated['customer_email'] ?? null,
+                        'contact_no' => $validated['customer_phone'] ?? null,
+                    ]);
+                    $customerId = $customer->id;
                 }
 
-                return [
-                    'id' => $p->id,
-                    'name' => $p->name,
-                    'price' => (float) $p->price,
-                    // map your DB quantity → stock for the JS
-                    'stock' => (int) $p->quantity,
-                    // you said you don't have sku/unit, so just send empty
-                    'sku' => '',
-                    'unit' => '',
-                    'image_url' => $imageUrl,
-                ];
+                $transaction = Transaction::create([
+                    'customer_id' => $customerId,
+                    'staff_id'    => auth()->id(),
+                    'type'        => 'Buy',
+                ]);
+
+                foreach ($validated['items'] as $item) {
+                    $qty   = (int) $item['quantity'];
+                    $price = (float) $item['unit_price'];
+
+                    $transaction->items()->create([
+                        'product_id'   => $item['product_id'],
+                        'quantity'     => $qty,
+                        'unit_price'   => $price,
+                        'line_total'   => $qty * $price,
+                        'pawn_item_id' => null,
+                        'repair_id'    => null,
+                    ]);
+
+                    Product::where('id', $item['product_id'])->decrement('quantity', $qty);
+                }
             });
+        } catch (QueryException $e) {
+            // MySQL duplicate key error code = 1062
+            if (($e->errorInfo[1] ?? null) === 1062 && str_contains($e->getMessage(), 'customers_email_unique')) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'customer_email' => 'That email is already registered. Please choose "Existing Customer" or use a different email.',
+                    ]);
+            }
 
-        return view('admin.transactions.form', compact('transaction', 'staff', 'products'));
-    }
-
-    /* ----------------------------------------------------
-     | UPDATE – items only (still walk-in)
-     ---------------------------------------------------- */
-    public function update(Request $request, Transaction $transaction)
-    {
-        $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
-        ]);
-
-        // If you want to properly adjust stock on edit, you’d first need to
-        // restore quantities from old items here before deleting them.
-
-        $transaction->items()->delete();
-
-        foreach ($validated['items'] as $item) {
-            $qty = (int) $item['quantity'];
-            $price = (float) $item['unit_price'];
-            $line = $qty * $price;
-
-            $transaction->items()->create([
-                'product_id' => $item['product_id'],
-                'pawn_item_id' => null,
-                'repair_id' => null,
-                'quantity' => $qty,
-                'unit_price' => $price,
-                'line_total' => $line,
-            ]);
-
-            // If you want to adjust stock on edit, you also need logic here
-            // (depends how you want to handle stock corrections).
+            throw $e; // rethrow other DB errors
         }
 
         return redirect()
             ->route('admin.transactions.index')
-            ->with('success', 'Transaction updated successfully.');
+            ->with([
+                'success'                 => 'Transaction created successfully.',
+                'download_transaction_id' => $transaction->id,
+            ]);
     }
 
-    public function destroy(Transaction $transaction)
-    {
-        // Optional: you could restore stock here if you want.
-        $transaction->delete();
 
-        return redirect()
-            ->route('admin.transactions.index')
-            ->with('success', 'Transaction deleted successfully.');
+    public function download(Transaction $transaction)
+    {
+        $transaction->load(['items.product', 'customer', 'staff']);
+        
+        $pdf = Pdf::loadView('admin.transactions.receipt', [
+            'transaction' => $transaction,
+        ])->setPaper('a4', 'portrait');
+
+        $fileName = 'receipt_' . str_pad($transaction->id, 6, '0', STR_PAD_LEFT) . '_' . date('YmdHis') . '.pdf';
+
+        return $pdf->download($fileName);
+    }
+
+    public function show(Transaction $transaction)
+    {
+        $transaction->load(['items.product', 'customer', 'staff']);
+        return view('admin.transactions.show', compact('transaction'));
+    }
+
+    public function receipt(Transaction $transaction)
+    {
+        $transaction->load(['items.product', 'customer', 'staff']);
+        return view('admin.transactions.receipt', compact('transaction'));
     }
 }

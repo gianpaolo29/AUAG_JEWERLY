@@ -3,10 +3,10 @@
 
     {{-- 1. Header and Primary Action --}}
     <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Products Management</h1>
+        <h1 class="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Product Management</h1>
 
         <a href="{{ route('admin.products.create') }}"
-            class="inline-flex items-center gap-2 bg-orange-500 text-white font-semibold px-4 py-2.5 rounded-lg shadow-md hover:bg-orange-600 transition-all duration-150">
+            class="inline-flex items-center gap-2 bg-yellow-500 text-white font-semibold px-4 py-2.5 rounded-lg shadow-md hover:bg-yellow-600 transition-all duration-150">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
             Add New Product
         </a>
@@ -81,19 +81,19 @@
                 <svg class="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 19l-6-6M5 11a6 6 0 1 1 12 0 6 6 0 0 1-12 0z"/></svg>
                 <input type="search" name="q" value="{{ $q }}"
                     placeholder="Search products..."
-                    class="w-full pl-9 pr-4 text-sm rounded-lg border-gray-300 focus:ring-violet-500 focus:border-violet-500 shadow-sm" />
+                    class="w-full pl-9 pr-4 text-sm rounded-lg border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm" />
             </div>
 
             {{-- Row 1: Category & Status --}}
             <div class="flex flex-wrap items-center gap-3">
-                <select name="category_id" class="text-sm rounded-lg border-gray-300 focus:ring-violet-500 focus:border-violet-500 shadow-sm flex-grow min-w-[140px]">
+                <select name="category_id" class="text-sm rounded-lg border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm flex-grow min-w-[140px]">
                     <option value="">All Categories</option>
                     @foreach($categories as $c)
                     <option value="{{ $c->id }}" @selected((int)$category_id === $c->id)>{{ $c->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="status" class="text-sm rounded-lg border-gray-300 focus:ring-violet-500 focus:border-violet-500 shadow-sm flex-grow min-w-[120px]">
+                <select name="status" class="text-sm rounded-lg border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm flex-grow min-w-[120px]">
                     <option value="">All Status</option>
                     <option value="active" @selected($status==='active')>Active</option>
                     <option value="inactive" @selected($status==='inactive')>Inactive</option>
@@ -102,7 +102,7 @@
 
             {{-- Row 2: Stock & Clear --}}
             <div class="flex flex-wrap items-center gap-3">
-                <select name="stock_status" class="text-sm rounded-lg border-gray-300 focus:ring-violet-500 focus:border-violet-500 shadow-sm flex-grow min-w-[120px]">
+                <select name="stock_status" class="text-sm rounded-lg border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm flex-grow min-w-[120px]">
                     <option value="">All Stock</option>
                     <option value="normal" @selected($stock_status==='normal')>Normal Stock</option>
                     <option value="low" @selected($stock_status==='low')>Low Stock</option>
@@ -139,20 +139,20 @@
                 @endphp
                 <tr>
                     <th class="px-5 py-3 text-left w-10">
-                        <input type="checkbox" class="rounded text-violet-600 border-gray-300 focus:ring-violet-500">
+                        <input type="checkbox" class="rounded text-yellow-600 border-gray-300 focus:ring-yellow-500">
                     </th>
                     <th class="px-5 py-3 text-left w-10">Image</th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">
-                        <a href="{{ $link('name') }}" class="hover:text-violet-600 transition">Product Name{!! $arrow('name') !!}</a>
+                        <a href="{{ $link('name') }}" class="hover:text-yellow-600 transition">Product Name{!! $arrow('name') !!}</a>
                     </th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">Category</th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">Material</th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">Style</th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">
-                        <a href="{{ $link('price') }}" class="hover:text-violet-600 transition">Price{!! $arrow('price') !!}</a>
+                        <a href="{{ $link('price') }}" class="hover:text-yellow-600 transition">Price{!! $arrow('price') !!}</a>
                     </th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">
-                        <a href="{{ $link('quantity') }}" class="hover:text-violet-600 transition">Stock{!! $arrow('quantity') !!}</a>
+                        <a href="{{ $link('quantity') }}" class="hover:text-yellow-600 transition">Stock{!! $arrow('quantity') !!}</a>
                     </th>
                     <th class="px-5 py-3 text-left whitespace-nowrap">
                         Status{!! $arrow('status') !!}
@@ -162,9 +162,9 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($products as $p)
-                <tr class="text-gray-700 transition duration-100 hover:bg-violet-50/50">
+                <tr class="text-gray-700 transition duration-100 hover:bg-yellow-50/50">
                     <td class="px-5 py-3 w-10">
-                        <input type="checkbox" class="rounded text-violet-600 border-gray-300 focus:ring-violet-500">
+                        <input type="checkbox" class="rounded text-yellow-600 border-gray-300 focus:ring-yellow-500">
                     </td>
                     <td class="px-5 py-3 w-10">
                         <div class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden grid place-content-center border border-gray-200">
@@ -231,7 +231,7 @@
                     <td class="px-5 py-3 text-center whitespace-nowrap">
                         <div class="inline-flex items-center justify-center gap-1">
                             <a href="{{ route('admin.products.edit',$p) }}"
-                               class="text-violet-600 hover:text-violet-700 p-2 rounded-lg hover:bg-violet-100 transition duration-150">
+                               class="text-yellow-600 hover:text-yellow-700 p-2 rounded-lg hover:bg-yellow-100 transition duration-150">
                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </a>
                             <form method="POST" action="{{ route('admin.products.destroy',$p) }}"

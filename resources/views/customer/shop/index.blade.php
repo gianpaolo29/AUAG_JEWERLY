@@ -3,7 +3,9 @@
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
             {{ __('Shop') }}
         </h2>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
         <style>
             .no-scrollbar::-webkit-scrollbar { display: none; }
             .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -12,17 +14,12 @@
             .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
             .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
-            /* Custom animations */
             @keyframes fadeIn {
                 from { opacity: 0; transform: translateY(10px); }
                 to { opacity: 1; transform: translateY(0); }
             }
+            .animate-fade-in { animation: fadeIn 0.3s ease-out; }
 
-            .animate-fade-in {
-                animation: fadeIn 0.3s ease-out;
-            }
-
-            /* Consistent image sizing */
             .product-image {
                 width: 100%;
                 height: 280px;
@@ -37,17 +34,12 @@
                 object-position: center;
                 background: #f8fafc;
             }
+            .dark .modal-image { background: #374151; }
 
-            .dark .modal-image {
-                background: #374151;
-            }
-
-            /* Smooth transitions */
             .smooth-transition {
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            /* Gradient backgrounds */
             .gradient-bg {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             }
@@ -101,7 +93,8 @@
 
                 {{-- Sort Dropdown Mobile --}}
                 <div class="relative">
-                    <select x-model="sort" @change="applyFilters()" class="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl">
+                    <select x-model="sort" @change="applyFilters()"
+                            class="block w-full pl-3 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl">
                         <option value="newest">Newest</option>
                         <option value="recommended">Recommended</option>
                         <option value="popular">Popular</option>
@@ -131,6 +124,7 @@
                                         </svg>
                                     </div>
                                 </div>
+
                                 <input type="hidden" name="sort" x-model="sort">
                                 <input type="hidden" name="min_price" x-model="filters.min_price">
                                 <input type="hidden" name="max_price" x-model="filters.max_price">
@@ -154,7 +148,8 @@
 
                         {{-- Desktop Sort --}}
                         <div class="hidden lg:block">
-                            <select x-model="sort" @change="applyFilters()" class="block w-full pl-4 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm">
+                            <select x-model="sort" @change="applyFilters()"
+                                    class="block w-full pl-4 pr-10 py-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm">
                                 <option value="newest">Newest</option>
                                 <option value="recommended">Recommended</option>
                                 <option value="popular">Popular</option>
@@ -167,7 +162,8 @@
                     {{-- Product Count & View Toggle --}}
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                         <p class="text-gray-600 dark:text-gray-400 font-medium">
-                            Showing <span class="text-gray-900 dark:text-white">{{ $products->count() }}</span> of <span class="text-gray-900 dark:text-white">{{ $products->total() }}</span> products
+                            Showing <span class="text-gray-900 dark:text-white">{{ $products->count() }}</span>
+                            of <span class="text-gray-900 dark:text-white">{{ $products->total() }}</span> products
                             @if(request('search'))
                                 <span class="text-sm">for "{{ request('search') }}"</span>
                             @endif
@@ -198,10 +194,11 @@
                             @foreach($products as $product)
                                 <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-2xl smooth-transition overflow-hidden border border-gray-200 dark:border-gray-700"
                                      :class="gridView === 'list' ? 'flex flex-col md:flex-row' : ''">
+
                                     {{-- Image Container --}}
                                     <div class="relative overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer"
                                          :class="gridView === 'list' ? 'md:w-1/3' : ''"
-                                         @click="openProductModal({{ $product }})">
+                                         @click="openProductModal(@js($product))">
                                         <img src="{{ $product->image_url ?: '/images/placeholder.jpg' }}"
                                              alt="{{ $product->name }}"
                                              class="product-image group-hover:scale-105 smooth-transition"
@@ -231,11 +228,12 @@
                                          :class="gridView === 'list' ? 'md:flex md:flex-col md:justify-between' : ''">
                                         <div>
                                             <h3 class="font-semibold text-gray-900 dark:text-white line-clamp-1 cursor-pointer text-lg mb-2"
-                                                @click="openProductModal({{ $product }})">
+                                                @click="openProductModal(@js($product))">
                                                 {{ $product->name }}
                                             </h3>
                                             <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">{{ $product->size }}</p>
                                         </div>
+
                                         <div class="flex items-center justify-between mb-4 space-x-2">
                                             <span class="text-xl font-bold text-gray-900 dark:text-white">
                                                 ₱{{ number_format($product->price, 2) }}
@@ -246,21 +244,22 @@
 
                                         {{-- Action Buttons --}}
                                         <div class="flex gap-3">
-                                            <button @click="openProductModal({{ $product }})"
+                                            <button type="button"
+                                                    @click="openProductModal(@js($product))"
                                                     class="flex-1 px-4 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 smooth-transition text-center font-medium shadow-sm">
                                                 View
                                             </button>
 
-                                            <form action="{{ route('favorites.toggle', $product) }}" method="POST" @click.stop>
-                                                @csrf
-                                                <button type="submit"
+                                            {{-- FAVORITE BUTTON (NO AUTH, localStorage only) --}}
+                                            <button type="button"
+                                                    @click.stop="toggleFavorite({{ (int) $product->id }})"
                                                     class="w-12 h-12 flex items-center justify-center rounded-xl shadow-sm smooth-transition"
-                                                    :class="{{ $product->is_favorite }} ? 'bg-red-500 text-white' : 'gradient-bg text-white'">
-                                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                                    :class="isFavorite({{ (int) $product->id }}) ? 'bg-red-500 text-white' : 'gradient-bg text-white'"
+                                                    aria-label="Toggle favorite">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                </svg>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -285,7 +284,8 @@
                                     @endif
                                 </p>
                                 @if(request('search') || request('category') || request('min_price') || request('max_price') || request('material') || request('style'))
-                                    <a href="{{ route('shop.index') }}" class="inline-flex items-center px-6 py-3 gradient-bg text-white rounded-xl hover:opacity-90 smooth-transition font-medium shadow-sm">
+                                    <a href="{{ route('shop.index') }}"
+                                       class="inline-flex items-center px-6 py-3 gradient-bg text-white rounded-xl hover:opacity-90 smooth-transition font-medium shadow-sm">
                                         Clear filters
                                     </a>
                                 @endif
@@ -305,17 +305,14 @@
 
                 {{-- Filters Sidebar --}}
                 <div class="hidden lg:block w-80 flex-shrink-0">
-                    {{-- Filters Card - Fixed Position --}}
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
-                        {{-- Filters Header --}}
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
-                            <button @click="clearFilters()" class="text-sm text-indigo-600 hover:text-indigo-500 font-medium smooth-transition">
+                            <button type="button" @click="clearFilters()" class="text-sm text-indigo-600 hover:text-indigo-500 font-medium smooth-transition">
                                 Clear all
                             </button>
                         </div>
 
-                        {{-- Filters Form --}}
                         <form method="GET" action="{{ route('shop.index') }}" id="filterForm">
                             <input type="hidden" name="sort" x-model="sort">
                             <input type="hidden" name="search" x-model="searchQuery">
@@ -329,26 +326,18 @@
                                         <span>Max: ₱50,000</span>
                                     </div>
                                     <div class="flex gap-3">
-                                        <input type="number"
-                                               name="min_price"
-                                               x-model="filters.min_price"
-                                               value="{{ request('min_price') }}"
-                                               placeholder="Min"
+                                        <input type="number" name="min_price" x-model="filters.min_price" value="{{ request('min_price') }}" placeholder="Min"
                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <input type="number"
-                                               name="max_price"
-                                               x-model="filters.max_price"
-                                               value="{{ request('max_price') }}"
-                                               placeholder="Max"
+                                        <input type="number" name="max_price" x-model="filters.max_price" value="{{ request('max_price') }}" placeholder="Max"
                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
                                 </div>
                             </div>
 
-                            @php 
-                                $selectedCats = (array) request('category', []); 
+                            @php
+                                $selectedCats      = (array) request('category', []);
                                 $selectedMaterials = (array) request('material', []);
-                                $selectedStyles = (array) request('style', []);
+                                $selectedStyles    = (array) request('style', []);
                             @endphp
 
                             {{-- Categories --}}
@@ -357,9 +346,7 @@
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @forelse ($categories as $cat)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox"
-                                                   name="category[]"
-                                                   value="{{ $cat->id }}"
+                                            <input type="checkbox" name="category[]" value="{{ $cat->id }}"
                                                    x-model="filters.categories"
                                                    @checked(in_array($cat->id, $selectedCats))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
@@ -377,9 +364,7 @@
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @forelse ($materials as $material)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox"
-                                                   name="material[]"
-                                                   value="{{ $material }}"
+                                            <input type="checkbox" name="material[]" value="{{ $material }}"
                                                    x-model="filters.materials"
                                                    @checked(in_array($material, $selectedMaterials))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
@@ -397,9 +382,7 @@
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @forelse ($styles as $style)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox"
-                                                   name="style[]"
-                                                   value="{{ $style }}"
+                                            <input type="checkbox" name="style[]" value="{{ $style }}"
                                                    x-model="filters.styles"
                                                    @checked(in_array($style, $selectedStyles))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
@@ -411,7 +394,6 @@
                                 </div>
                             </div>
 
-                            {{-- Apply Filters Button --}}
                             <button type="submit"
                                     class="w-full gradient-bg text-white py-4 rounded-xl font-medium hover:opacity-90 smooth-transition shadow-sm">
                                 Apply Filters
@@ -424,13 +406,8 @@
 
         {{-- Mobile Filters Drawer --}}
         <div x-show="openFilters" class="lg:hidden" x-cloak>
-            {{-- Backdrop --}}
-            <div x-show="openFilters"
-                 class="fixed inset-0 bg-black bg-opacity-50 z-40"
-                 @click="openFilters = false">
-            </div>
+            <div x-show="openFilters" class="fixed inset-0 bg-black bg-opacity-50 z-40" @click="openFilters = false"></div>
 
-            {{-- Drawer --}}
             <div x-show="openFilters"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="transform translate-x-full"
@@ -440,53 +417,37 @@
                  x-transition:leave-end="transform translate-x-full"
                  class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl z-50 overflow-y-auto">
 
-                {{-- Drawer Header --}}
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
-                    <button @click="openFilters = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg smooth-transition">
+                    <button type="button" @click="openFilters = false" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg smooth-transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
 
-                {{-- Mobile Filters Content --}}
                 <div class="p-6">
                     <form method="GET" action="{{ route('shop.index') }}" id="mobileFilterForm">
                         <input type="hidden" name="sort" x-model="sort">
                         <input type="hidden" name="search" x-model="searchQuery">
 
                         <div class="space-y-8">
-                            {{-- Price Range --}}
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white mb-4">Price Range</h4>
-                                <div class="space-y-4">
-                                    <div class="flex gap-3">
-                                        <input type="number"
-                                               name="min_price"
-                                               x-model="filters.min_price"
-                                               value="{{ request('min_price') }}"
-                                               placeholder="Min"
-                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                        <input type="number"
-                                               name="max_price"
-                                               x-model="filters.max_price"
-                                               value="{{ request('max_price') }}"
-                                               placeholder="Max"
-                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    </div>
+                                <div class="flex gap-3">
+                                    <input type="number" name="min_price" x-model="filters.min_price" value="{{ request('min_price') }}" placeholder="Min"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <input type="number" name="max_price" x-model="filters.max_price" value="{{ request('max_price') }}" placeholder="Max"
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                             </div>
 
-                            {{-- Categories --}}
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white mb-4">Categories</h4>
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @foreach ($categories as $cat)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox"
-                                                   name="category[]"
-                                                   value="{{ $cat->id }}"
+                                            <input type="checkbox" name="category[]" value="{{ $cat->id }}"
                                                    x-model="filters.categories"
                                                    @checked(in_array($cat->id, request('category', [])))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
@@ -496,15 +457,12 @@
                                 </div>
                             </div>
 
-                            {{-- Materials (Mobile) --}}
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white mb-4">Materials</h4>
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @foreach ($materials as $material)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox"
-                                                   name="material[]"
-                                                   value="{{ $material }}"
+                                            <input type="checkbox" name="material[]" value="{{ $material }}"
                                                    x-model="filters.materials"
                                                    @checked(in_array($material, (array) request('material', [])))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
@@ -514,15 +472,12 @@
                                 </div>
                             </div>
 
-                            {{-- Styles (Mobile) --}}
                             <div>
                                 <h4 class="font-medium text-gray-900 dark:text-white mb-4">Style</h4>
                                 <div class="space-y-3 max-h-60 overflow-y-auto">
                                     @foreach ($styles as $style)
                                         <label class="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg smooth-transition">
-                                            <input type="checkbox"
-                                                   name="style[]"
-                                                   value="{{ $style }}"
+                                            <input type="checkbox" name="style[]" value="{{ $style }}"
                                                    x-model="filters.styles"
                                                    @checked(in_array($style, (array) request('style', [])))
                                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
@@ -532,7 +487,6 @@
                                 </div>
                             </div>
 
-                            {{-- Apply Filters Button --}}
                             <button type="submit"
                                     @click="openFilters = false"
                                     class="w-full gradient-bg text-white py-4 rounded-xl font-medium hover:opacity-90 smooth-transition shadow-sm">
@@ -547,7 +501,6 @@
         {{-- Product Modal --}}
         <div x-show="productModalOpen" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                {{-- Backdrop --}}
                 <div x-show="productModalOpen"
                      class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
                      x-transition:enter="ease-out duration-300"
@@ -556,10 +509,8 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     @click="productModalOpen = false">
-                </div>
+                     @click="productModalOpen = false"></div>
 
-                {{-- Modal Panel --}}
                 <div x-show="productModalOpen"
                      class="inline-block w-full max-w-2xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto smooth-transition"
                      x-transition:enter="ease-out duration-300"
@@ -568,14 +519,13 @@
                      x-transition:leave="ease-in duration-200"
                      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+
                     <div class="flex flex-col">
-                        {{-- Product Image --}}
                         <div class="relative">
                             <img :src="selectedProduct.image_url || '/images/placeholder.jpg'"
                                  :alt="selectedProduct.name"
                                  class="modal-image">
 
-                            {{-- Close Button --}}
                             <button @click="productModalOpen = false"
                                     class="absolute top-4 right-4 p-2 bg-black/20 backdrop-blur-sm text-white rounded-full hover:bg-black/30 smooth-transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -583,27 +533,24 @@
                                 </svg>
                             </button>
 
-                            {{-- Category Badge --}}
                             <div class="absolute top-4 left-4">
                                 <span class="px-3 py-1 bg-black/80 backdrop-blur-sm text-white text-sm rounded-full font-medium"
                                       x-text="selectedProduct.category ? selectedProduct.category.name : 'Uncategorized'"></span>
                             </div>
 
-                            {{-- Stock Status --}}
                             <div class="absolute bottom-4 left-4">
                                 <span class="px-3 py-1 text-sm rounded-full font-medium"
-                                      :class="selectedProduct.quantity > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
-                                      x-text="selectedProduct.quantity > 0 ? 'In Stock' : 'Out of Stock'"></span>
+                                      :class="Number(selectedProduct.quantity || 0) > 0 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
+                                      x-text="Number(selectedProduct.quantity || 0) > 0 ? 'In Stock' : 'Out of Stock'"></span>
                             </div>
                         </div>
 
-                        {{-- Product Details --}}
                         <div class="p-6">
-                            {{-- Product Info --}}
                             <div class="mb-6">
                                 <div class="flex items-start justify-between mb-4">
                                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white" x-text="selectedProduct.name"></h2>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white" x-text="'₱' + (selectedProduct.price ? selectedProduct.price.toLocaleString('en-PH', {minimumFractionDigits: 2}) : '0.00')"></span>
+                                    <span class="text-2xl font-bold text-gray-900 dark:text-white"
+                                          x-text="'₱' + (selectedProduct.price ? Number(selectedProduct.price).toLocaleString('en-PH', {minimumFractionDigits: 2}) : '0.00')"></span>
                                 </div>
 
                                 <p class="text-gray-600 dark:text-gray-400 mb-4 leading-relaxed" x-text="selectedProduct.description"></p>
@@ -624,19 +571,17 @@
                                 </div>
                             </div>
 
-                            {{-- Action Buttons --}}
                             <div class="flex gap-3">
-                                <form :action="'/favorites/' + selectedProduct.id + '/toggle'" method="POST" @click.stop>
-                                    @csrf
-                                    <button type="submit"
-                                        :class="`w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2 ${selectedProduct.is_favorite ? 'bg-red-500 text-white' : 'gradient-bg text-white'}`"
-                                        @click="toggleFavorite(selectedProduct.id)">
-                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                        </svg>
-                                        <span x-text="selectedProduct.is_favorite ? 'Remove Favorite' : 'Add to Favorite'"></span>
-                                    </button>
-                                </form>
+                                {{-- FAVORITE BUTTON (NO AUTH, localStorage only) --}}
+                                <button type="button"
+                                        @click.stop="toggleFavorite(selectedProduct.id)"
+                                        class="w-full px-4 py-3 rounded-xl font-medium shadow-sm smooth-transition flex items-center justify-center gap-2"
+                                        :class="isFavorite(selectedProduct.id) ? 'bg-red-500 text-white' : 'gradient-bg text-white'">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                    </svg>
+                                    <span x-text="isFavorite(selectedProduct.id) ? 'Remove Favorite' : 'Add to Favorite'"></span>
+                                </button>
 
                                 <button @click="productModalOpen = false"
                                         class="flex-1 px-4 py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-700 smooth-transition font-medium shadow-sm">
@@ -645,9 +590,11 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
+
     </div>
 
     <script>
@@ -670,58 +617,51 @@
                 },
 
                 init() {
-                    this.filters.categories = this.filters.categories.map(cat => cat.toString());
-                    this.filters.materials = this.filters.materials.map(m => m.toString());
-                    this.filters.styles = this.filters.styles.map(s => s.toString());
+                    this.filters.categories = (this.filters.categories || []).map(v => v.toString());
+                    this.filters.materials  = (this.filters.materials || []).map(v => v.toString());
+                    this.filters.styles     = (this.filters.styles || []).map(v => v.toString());
 
                     const saved = localStorage.getItem('favorites');
                     this.favorites = saved ? JSON.parse(saved).map(id => Number(id)) : [];
-
-                    const backendFavorites = @json($favoriteIds).map(id => Number(id));
-                    backendFavorites.forEach(id => {
-                        if (!this.favorites.includes(id)) {
-                            this.favorites.push(id);
-                        }
-                    });
-
-                    localStorage.setItem('favorites', JSON.stringify(this.favorites));
-                },
-
-                loadFavorites() {
-                    const saved = localStorage.getItem('favorites');
-
-                    if (!saved) {
-                        this.favorites = [];
-                        return;
-                    }
-
-                    this.favorites = JSON.parse(saved).map(id => Number(id));
                 },
 
                 saveFavorites() {
                     localStorage.setItem('favorites', JSON.stringify(this.favorites));
                 },
 
+                isFavorite(productId) {
+                    return this.favorites.includes(Number(productId));
+                },
+
                 toggleFavorite(productId) {
                     productId = Number(productId);
+                    const idx = this.favorites.indexOf(productId);
 
-                    const index = this.favorites.indexOf(productId);
-
-                    if (index > -1) {
-                        this.favorites.splice(index, 1);
-                    } else {
-                        this.favorites.push(productId);
-                    }
+                    if (idx > -1) this.favorites.splice(idx, 1);
+                    else this.favorites.push(productId);
 
                     this.saveFavorites();
+
+                    // keep modal state synced
+                    if (this.selectedProduct && Number(this.selectedProduct.id) === productId) {
+                        this.selectedProduct.is_favorite = this.isFavorite(productId);
+                    }
                 },
 
                 openProductModal(product) {
+                    // Normalize & attach local favorite state
                     product.id = Number(product.id);
+                    product.is_favorite = this.isFavorite(product.id);
+
                     this.selectedProduct = product;
                     this.productModalOpen = true;
 
-                    axios.post(`/product/view/${product.id}`);
+                    // OPTIONAL tracking - won't break guests
+                    try {
+                        if (window.axios) {
+                            axios.post(`/product/view/${product.id}`);
+                        }
+                    } catch (e) {}
                 },
 
                 applyFilters() {
@@ -739,17 +679,6 @@
                         styles: [],
                     };
                     window.location.href = '{{ route('shop.index') }}';
-                },
-
-                hasActiveFilters() {
-                    return !!(
-                        this.searchQuery ||
-                        this.filters.min_price ||
-                        this.filters.max_price ||
-                        (this.filters.categories && this.filters.categories.length) ||
-                        (this.filters.materials && this.filters.materials.length) ||
-                        (this.filters.styles && this.filters.styles.length)
-                    );
                 },
 
                 categoryLabel(id) {

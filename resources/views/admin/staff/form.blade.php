@@ -10,7 +10,7 @@
 
         {{-- Action Bar at the top (Matches Customer/Product Bar) --}}
         <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-gray-900">
+            <h1 class="text-2xl font-bold font-serif text-gray-900">
                 {{ $user->exists ? 'Edit Staff' : 'Create Staff' }}
             </h1>
 
@@ -19,9 +19,9 @@
                     class="rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors duration-150">
                     Cancel
                 </a>
-                {{-- Save Button styled like 'Add New Product' (PURPLE) --}}
+                {{-- Save Button styled like 'Add New Product' (yellow) --}}
                 <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-purple-700 transition-colors duration-150">
+                    class="inline-flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-yellow-700 transition-colors duration-150">
                     {{ $user->exists ? 'Update Staff' : 'Create Staff' }}
                 </button>
             </div>
@@ -43,8 +43,8 @@
                         name="name"
                         value="{{ old('name', $user->name) }}"
                         required
-                        {{-- Changed focus color from amber to purple --}}
-                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors duration-150">
+                        {{-- Changed focus color from amber to yellow --}}
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors duration-150">
                     @error('name')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
@@ -60,8 +60,8 @@
                         name="email"
                         value="{{ old('email', $user->email) }}"
                         required
-                        {{-- Changed focus color from amber to purple --}}
-                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors duration-150">
+                        {{-- Changed focus color from amber to yellow --}}
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors duration-150">
                     @error('email')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
@@ -81,8 +81,8 @@
                         name="password"
                         placeholder="{{ $user->exists ? 'Leave blank to keep current' : '' }}"
                         @if(!$user->exists) required @endif
-                        {{-- Changed focus color from amber to purple --}}
-                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors duration-150">
+                        {{-- Changed focus color from amber to yellow --}}
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors duration-150">
                     @error('password')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
@@ -101,8 +101,8 @@
                         name="password_confirmation"
                         placeholder="{{ $user->exists ? 'Leave blank if not changing' : '' }}"
                         @if(!$user->exists) required @endif
-                        {{-- Changed focus color from amber to purple --}}
-                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-colors duration-150">
+                        {{-- Changed focus color from amber to yellow --}}
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors duration-150">
                     @error('password_confirmation')
                         <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
                     @enderror

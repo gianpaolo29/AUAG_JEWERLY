@@ -22,7 +22,7 @@
                 </a>
 
                 <button type="submit" form="product-form"
-                        class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 shadow-md transition">
+                        class="px-4 py-2 rounded-lg bg-yellow-600 text-white text-sm font-semibold hover:bg-yellow-700 shadow-md transition">
                     {{ $product->exists ? 'Save Changes' : 'Save Product' }}
                 </button>
             </div>
@@ -45,7 +45,7 @@
             {{-- LEFT: basic info + pricing --}}
             <div class="lg:col-span-2 flex flex-col gap-6">
                 {{-- Basic info --}}
-                <div class="bg-white rounded-xl shadow-sm p-6 space-y-5 border-t-4 border-violet-600">
+                <div class="bg-white rounded-xl shadow-sm p-6 space-y-5 border-t-4 border-yellow-600">
                     <h3 class="text-lg font-bold text-gray-900 border-b pb-3 -mx-6 px-6">
                         Basic Information
                     </h3>
@@ -59,7 +59,7 @@
                                value="{{ old('name', $product->name) }}"
                                required
                                placeholder="Enter product name"
-                               class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500"/>
+                               class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500"/>
                         @error('name')
                         <p class="text-rose-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -71,7 +71,7 @@
                             Category <span class="text-rose-600">*</span>
                         </label>
                         <select id="category_id" name="category_id" required
-                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500">
                             <option value="">Select Category</option>
                             @foreach($categories as $c)
                                 <option value="{{ $c->id }}"
@@ -93,7 +93,7 @@
                         </label>
                         <textarea name="description" id="description" rows="4"
                                 placeholder="Describe the product..."
-                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">{{ old('description', $product->description) }}</textarea>
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500">{{ old('description', $product->description) }}</textarea>
                         @error('description')
                         <p class="text-rose-600 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -105,7 +105,7 @@
                             Material
                         </label>
                         <select id="material" name="material"
-                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500">
                             <option value="">Select Material</option>
                             @foreach(\App\Models\Product::MATERIAL_OPTIONS as $mat)
                                 <option value="{{ $mat }}" @selected(old('material', $product->material) === $mat)>
@@ -123,7 +123,7 @@
                         <input type="text" id="size" name="size"
                             value="{{ old('size', $product->size) }}"
                             placeholder="e.g. 18 inches, Adjustable, 2mm, Medium"
-                            class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                            class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500">
                     </div>
 
                     {{-- Style --}}
@@ -132,7 +132,7 @@
                             Style
                         </label>
                         <select id="style" name="style"
-                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500">
+                                class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500">
                             <option value="">Select Style</option>
                             @foreach(\App\Models\Product::STYLE_OPTIONS as $sty)
                                 <option value="{{ $sty }}" @selected(old('style', $product->style) === $sty)>
@@ -145,7 +145,7 @@
                 </div>
 
                 {{-- Pricing & stock --}}
-                <div class="bg-white rounded-xl shadow-sm p-6 space-y-5 border-t-4 border-violet-600">
+                <div class="bg-white rounded-xl shadow-sm p-6 space-y-5 border-t-4 border-yellow-600">
                     <h3 class="text-lg font-bold text-gray-900 border-b pb-3 -mx-6 px-6">
                         Pricing & Inventory
                     </h3>
@@ -164,7 +164,7 @@
                                        value="{{ old('price', $product->price) }}"
                                        required
                                        placeholder="0.00"
-                                       class="block w-full pl-7 pr-3 rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500"/>
+                                       class="block w-full pl-7 pr-3 rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500"/>
                             </div>
                             @error('price')
                             <p class="text-rose-600 text-xs mt-1">{{ $message }}</p>
@@ -179,7 +179,7 @@
                             <input id="quantity" name="quantity" type="number" min="0"
                                    value="{{ old('quantity', $product->quantity ?? 0) }}"
                                    required
-                                   class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-violet-500 focus:border-violet-500"/>
+                                   class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:ring-yellow-500 focus:border-yellow-500"/>
                             @error('quantity')
                             <p class="text-rose-600 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -195,7 +195,7 @@
                                        class="sr-only peer"
                                        @checked(old('status', $product->status ?? true))>
                                 <div
-                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 rounded-full peer
+                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer
                                            peer-checked:after:translate-x-full peer-checked:after:border-white
                                            after:content-[''] after:absolute after:top-[2px] after:left-[2px]
                                            after:bg-white after:border-gray-300 after:border after:rounded-full
@@ -209,14 +209,14 @@
 
             {{-- RIGHT: Image --}}
             <div class="lg:col-span-1 flex flex-col gap-6">
-                <div class="bg-white rounded-xl shadow-sm p-6 space-y-4 border-t-4 border-violet-600">
+                <div class="bg-white rounded-xl shadow-sm p-6 space-y-4 border-t-4 border-yellow-600">
                     <h3 class="text-lg font-bold text-gray-900 border-b pb-3 -mx-6 px-6">
                         Product Image
                     </h3>
 
                     <label for="image_upload"
-                           class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:border-violet-400 transition">
-                        <svg class="w-8 h-8 text-violet-600 mb-2" viewBox="0 0 24 24" fill="none"
+                           class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:border-yellow-400 transition">
+                        <svg class="w-8 h-8 text-yellow-600 mb-2" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2">
                             <path
                                 d="M4 14.899L7.5 11.399L10.5 14.399L16 8.899M16 8.899H13.5M16 8.899V11.399M21 15V9C21 8.44772 20.5523 8 20 8H13L10.5 5.5H4C3.44772 5.5 3 5.94772 3 6.5V17.5C3 18.0523 3.44772 18.5 4 18.5H20C20.5523 18.5 21 18.0523 21 17.5V15Z"

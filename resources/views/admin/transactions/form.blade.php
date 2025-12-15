@@ -1,387 +1,395 @@
-{{-- resources/views/admin/transactions/form.blade.php --}}
-@php
-    /** @var \App\Models\Transaction $transaction */
-    $isEdit = $transaction->exists;
+<x-admin-layout title="New Transaction">
 
-    // For now we only really support "Buy" (sale) transactions here
-    $title = $isEdit ? 'Edit Sale Transaction' : 'Record New Sale';
+    {{-- CHANGED: Removed max-w-7xl, changed py-10 to py-6 --}}
+    <div class="w-full px-4 sm:px-6 py-6"
+         x-data="{
+        search: '',
+        products: @js($products),
+        items: [],
 
-    // Initial items for edit / validation error
-    $initialItems = old('items');
+        // Customer data
+        customerTab: 'existing', // 'new' or 'existing'
+        customerSearch: '',
+        customers: @js($customers),
+        selectedCustomerId: null,
+        selectedCustomerName: '',
 
-    if (!$initialItems && $isEdit && $transaction->relationLoaded('items')) {
-        // If you plan to use edit: make sure controller does ->load('items.product')
-        $initialItems = $transaction->items->map(function ($item) {
-            $product = $item->product ?? null;
+        // Error Modal State (SweetAlert style)
+        errorOpen: false,
+        errorMessage: '',
 
-            return [
-                'product_id' => $item->product_id,
-                'name'       => $product->name ?? 'Product #'.$item->product_id,
-                'unit_price' => (float) $item->unit_price,
-                'quantity'   => (int) $item->quantity,
-                'unit'       => $product->unit ?? '',
-                'image_url'  => $product->image_url ?? null,
-                'max_qty'    => $product->stock ?? null,
-            ];
-        })->toArray();
-    }
+        init() {
+            // Trigger modal if server-side validation fails
+            @if($errors->any())
+                this.showError('{{ $errors->first() }}');
+            @endif
+        },
 
-    if (!$initialItems) {
-        $initialItems = [];
-    }
+        showError(msg) {
+            this.errorMessage = msg;
+            this.errorOpen = true;
+        },
 
-    // We expect $products from controller with: id, name, price, stock, unit, image_url
-@endphp
+        filtered() {
+            if (!this.search) return this.products;
+            const s = this.search.toLowerCase();
+            return this.products.filter(p =>
+                (p.name || '').toLowerCase().includes(s)
+            );
+        },
 
-<x-admin-layout :title="$title">
-    <div class="max-w-6xl mx-auto"
-         x-data="transactionForm(@js($initialItems), @js($products), {{ (int) $staff->id }})">
+        filteredCustomers() {
+            if (!this.customerSearch) return this.customers;
+            const s = this.customerSearch.toLowerCase();
+            return this.customers.filter(c =>
+                (c.name || '').toLowerCase().includes(s)
+                || (c.email || '').toLowerCase().includes(s)
+                || (c.phone || '').toLowerCase().includes(s)
+            );
+        },
+
+        selectCustomer(c) {
+            this.selectedCustomerId = c.id;
+            this.selectedCustomerName = c.name;
+            this.customerSearch = c.name; // Fill input with name
+        },
+
+        add(p) {
+            const max = Number(p.stock || 0);
+            
+            // Validation: Out of stock
+            if (max <= 0) {
+                this.showError('This item is currently out of stock.');
+                return;
+            }
+
+            let found = this.items.find(i => i.product_id === p.id);
+
+            if (found) {
+                if (found.quantity < max) {
+                    found.quantity++;
+                } else {
+                    this.showError('Cannot add more. Max stock reached.');
+                }
+                return;
+            }
+
+            this.items.push({
+                product_id: p.id,
+                name: p.name,
+                price: Number(p.price),
+                quantity: 1,
+                stock: max,
+                image: p.image_url,
+            });
+        },
+
+        remove(i) {
+            this.items.splice(i, 1);
+        },
+
+        subtotal() {
+            return this.items.reduce((t, i) => t + (i.price * i.quantity), 0);
+        },
+
+        money(v) {
+            return '₱' + Number(v).toLocaleString('en-PH', {
+                minimumFractionDigits: 2
+            });
+        }
+     }">
 
         {{-- HEADER --}}
-        <div class="flex items-center justify-between mb-8">
+        {{-- CHANGED: mb-8 to mb-6, pb-6 to pb-4 --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-gray-200 pb-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">{{ $title }}</h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    Walk-in customer sale. Customer is not recorded — only staff and items.
-                </p>
+                <h1 class="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Record Sale</h1>
+                <p class="text-sm text-gray-500 mt-1">Create a new transaction record</p>
             </div>
-
-            <div class="flex items-center gap-3">
-                <a href="{{ route('admin.transactions.index') }}"
-                   class="px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100">
-                    Cancel
-                </a>
-
-                <button type="submit"
-                        form="transaction-form"
-                        class="px-5 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 shadow-md">
-                    {{ $isEdit ? 'Update Sale' : 'Save Transaction' }}
-                </button>
-            </div>
+            {{-- CHANGED: px-5 py-2.5 to px-4 py-2 --}}
+            <a href="{{ route('admin.transactions.index') }}"
+               class="mt-4 sm:mt-0 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition shadow-sm text-sm">
+                ← Back to List
+            </a>
         </div>
 
-        {{-- ERRORS --}}
-        @if ($errors->any())
-            <div class="rounded-xl border border-red-300 bg-red-50 p-4 text-red-700 mb-6">
-                <div class="font-semibold mb-2">Please correct the following errors:</div>
-                <ul class="list-disc list-inside space-y-1 text-sm">
-                    @foreach ($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        {{-- FORM --}}
+        <form action="{{ route('admin.transactions.store') }}" method="POST">
+            @csrf
 
-        <div class="grid lg:grid-cols-3 gap-6">
-            {{-- LEFT: FORM --}}
-            <div class="lg:col-span-2 space-y-6">
-                <form
-                    id="transaction-form"
-                    method="POST"
-                    action="{{ $isEdit ? route('admin.transactions.update', $transaction) : route('admin.transactions.store') }}"
-                    class="space-y-6"
-                >
-                    @csrf
-                    @if($isEdit)
-                        @method('PUT')
-                    @endif
+            {{-- CUSTOMER SECTION --}}
+            {{-- CHANGED: p-6 to p-4 sm:p-5, mb-8 to mb-6 --}}
+            <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-4 sm:p-5 mb-6">
+                <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4 border-b border-gray-100 pb-2">Customer Details</h2>
 
-                    {{-- Hidden / meta fields --}}
-                    <input type="hidden" name="type" value="Buy">
-                    <input type="hidden" name="staff_id" :value="staffId">
+                {{-- Tabs --}}
+                <div class="flex gap-4 mb-5">
+                    {{-- CHANGED: px-5 py-2 to px-4 py-1.5 --}}
+                    <button type="button"
+                            @click="customerTab = 'existing'"
+                            class="px-4 py-1.5 text-sm font-medium rounded-full transition-all border"
+                            :class="customerTab === 'existing'
+                            ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">
+                        Select Existing
+                    </button>
+                    <button type="button"
+                            @click="customerTab = 'new'"
+                            class="px-4 py-1.5 text-sm font-medium rounded-full transition-all border"
+                            :class="customerTab === 'new'
+                            ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">
+                        Register New
+                    </button>
+                </div>
 
-                    {{-- STAFF CARD --}}
-                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-2">Processed By</h2>
-                        <p class="text-gray-700">{{ $staff->name }} (You)</p>
-                        <p class="text-xs text-gray-500 mt-1">
-                            This sale will be associated with your staff account.
-                        </p>
+                <input type="hidden" name="customer_mode" :value="customerTab">
+
+                {{-- EXISTING CUSTOMER SEARCH --}}
+                <div x-show="customerTab === 'existing'" x-transition>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Find Customer</label>
+                    <div class="relative">
+                        {{-- CHANGED: p-3.5 to px-3 py-2 --}}
+                        <input type="text"
+                               x-model="customerSearch"
+                               placeholder="Type to search name..."
+                               class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-yellow-500 focus:border-yellow-500 block px-3 py-2 shadow-sm">
+
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
                     </div>
 
-                    {{-- PRODUCTS CARD --}}
-                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-semibold text-gray-800">Products</h2>
-
+                    {{-- Dropdown Results --}}
+                    <div x-show="customerSearch.length > 0 && selectedCustomerName !== customerSearch"
+                         class="mt-2 max-h-56 overflow-y-auto border border-gray-100 rounded-xl bg-white shadow-xl z-10">
+                        <template x-for="c in filteredCustomers()" :key="c.id">
                             <button type="button"
-                                    @click="showProductModal = true"
-                                    class="inline-flex items-center gap-1.5 text-indigo-600 font-medium hover:text-indigo-700">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="2">
-                                    <path d="M12 5v14M5 12h14"/>
-                                </svg>
-                                Add Product
+                                    @click="selectCustomer(c)"
+                                    class="w-full text-left px-4 py-3 flex flex-col hover:bg-yellow-50 border-b border-gray-50 last:border-0 transition">
+                                <span class="text-sm font-bold text-gray-800" x-text="c.name"></span>
+                                <div class="flex gap-2 text-xs text-gray-500 mt-0.5">
+                                    <span x-text="c.email"></span> • <span x-text="c.phone"></span>
+                                </div>
                             </button>
-                        </div>
+                        </template>
+                        <template x-if="filteredCustomers().length === 0">
+                            <div class="p-4 text-sm text-gray-500 text-center">No customers found.</div>
+                        </template>
+                    </div>
 
-                        <div class="space-y-4">
-                            {{-- ITEM ROWS --}}
+                    <input type="hidden" name="customer_id" :value="selectedCustomerId">
+                </div>
+
+                {{-- NEW CUSTOMER FORM --}}
+                <div x-show="customerTab === 'new'" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{-- CHANGED: gap-6 to gap-4 --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Full Name <span class="text-red-500">*</span></label>
+                        {{-- CHANGED: p-3 to px-3 py-2 --}}
+                        <input type="text" name="customer_name" value="{{ old('customer_name') }}"
+                               class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Email</label>
+                        <input type="email" name="customer_email" value="{{ old('customer_email') }}"
+                               class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Phone</label>
+                        <input type="text" name="customer_phone" value="{{ old('customer_phone') }}"
+                               class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 px-3 py-2 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {{-- LEFT: PRODUCT SELECTOR --}}
+                {{-- CHANGED: p-6 to p-4 sm:p-5 --}}
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-4 sm:p-5">
+
+                    <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        Select Products
+                    </h2>
+
+                    {{-- CHANGED: px-4 py-3 to px-3 py-2 --}}
+                    <input type="text"
+                           x-model="search"
+                           placeholder="Search product inventory..."
+                           class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl mb-4 focus:ring-yellow-500 focus:border-yellow-500 shadow-inner text-sm">
+
+                    <div class="max-h-[500px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                        <template x-for="p in filtered()" :key="p.id">
+                            <button type="button"
+                                    @click="add(p)"
+                                    class="w-full group flex items-center justify-between border border-gray-100 rounded-xl p-3 hover:border-yellow-400 hover:bg-yellow-50/30 hover:shadow-md transition-all duration-200">
+
+                                <div class="flex items-center gap-3">
+                                    {{-- CHANGED: h-14 w-14 to h-12 w-12 for compactness --}}
+                                    <div class="h-12 w-12 rounded-lg overflow-hidden border border-gray-200 bg-white">
+                                        <img :src="p.image_url || '{{ asset('images/placeholder-product.png') }}'"
+                                             class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="font-bold text-sm text-gray-800 group-hover:text-gray-900" x-text="p.name"></p>
+                                        <p class="text-xs text-yellow-600 font-bold" x-text="money(p.price)"></p>
+                                        <p class="text-[10px] text-gray-400 mt-0.5">Available: <span x-text="p.stock"></span></p>
+                                    </div>
+                                </div>
+
+                                {{-- CHANGED: px-4 py-2 to px-3 py-1.5 --}}
+                                <span class="px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg shadow group-hover:bg-yellow-500 transition">
+                                    Add +
+                                </span>
+                            </button>
+                        </template>
+                        <template x-if="filtered().length === 0">
+                            <div class="text-center py-10 text-gray-400 text-sm">No products found.</div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- RIGHT: CART --}}
+                <div class="lg:col-span-1">
+                    {{-- CHANGED: p-6 to p-4 sm:p-5 --}}
+                    <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 p-4 sm:p-5 sticky top-24">
+
+                        <h2 class="text-lg font-serif font-semibold text-gray-800 mb-6 flex justify-between items-center">
+                            Current Cart
+                            <span class="text-xs font-sans bg-gray-100 text-gray-600 px-2 py-1 rounded-full" x-text="items.length + ' Items'"></span>
+                        </h2>
+
+                        <template x-if="items.length === 0">
+                            <div class="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                                <p class="text-gray-400 text-sm font-medium">Cart is empty</p>
+                                <p class="text-xs text-gray-300 mt-1">Select items from the left</p>
+                            </div>
+                        </template>
+
+                        {{-- Cart Items --}}
+                        <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1 mb-6">
                             <template x-for="(item, index) in items" :key="index">
-                                <div class="flex items-center p-3 border border-gray-200 rounded-xl bg-gray-50">
-                                    {{-- LEFT: product info --}}
-                                    <div class="flex items-center gap-3 w-1/2">
-                                        <img :src="item.image_url || '{{ asset('images/placeholder-product.png') }}'"
-                                             class="w-10 h-10 rounded-md object-cover" alt="">
+                                <div class="p-3 border border-gray-100 rounded-xl bg-gray-50/50 flex flex-col gap-2 relative group">
+
+                                    {{-- Remove Button --}}
+                                    <button type="button" @click="remove(index)" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+
+                                    <div class="flex items-center gap-3">
+                                        <img :src="item.image || '{{ asset('images/placeholder-product.png') }}'"
+                                             class="w-10 h-10 rounded border object-cover">
                                         <div>
-                                            <p class="font-medium text-gray-900" x-text="item.name"></p>
-                                            <p class="text-xs text-gray-500"
-                                               x-text="'₱' + Number(item.unit_price||0).toFixed(2) + (item.unit ? ' • ' + item.unit : '')"></p>
-                                            <p class="text-[11px] text-gray-400"
-                                               x-text="item.max_qty ? ('Stock: ' + item.max_qty) : ''"></p>
+                                            <p class="font-bold text-sm text-gray-800 leading-tight" x-text="item.name"></p>
+                                            <p class="text-xs text-gray-500" x-text="money(item.price)"></p>
                                         </div>
                                     </div>
 
-                                    {{-- MIDDLE: quantity controls --}}
-                                    <div class="flex items-center gap-2 w-1/4 justify-end">
-                                        {{-- hidden fields used by controller --}}
-                                        <input type="hidden"
-                                               :name="`items[${index}][product_id]`"
-                                               :value="item.product_id">
-                                        <input type="hidden"
-                                               :name="`items[${index}][unit_price]`"
-                                               :value="Number(item.unit_price||0).toFixed(2)">
+                                    <div class="flex items-center justify-between mt-1">
+                                        {{-- QTY Controls --}}
+                                        <div class="flex items-center bg-white border border-gray-200 rounded-lg">
+                                            <button type="button" @click="item.quantity > 1 ? item.quantity-- : null"
+                                                    class="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-l-lg transition">-</button>
+                                            <input type="number" readonly x-model="item.quantity"
+                                                   class="w-8 text-center text-xs border-none p-0 focus:ring-0 text-gray-800 font-bold">
+                                            <button type="button" @click="item.quantity < item.stock ? item.quantity++ : showError('Max stock reached')"
+                                                    class="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-r-lg transition">+</button>
+                                        </div>
 
-                                        <button type="button"
-                                                @click="item.quantity > 1 ? item.quantity-- : null"
-                                                class="p-1 text-gray-600 hover:text-indigo-600"
-                                                :disabled="item.quantity <= 1">
-                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                                                 stroke="currentColor" stroke-width="2">
-                                                <path d="M5 12h14"/>
-                                            </svg>
-                                        </button>
-
-                                        <input type="number"
-                                               min="1"
-                                               :max="item.max_qty ?? null"
-                                               :name="`items[${index}][quantity]`"
-                                               x-model.number="item.quantity"
-                                               @input="
-                                                    if (item.quantity < 1) item.quantity = 1;
-                                                    if (item.max_qty && item.quantity > item.max_qty) {
-                                                        item.quantity = item.max_qty;
-                                                    }
-                                               "
-                                               class="w-12 text-center text-sm rounded-lg border-gray-300 p-1 focus:ring-indigo-500 focus:border-indigo-500">
-
-                                        <button type="button"
-                                                @click="
-                                                    if (!item.max_qty || item.quantity < item.max_qty) {
-                                                        item.quantity++;
-                                                    }
-                                                "
-                                                class="p-1 text-gray-600 hover:text-indigo-600"
-                                                :disabled="item.max_qty && item.quantity >= item.max_qty">
-                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                                                 stroke="currentColor" stroke-width="2">
-                                                <path d="M12 5v14M5 12h14"/>
-                                            </svg>
-                                        </button>
+                                        {{-- Line Total --}}
+                                        <span class="font-serif font-bold text-yellow-600 text-sm" x-text="money(item.quantity * item.price)"></span>
                                     </div>
 
-                                    {{-- RIGHT: line total + remove --}}
-                                    <div class="flex items-center justify-end w-1/4 gap-4">
-                                        <span class="font-bold text-gray-900 w-20 text-right"
-                                              x-text="'₱' + (Number(item.unit_price||0) * Number(item.quantity||0)).toFixed(2)">
-                                        </span>
-
-                                        <button type="button"
-                                                @click="removeItem(index)"
-                                                class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"
-                                                title="Remove">
-                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                                                 stroke="currentColor" stroke-width="2">
-                                                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4
-                                                         a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </template>
-
-                            {{-- EMPTY STATE --}}
-                            <template x-if="items.length === 0">
-                                <div class="flex flex-col items-center justify-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-500">
-                                    <svg class="h-10 w-10 text-gray-400 mb-2" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" stroke-width="1.5">
-                                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
-                                    </svg>
-                                    <p class="text-sm font-medium">No products added yet</p>
-                                    <p class="text-xs mt-1">Click “Add Product” to start</p>
+                                    {{-- Hidden Inputs --}}
+                                    <input type="hidden" :name="`items[${index}][product_id]`" :value="item.product_id">
+                                    <input type="hidden" :name="`items[${index}][quantity]`" :value="item.quantity">
+                                    <input type="hidden" :name="`items[${index}][unit_price]`" :value="item.price">
                                 </div>
                             </template>
                         </div>
-                    </div>
-                </form>
-            </div>
 
-            {{-- RIGHT: SUMMARY --}}
-            <div class="lg:col-span-1">
-                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 sticky top-4">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Transaction Summary</h2>
-
-                    <div class="space-y-3 mb-6 border-b pb-4">
-                        <template x-for="(item, index) in items" :key="index">
-                            <div class="flex justify-between items-start text-sm">
-                                <span class="text-gray-700 leading-tight" x-text="item.name"></span>
-                                <div class="text-right ml-4">
-                                    <span class="text-gray-500 text-xs"
-                                          x-text="(item.quantity||0) + ' × ₱' + Number(item.unit_price||0).toFixed(2)">
-                                    </span>
-                                    <p class="font-medium text-gray-900"
-                                       x-text="'₱' + (Number(item.unit_price||0) * Number(item.quantity||0)).toFixed(2)">
-                                    </p>
-                                </div>
+                        {{-- TOTAL & SUBMIT --}}
+                        <div class="border-t border-gray-100 pt-4">
+                            <div class="flex justify-between items-end mb-4">
+                                <span class="text-sm font-medium text-gray-500">Total Amount</span>
+                                <span class="text-2xl font-serif font-bold text-gray-900" x-text="money(subtotal())"></span>
                             </div>
-                        </template>
 
-                        <template x-if="items.length === 0">
-                            <p class="text-sm text-gray-500 py-2">Add products to see the summary.</p>
-                        </template>
-                    </div>
-
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-gray-600 text-sm">
-                            <span>Subtotal</span>
-                            <span x-text="'₱' + subtotal().toFixed(2)">₱0.00</span>
-                        </div>
-
-                        <hr class="my-2 border-gray-200">
-
-                        <div class="flex justify-between font-bold text-lg text-gray-900">
-                            <span>Total</span>
-                            <span x-text="'₱' + subtotal().toFixed(2)">₱0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- PRODUCT SELECT MODAL --}}
-        <div x-cloak
-             x-show="showProductModal"
-             class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-             @keydown.escape.window="showProductModal = false">
-            <div class="bg-white w-full max-w-2xl rounded-xl shadow-xl overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b">
-                    <h3 class="font-semibold text-gray-800">Select Product</h3>
-                    <button class="p-2 rounded hover:bg-gray-100"
-                            @click="showProductModal = false">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="1.5">
-                            <path d="M6 18 18 6M6 6l12 12"
-                                  stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="p-4 border-b">
-                    <input type="text"
-                           x-model="productSearch"
-                           placeholder="Search product name or SKU..."
-                           class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-
-                <div class="p-4 max-h-[60vh] overflow-y-auto space-y-3">
-                    <template x-for="p in filteredProducts" :key="p.id">
-                        <div class="flex items-center justify-between border rounded-lg p-3">
-                            <div class="flex items-center gap-3">
-                                <img :src="p.image_url || '{{ asset('images/placeholder-product.png') }}'"
-                                     class="w-12 h-12 rounded object-cover" alt="">
-                                <div>
-                                    <div class="font-medium text-gray-900" x-text="p.name"></div>
-                                    <div class="text-xs text-gray-500"
-                                         x-text="'₱' + Number(p.price||0).toFixed(2)
-                                                 + (p.unit ? ' • ' + p.unit : '')
-                                                 + ' • Stock: ' + (p.stock ?? 0)">
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="button"
-                                    class="px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                                    :disabled="(p.stock ?? 0) <= 0"
-                                    @click="addItem(p)">
-                                Add
+                            {{-- CHANGED: py-4 to py-3 --}}
+                            <button type="submit"
+                                    :disabled="items.length === 0"
+                                    class="w-full py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:to-gray-700 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-[0.98] font-bold tracking-wide">
+                                Complete Transaction
                             </button>
                         </div>
-                    </template>
 
-                    <template x-if="filteredProducts.length === 0">
-                        <p class="text-sm text-gray-500">No products match your search.</p>
-                    </template>
+                    </div>
                 </div>
+            </div>
 
-                <div class="p-4 border-t text-right">
-                    <button class="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200"
-                            @click="showProductModal = false">
-                        Close
-                    </button>
+        </form>
+
+        {{-- CUSTOM ERROR MODAL (SweetAlert Clone) --}}
+        <div x-cloak x-show="errorOpen"
+             class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
+            {{-- Backdrop --}}
+            <div x-show="errorOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+
+                    {{-- Modal Panel --}}
+                    <div x-show="errorOpen"
+                         x-transition:enter="ease-out duration-300"
+                         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave="ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         @click.outside="errorOpen = false"
+                         class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm border border-red-100">
+
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div class="flex flex-col items-center justify-center text-center">
+                                {{-- Animated X Icon --}}
+                                <div class="mx-auto flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-red-50 border-4 border-red-50 mb-4 animate-bounce">
+                                    <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </div>
+
+                                <h3 class="text-xl font-serif font-bold leading-6 text-gray-900" id="modal-title">
+                                    Attention Needed
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500" x-text="errorMessage"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse justify-center">
+                            {{-- CHANGED: px-8 py-2.5 to px-6 py-2 --}}
+                            <button type="button"
+                                    @click="errorOpen = false"
+                                    class="inline-flex w-full justify-center rounded-xl bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto transition-colors">
+                                OK
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 
-    {{-- Alpine helper --}}
-    <script>
-        function transactionForm(initialItems, products, staffId) {
-            return {
-                showProductModal: false,
-                products: products || [],
-                productSearch: '',
-                items: (initialItems && initialItems.length) ? initialItems : [],
-                staffId: staffId,
-
-                get filteredProducts() {
-                    if (!this.productSearch) return this.products;
-                    const term = this.productSearch.toLowerCase();
-                    return this.products.filter(p => {
-                        const name = (p.name || '').toLowerCase();
-                        const sku  = (p.sku || '').toLowerCase();
-                        return name.includes(term) || sku.includes(term);
-                    });
-                },
-
-                subtotal() {
-                    return this.items.reduce((s, i) =>
-                        s + (Number(i.unit_price || 0) * Number(i.quantity || 0)), 0
-                    );
-                },
-
-                addItem(p) {
-                    if (!p) return;
-
-                    const maxStock = Number(p.stock || 0);
-                    if (maxStock <= 0) return;
-
-                    const idx = this.items.findIndex(i => i.product_id === p.id);
-
-                    if (idx >= 0) {
-                        // already in cart – just bump qty (respect stock)
-                        if (!this.items[idx].max_qty || this.items[idx].quantity < this.items[idx].max_qty) {
-                            this.items[idx].quantity++;
-                        }
-                        return;
-                    }
-
-                    this.items.push({
-                        product_id: p.id,
-                        name: p.name,
-                        unit_price: Number(p.price || 0),
-                        quantity: 1,
-                        unit: p.unit,
-                        image_url: p.image_url,
-                        max_qty: maxStock,
-                    });
-
-                    this.showProductModal = false;
-                    this.productSearch = '';
-                },
-
-                removeItem(i) {
-                    this.items.splice(i, 1);
-                },
-            }
-        }
-    </script>
 </x-admin-layout>

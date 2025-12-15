@@ -3,13 +3,13 @@
 
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Staff</h1>
+                <h1 class="text-2xl font-serif font-bold text-gray-900">Staff</h1>
                 <p class="text-sm text-gray-500">Manage staff accounts.</p>
             </div>
 
             {{-- ADD STAFF BUTTON: Changed color from amber to orange (like 'Add New Product') --}}
             <a href="{{ route('admin.staff.create') }}"
-               class="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-orange-600 transition-colors duration-150">
+               class="inline-flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-yellow-600 transition-colors duration-150">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 5v14M5 12h14" stroke-linecap="round" />
                 </svg>
@@ -29,8 +29,8 @@
                             name="q"
                             value="{{ $q }}"
                             placeholder="Search staff by name or email…"
-                            {{-- Changed focus color from amber to purple --}}
-                            class="w-full rounded-lg border-gray-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                            {{-- Changed focus color from amber to yellow --}}
+                            class="w-full rounded-lg border-gray-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
                 </div>
                 <div class="flex gap-2 md:ml-auto">
                     <button type="submit"
@@ -67,29 +67,16 @@
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="inline-flex items-center gap-1">
-                                        {{-- EDIT BUTTON: Changed color from amber to purple (to match links/accents) --}}
+                                        {{-- EDIT BUTTON: Changed color from amber to yellow (to match links/accents) --}}
                                         <a href="{{ route('admin.staff.edit', $user) }}"
-                                           class="rounded-md p-1.5 text-purple-600 hover:bg-purple-50 hover:text-purple-700">
+                                           class="rounded-md p-1.5 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700">
                                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2">
                                                 <path
                                                     d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                             </svg>
                                         </a>
-                                        <form method="POST" action="{{ route('admin.staff.destroy', $user) }}"
-                                                onsubmit="return confirm('Delete {{ $user->name }}?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            {{-- DELETE BUTTON: Remains rose/red for warning --}}
-                                            <button type="submit"
-                                                    class="rounded-md p-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700">
-                                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="2">
-                                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                                    <path d="M10 11v6M14 11v6" />
-                                                </svg>
-                                            </button>
-                                        </form>
+            
                                     </div>
                                 </td>
                             </tr>

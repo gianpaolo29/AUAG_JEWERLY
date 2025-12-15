@@ -1,364 +1,397 @@
-<x-admin-layout title="Transactions">
-    <div class="flex flex-col gap-6"
-         x-data="{
-            showDetails: false,
-            details: {
-                id: null,
-                datetime: '',
-                type: '',
-                customer_name: '',
-                customer_email: '',
-                staff_name: '',
-                staff_email: '',
-                items: [],
-                total: 0,
-            },
-            openDetails(data) {
-                this.details = data;
-                this.showDetails = true;
-            },
-            closeDetails() {
-                this.showDetails = false;
-            },
-            money(v) {
-                const n = Number(v || 0);
-                return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-         }"
-    >
+<x-admin-layout title="Transactions History">
 
-        {{-- HEADER + PRIMARY ACTION --}}
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Transactions</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    View and manage all Buy, Pawn, and Repair transactions.
-                </p>
+    @if (session('download_transaction_id'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const url = "{{ route('admin.transactions.download', ['transaction' => session('download_transaction_id')]) }}";
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', '');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            });
+        </script>
+    @endif
+
+    {{-- CHANGED: Removed max-w-7xl, changed py-10 to py-6 for tighter vertical spacing --}}
+    <div class="w-full px-4 sm:px-6 py-6">
+        
+        {{-- CHANGED: gap-8 to gap-6 --}}
+        <div class="flex flex-col gap-6" x-data="transactionsHistory()">
+
+            {{-- HEADER --}}
+            {{-- CHANGED: reduced pb-6 to pb-4 --}}
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 pb-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-serif font-bold text-gray-900 tracking-tight">Transaction History</h1>
+                    <p class="text-sm text-gray-500 mt-1">View and manage past sales and services.</p>
+                </div>
+
+                {{-- CHANGED: py-2.5 to py-2 --}}
+                <a href="{{ route('admin.transactions.create') }}"
+                   class="mt-4 sm:mt-0 inline-flex items-center gap-2 rounded-xl bg-yellow-500 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-gray-800 transition transform active:scale-95">
+                    <svg class="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    New Sale
+                </a>
             </div>
 
-            <a href="{{ route('admin.transactions.create') }}"
-               class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                New Transaction
-            </a>
-        </div>
+            {{-- FILTERS --}}
+            {{-- CHANGED: p-6 to p-4 sm:p-5 --}}
+            <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-4 sm:p-5">
+                <form method="GET" class="grid gap-4 md:grid-cols-4 lg:grid-cols-5 items-end">
 
-        {{-- FILTERS CARD --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <form method="GET" class="grid gap-4 md:grid-cols-4 items-end">
-                {{-- Search --}}
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-medium text-gray-500 mb-1.5">
-                        Search (Customer / Staff / ID)
-                    </label>
-                    <div class="relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M15.75 15.75 21 21" stroke-linecap="round" stroke-linejoin="round" />
-                            <circle cx="10.5" cy="10.5" r="6" />
-                        </svg>
-                        <input type="search" name="q" value="{{ request('q') }}"
-                               class="w-full rounded-lg border-gray-300 pl-9 pr-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                               placeholder="Search by customer name, sell by, name, or ID">
+                    {{-- Search --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Search Transaction</label>
+                        <div class="relative">
+                            {{-- CHANGED: py-2.5 to py-2 --}}
+                            <input type="search" name="q" value="{{ request('q') }}"
+                                   class="w-full rounded-xl border-gray-200 bg-gray-50 pl-10 pr-4 py-2 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors"
+                                   placeholder="Transaction ID (e.g. 104)">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {{-- Type --}}
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1.5">
-                        Type
-                    </label>
-                    <select name="type"
-                            class="w-full rounded-lg border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">All</option>
-                        <option value="Buy"   @selected(request('type') === 'Buy')>Buy</option>
-                        <option value="Pawn"  @selected(request('type') === 'Pawn')>Pawn</option>
-                        <option value="Repair"@selected(request('type') === 'Repair')>Repair</option>
-                    </select>
-                </div>
+                    {{-- Date --}}
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Filter Date</label>
+                        {{-- CHANGED: py-2.5 to py-2 --}}
+                        <input type="date" name="date" value="{{ request('date') }}"
+                               class="w-full rounded-xl border-gray-200 bg-gray-50 py-2 px-3 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                    </div>
 
-                {{-- Date --}}
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1.5">
-                        Date
-                    </label>
-                    <input type="date" name="date"
-                           value="{{ request('date') }}"
-                           class="w-full rounded-lg border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-
-                {{-- Buttons --}}
-                <div class="md:col-span-4 flex items-center justify-between pt-2">
-                    <p class="text-xs text-gray-500">
-                        Showing:
-                        <span class="font-semibold text-gray-700">
-                            {{ $transactions->total() }} transaction{{ $transactions->total() === 1 ? '' : 's' }}
-                        </span>
-                    </p>
-
-                    <div class="flex gap-2">
+                    {{-- Buttons --}}
+                    <div class="flex items-center gap-2 md:col-span-1 lg:col-span-2 justify-end">
+                        {{-- CHANGED: py-2.5 to py-2 --}}
                         <a href="{{ route('admin.transactions.index') }}"
-                           class="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50">
-                            Clear
+                           class="inline-flex items-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                            Reset
                         </a>
+
+                        {{-- CHANGED: py-2.5 to py-2 --}}
                         <button type="submit"
-                                class="inline-flex items-center gap-1 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-gray-800">
+                                class="inline-flex items-center rounded-xl bg-yellow-500 px-6 py-2 text-sm font-bold text-white shadow-md hover:bg-yellow-600 transition">
                             Apply
                         </button>
                     </div>
-                </div>
-            </form>
-        </div>
 
-        {{-- TABLE --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                </form>
+            </div>
+
+            {{-- TABLE --}}
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left">ID</th>
-                            <th class="px-4 py-3 text-left">Date</th>
-                            <th class="px-4 py-3 text-left">Customer</th>
-                            <th class="px-4 py-3 text-left">Sell By</th>
-                            <th class="px-4 py-3 text-left">Type</th>
-                            <th class="px-4 py-3 text-right">Total</th>
-                            <th class="px-4 py-3 text-center">Actions</th>
+                            {{-- CHANGED: px-6 py-4 to px-4 py-3 for tighter table headers --}}
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Transaction ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Total Amount</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-50 bg-white">
                         @forelse($transactions as $t)
-                            <tr class="hover:bg-gray-50/80 transition">
-                                <td class="px-4 py-3 font-mono text-xs text-gray-500">
-                                    #{{ $t->id }}
+                            <tr class="hover:bg-yellow-50/20 transition duration-150">
+                                {{-- CHANGED: px-6 py-4 to px-4 py-3 for tighter table cells --}}
+                                
+                                {{-- ID --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="font-mono text-sm font-medium text-gray-900">
+                                        #{{ str_pad($t->id, 6, '0', STR_PAD_LEFT) }}
+                                    </span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                                    {{ $t->created_at->format('M d, Y h:i A') }}
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-medium text-gray-900">
-                                            {{ $t->customer?->name ?? 'Walk-in Customer' }}
-                                        </span>
-                                        <span class="text-xs text-gray-400">
-                                            {{ $t->customer?->email ?? '' }}
-                                        </span>
+
+                                {{-- Date --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ $t->created_at->format('M d, Y') }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ $t->created_at->format('h:i A') }}
                                     </div>
                                 </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex flex-col">
-                                        <span class="text-sm text-gray-800">
-                                            {{ $t->staff?->name ?? '—' }}
-                                        </span>
-                                        @if($t->staff?->email)
-                                            <span class="text-xs text-gray-400">
-                                                {{ $t->staff->email }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    @php
-                                        $typeColor = match($t->type) {
-                                            'Buy'    => 'bg-emerald-50 text-emerald-700 border-emerald-100',
-                                            'Pawn'   => 'bg-amber-50 text-amber-700 border-amber-100',
-                                            'Repair' => 'bg-sky-50 text-sky-700 border-sky-100',
-                                            default  => 'bg-gray-50 text-gray-700 border-gray-200',
-                                        };
-                                    @endphp
-                                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {{ $typeColor }}">
+
+                                {{-- Type --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span
+                                        class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-sm"
+                                        :class="getTypeColor('{{ $t->type }}')"
+                                    >
                                         {{ $t->type }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-right font-semibold text-gray-900 whitespace-nowrap">
-                                    ₱{{ number_format($t->total_amount ?? 0, 2) }}
+
+                                {{-- Total --}}
+                                <td class="px-4 py-3 whitespace-nowrap text-right">
+                                    <span class="text-sm font-serif font-bold text-gray-900">
+                                        ₱{{ number_format($t->items->sum('line_total'), 2) }}
+                                    </span>
                                 </td>
-                                <td class="px-4 py-3 text-center whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-1">
-                                        {{-- VIEW: open modal --}}
-                                        <button type="button"
-                                            @click="openDetails(@js([
-                                                'id' => $t->id,
-                                                'datetime' => $t->created_at->format('M d, Y h:i A'),
-                                                'type' => $t->type,
-                                                'customer_name' => $t->customer->name ?? 'Walk-in Customer',
-                                                'customer_email' => $t->customer->email ?? '',
-                                                'staff_name' => $t->staff->name ?? '—',
-                                                'staff_email' => $t->staff->email ?? '',
-                                                'items' => $t->items->map(function ($item) {
-                                                    $placeholder = asset('images/placeholder-product.png');
-                                                    $name = 'Item #'.$item->id;
-                                                    $imageUrl = $placeholder;
 
-                                                    // 1) PRODUCT (Buy)
-                                                    if ($item->product) {
-                                                        $product = $item->product;
-                                                        $name = $product->name ?? ('Product #'.$item->product_id);
-
-                                                        $imageUrl = $product->image_url
-                                                            ?? ($product->picture ? asset('storage/'.$product->picture->url) : $placeholder);
-                                                    }
-                                                    // 2) PAWN ITEM
-                                                    elseif ($item->pawnItem) {
-                                                        $pawn = $item->pawnItem;
-                                                        $name = 'Pawn: '.($pawn->title ?? ('Pawn #'.$item->pawn_item_id));
-
-                                                        $firstPic = $pawn->pictures->first();
-                                                        if ($firstPic) {
-                                                            $imageUrl = asset('storage/'.$firstPic->url);
-                                                        }
-                                                    }
-                                                    // 3) REPAIR
-                                                    elseif ($item->repair) {
-                                                        $repair = $item->repair;
-                                                        $name = 'Repair: '.(strlen($repair->description ?? '') > 40
-                                                            ? substr($repair->description, 0, 40).'...'
-                                                            : ($repair->description ?? 'Repair #'.$item->repair_id));
-
-                                                        if ($repair->picture) {
-                                                            $imageUrl = asset('storage/'.$repair->picture->url);
-                                                        }
-                                                    }
-
-                                                    return [
-                                                        'product_name' => $name,
-                                                        'image_url'    => $imageUrl,
-                                                        'quantity'     => $item->quantity,
-                                                        'unit_price'   => $item->unit_price,
-                                                        'line_total'   => $item->line_total,
-                                                    ];
-                                                }),
-
-                                                'total' => $t->items->sum('line_total'),
-                                            ]))"
-                                            class="inline-flex items-center rounded-md p-1.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                                        >
-                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                <path d="M2.25 12s3-6.75 9.75-6.75S21.75 12 21.75 12 18.75 18.75 12 18.75 2.25 12 2.25 12Z" stroke-linecap="round" stroke-linejoin="round" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </svg>
-                                        </button>
-
-                                        {{-- (optional) delete button here --}}
-                                    </div>
+                                {{-- Actions --}}
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    <button
+                                        @click="openDetails(@js([
+                                            'id'             => str_pad($t->id, 6, '0', STR_PAD_LEFT),
+                                            'datetime'       => $t->created_at->format('M d, Y h:i A'),
+                                            'type'           => $t->type,
+                                            'customer_name'  => $t->customer?->name ?? 'Walk-in Customer',
+                                            'customer_email' => $t->customer?->email ?? '',
+                                            'staff_name'     => $t->staff?->name ?? '',
+                                            'staff_email'    => $t->staff?->email ?? '',
+                                            'items'          => $t->items->map(fn ($i) => [
+                                                'product_name' => $i->product->name ?? 'Item',
+                                                'image_url'    => $i->product->image_url ?? asset('images/placeholder-product.png'),
+                                                'quantity'     => $i->quantity,
+                                                'unit_price'   => $i->unit_price,
+                                                'line_total'   => $i->line_total,
+                                            ]),
+                                            'total'        => $t->items->sum('line_total'),
+                                            'download_url' => route('admin.transactions.download', $t),
+                                        ]))"
+                                        class="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 transition"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-10 text-center text-sm text-gray-500 bg-gray-50">
-                                    No transactions found. Create a new one to get started.
+                                <td colspan="5" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center text-gray-500">
+                                        <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor"
+                                             viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                        <p class="text-sm font-medium">No transactions found.</p>
+                                        <p class="text-xs mt-1">Try adjusting your search filters.</p>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </table>
+                </div>
 
-            {{-- Pagination --}}
-            <div class="border-t border-gray-200 px-4 py-3 flex items-center justify-between">
-                <p class="text-xs text-gray-500">
-                    Showing
-                    <span class="font-medium text-gray-700">
-                        {{ $transactions->firstItem() ?? 0 }}–{{ $transactions->lastItem() ?? 0 }}
-                    </span>
-                    of
-                    <span class="font-medium text-gray-700">
-                        {{ $transactions->total() }}
-                    </span>
-                    results
-                </p>
-                <div>
+                {{-- Pagination --}}
+                <div class="border-t border-gray-100 px-4 py-3 bg-gray-50/50">
                     {{ $transactions->links() }}
                 </div>
             </div>
-        </div>
 
-        {{-- 🔍 TRANSACTION DETAILS MODAL (phone size) --}}
-        <div
-            x-cloak
-            x-show="showDetails"
-            @click.self="closeDetails()"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-        >
-            <div class="w-full max-w-xs sm:max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
-                {{-- Header --}}
-                <div class="flex items-center justify-between px-4 py-3 border-b">
-                    <div>
-                        <p class="text-xs uppercase tracking-wide text-gray-400">Transaction</p>
-                        <p class="text-sm font-semibold text-gray-900">
-                            #<span x-text="details.id"></span>
-                        </p>
-                    </div>
-                    <button @click="closeDetails()" class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M6 18 18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
+            {{-- MODAL – RECEIPT PREVIEW (No Major Changes Needed here usually, but kept for context) --}}
+            <div x-cloak x-show="showDetails"
+                 class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
 
-                {{-- Body --}}
-                <div class="px-4 py-3 space-y-3 max-h-[70vh] overflow-y-auto text-sm">
-                    {{-- Basic info --}}
-                    <div class="space-y-1">
-                        <p class="text-[11px] text-gray-400" x-text="details.datetime"></p>
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                                <span x-text="details.type"></span>
-                            </span>
-                        </div>
-                    </div>
+                {{-- Backdrop --}}
+                <div x-show="showDetails"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                     @click="closeDetails()"></div>
 
-                    <div class="grid grid-cols-1 gap-2 border-t border-gray-100 pt-2">
-                        <div>
-                            <p class="text-[11px] text-gray-400">Customer</p>
-                            <p class="text-sm font-medium text-gray-900" x-text="details.customer_name"></p>
-                            <p class="text-[11px] text-gray-400" x-text="details.customer_email"></p>
-                        </div>
-                        <div>
-                            <p class="text-[11px] text-gray-400">Processed By</p>
-                            <p class="text-sm font-medium text-gray-900" x-text="details.staff_name"></p>
-                            <p class="text-[11px] text-gray-400" x-text="details.staff_email"></p>
-                        </div>
-                    </div>
+                <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
 
-                    {{-- Items --}}
-                    <div class="border-t border-gray-100 pt-3 space-y-2">
-                        <p class="text-xs font-semibold text-gray-700">Items</p>
+                        {{-- Modal Panel --}}
+                        <div x-show="showDetails"
+                             x-transition:enter="ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave="ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                             class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-200">
 
-                        <template x-for="(item, idx) in details.items" :key="idx">
-                            <div class="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2 py-2">
-                                <div class="flex items-center gap-2">
-                                    <img :src="item.image_url"
-                                         class="w-9 h-9 rounded-md object-cover border border-gray-200"
-                                         alt="">
-                                    <div>
-                                        <p class="text-xs font-medium text-gray-900" x-text="item.product_name"></p>
-                                        <p class="text-[11px] text-gray-500"
-                                           x-text="item.quantity + ' × ' + money(item.unit_price)">
-                                        </p>
+                            {{-- Modal Header --}}
+                            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <div>
+                                    <h3 class="text-lg font-serif font-bold text-gray-900">Receipt Preview</h3>
+                                    <p class="text-xs text-gray-500">
+                                        Transaction #<span x-text="details.id"></span>
+                                    </p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="printReceipt()"
+                                            class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-xs font-bold text-white hover:bg-gray-800 transition shadow-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        Print
+                                    </button>
+                                    <button @click="closeDetails()"
+                                            class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- RECEIPT CONTENT PREVIEW --}}
+                            <div class="p-8 bg-white" x-ref="receiptContent">
+                                {{-- Header --}}
+                                <div class="text-center border-b-2 border-yellow-500 pb-6 mb-6">
+                                    <h2 class="text-2xl font-serif font-bold text-gray-900 tracking-wider">
+                                        AUAG JEWELRY
+                                    </h2>
+                                    <p class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Official Receipt</p>
+                                    <div class="mt-4 flex justify-between text-xs text-gray-600">
+                                        <span>No: <strong x-text="details.id"></strong></span>
+                                        <span>Date: <span x-text="details.datetime"></span></span>
                                     </div>
                                 </div>
-                                <p class="text-xs font-semibold text-gray-900 text-right"
-                                   x-text="money(item.line_total)">
-                                </p>
-                            </div>
-                        </template>
 
-                        <template x-if="!details.items || details.items.length === 0">
-                            <p class="text-[11px] text-gray-400">No items found.</p>
-                        </template>
+                                {{-- Info Grid --}}
+                                <div class="grid grid-cols-2 gap-8 mb-8 text-xs">
+                                    <div>
+                                        <p class="font-bold text-yellow-600 uppercase border-b border-gray-100 pb-1 mb-2">
+                                            Customer
+                                        </p>
+                                        <p class="font-bold text-gray-900 text-sm" x-text="details.customer_name"></p>
+                                        <p class="text-gray-500" x-text="details.customer_email"></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-yellow-600 uppercase border-b border-gray-100 pb-1 mb-2">
+                                            Details
+                                        </p>
+                                        <p>Type:
+                                            <span class="font-bold text-gray-900" x-text="details.type"></span>
+                                        </p>
+                                        <p>Cashier: <span x-text="details.staff_name"></span></p>
+                                    </div>
+                                </div>
+
+                                {{-- Items --}}
+                                <table class="w-full text-xs mb-6">
+                                    <thead>
+                                    <tr class="bg-gray-900 text-white">
+                                        <th class="py-2 px-3 text-left uppercase">Description</th>
+                                        <th class="py-2 px-3 text-center uppercase">Qty</th>
+                                        <th class="py-2 px-3 text-right uppercase">Price</th>
+                                        <th class="py-2 px-3 text-right uppercase">Total</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                    <template x-for="item in details.items" :key="item.product_name">
+                                        <tr>
+                                            <td class="py-3 px-3">
+                                                <span class="font-bold text-gray-900"
+                                                      x-text="item.product_name"></span>
+                                            </td>
+                                            <td class="py-3 px-3 text-center" x-text="item.quantity"></td>
+                                            <td class="py-3 px-3 text-right" x-text="money(item.unit_price)"></td>
+                                            <td class="py-3 px-3 text-right font-bold text-gray-900"
+                                                x-text="money(item.line_total)"></td>
+                                        </tr>
+                                    </template>
+                                    </tbody>
+                                    <tfoot>
+                                    <tr>
+                                        <td colspan="3"
+                                            class="pt-4 text-right text-sm font-bold text-gray-900 border-t-2 border-yellow-500">
+                                            TOTAL DUE
+                                        </td>
+                                        <td class="pt-4 text-right text-lg font-serif font-bold text-yellow-600 border-t-2 border-yellow-500"
+                                            x-text="money(details.total)"></td>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+
+                                {{-- Footer Note --}}
+                                <div class="text-center text-[10px] text-gray-400 mt-10">
+                                    <p class="font-bold text-gray-500">Thank you for your purchase!</p>
+                                    <p class="mt-1">Items may be exchanged within 7 days with this receipt.</p>
+                                </div>
+
+                            </div>
+
+                        </div>
                     </div>
                 </div>
-
-                {{-- Footer total --}}
-                <div class="px-4 py-3 border-t bg-gray-50 flex items-center justify-between text-sm">
-                    <span class="font-medium text-gray-700">Total</span>
-                    <span class="font-semibold text-gray-900" x-text="money(details.total)"></span>
-                </div>
             </div>
-        </div>
 
+        </div>
     </div>
+
+    {{-- ALPINE JS CONTROLLER --}}
+    <script>
+        function transactionsHistory() {
+            return {
+                showDetails: false,
+                details: {
+                    id: null,
+                    datetime: '',
+                    type: '',
+                    customer_name: '',
+                    customer_email: '',
+                    staff_name: '',
+                    staff_email: '',
+                    items: [],
+                    total: 0,
+                    download_url: null,
+                },
+                openDetails(data) {
+                    this.details = data;
+                    this.showDetails = true;
+                },
+                closeDetails() {
+                    this.showDetails = false;
+                },
+                money(v) {
+                    return '₱' + Number(v || 0).toLocaleString('en-PH', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    });
+                },
+                getTypeColor(type) {
+                    switch (type) {
+                        case 'Buy':
+                            return 'bg-green-500/10 text-green-600 border-green-500/20';
+                        case 'Pawn':
+                            return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+                        case 'Repair':
+                            return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+                        default:
+                            return 'bg-gray-100 text-gray-600 border-gray-200';
+                    }
+                },
+                printReceipt() {
+                    if (!this.details.download_url) return;
+
+                    const link = document.createElement('a');
+                    link.href = this.details.download_url;
+                    link.setAttribute('download', '');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+            };
+        }
+    </script>
 </x-admin-layout>

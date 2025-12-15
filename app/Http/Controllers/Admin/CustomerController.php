@@ -3,74 +3,68 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Customer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
-    protected string $role = 'customer';
-
     public function index(Request $request)
     {
-        $q = $request->string('q')->toString();
+        $q = trim((string) $request->query('q', ''));
 
-        $users = User::where('role', $this->role)
-            ->when($q, fn ($qr) => $qr->where('name', 'like', "%{$q}%")
-                ->orWhere('email', 'like', "%{$q}%")
-            )
-            ->orderBy('name')
-            ->paginate(10);
+        $perPage = (int) $request->query('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        return view('admin.customers.index', compact('users', 'q'));
+        $sort = (string) $request->query('sort', 'name');
+        $dir  = strtolower((string) $request->query('dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        $sortable = ['name', 'email', 'contact_no', 'created_at'];
+        if (! in_array($sort, $sortable, true)) {
+            $sort = 'name';
+        }
+
+        $customers = Customer::query()
+            ->select(['id', 'name', 'email', 'contact_no', 'created_at'])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%")
+                        ->orWhere('contact_no', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy($sort, $dir)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('admin.customers.index', compact('customers', 'q', 'sort', 'dir', 'perPage'));
     }
 
     public function create()
     {
-        $user = new User(['role' => $this->role]);
-
-        return view('admin.customers.form', compact('user'));
+        $customer = new Customer();
+        return view('admin.customers.form', compact('customer'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
-        ]);
+        $validated = $this->validated($request);
 
-        $validated['role'] = $this->role;
-        $validated['password'] = Hash::make($validated['password']);
-
-        User::create($validated);
+        Customer::create($validated);
 
         return redirect()
             ->route('admin.customers.index')
             ->with('success', 'Customer created successfully.');
     }
 
-    public function edit(User $customer)
+    public function edit(Customer $customer)
     {
-        return view('admin.customers.form', ['user' => $customer]);
+        return view('admin.customers.form', compact('customer'));
     }
 
-    public function update(Request $request, User $customer)
+    public function update(Request $request, Customer $customer)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($customer->id)],
-            'password' => ['nullable', 'string', 'min:6'],
-        ]);
-
-        $validated['role'] = $this->role;
-
-        if ($validated['password'] ?? false) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
+        $validated = $this->validated($request, $customer);
 
         $customer->update($validated);
 
@@ -79,10 +73,24 @@ class CustomerController extends Controller
             ->with('success', 'Customer updated successfully.');
     }
 
-    public function destroy(User $customer)
+    public function destroy(Customer $customer)
     {
         $customer->delete();
 
         return back()->with('success', 'Customer deleted successfully.');
+    }
+
+    protected function validated(Request $request, ?Customer $customer = null): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'email' => [
+                'required',
+                'email:rfc,dns',
+                'max:150',
+                Rule::unique('customers', 'email')->ignore($customer?->id),
+            ],
+            'contact_no' => ['nullable', 'string', 'max:30'],
+        ]);
     }
 }
