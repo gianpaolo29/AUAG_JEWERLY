@@ -1,471 +1,306 @@
-<x-staff-layout title="New Pawn Item">
+<x-staff-layout title="Pawn Items">
 
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
-         x-data="pawnForm()"
-         x-init="init()">
+@if (session('download_pawn_id'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const url = "{{ route('staff.pawn.download', ['pawn' => session('download_pawn_id')]) }}";
+            const link = document.createElement('a');
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        });
+    </script>
+@endif
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="pawnIndex()">
+
+    <div class="flex flex-col gap-6">
 
         {{-- HEADER --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-gray-200 pb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-serif font-bold text-gray-900 tracking-tight">Record Pawn Item</h1>
-                <p class="text-sm text-gray-500 mt-1">Create a new pawn ticket for a customer.</p>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                    Pawn Items
+                </h1>
+                <p class="mt-1 text-base text-gray-500">
+                    All pawned items you have recorded.
+                </p>
             </div>
-            <a href="{{ route('staff.pawn.index') }}"
-               class="mt-4 sm:mt-0 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition shadow-sm">
-                ← Back to List
+
+            <a href="{{ route('staff.pawn.create') }}"
+               class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                New Pawn Item
             </a>
         </div>
 
-        {{-- FORM --}}
-        <form action="{{ route('staff.pawn.store') }}"
-              method="POST"
-              enctype="multipart/form-data"
-              @submit.prevent="validateAndSubmit($event)">
-            @csrf
+        {{-- FILTERS --}}
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <form method="GET" class="grid gap-x-6 gap-y-4 md:grid-cols-4 lg:grid-cols-8 items-end">
 
-            {{-- CUSTOMER SECTION --}}
-            <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-6 mb-8">
-                <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4 border-b border-gray-100 pb-2">
-                    Customer Details
-                </h2>
-
-                {{-- Tabs --}}
-                <div class="flex gap-4 mb-6">
-                    <button type="button"
-                            @click="switchTab('existing')"
-                            class="px-5 py-2 text-sm font-medium rounded-full transition-all border"
-                            :class="customerTab === 'existing'
-                                ? 'bg-gray-900 text-white border-gray-900 shadow-md'
-                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">
-                        Select Existing
-                    </button>
-
-                    <button type="button"
-                            @click="switchTab('new')"
-                            class="px-5 py-2 text-sm font-medium rounded-full transition-all border"
-                            :class="customerTab === 'new'
-                                ? 'bg-gray-900 text-white border-gray-900 shadow-md'
-                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'">
-                        Register New
-                    </button>
-                </div>
-
-                {{-- MODE --}}
-                <input type="hidden" name="customer_mode" :value="customerTab">
-
-                {{-- EXISTING CUSTOMER --}}
-                <div x-show="customerTab === 'existing'" x-transition>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                        Find Customer <span class="text-red-500">*</span>
-                    </label>
-
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
                     <div class="relative">
-                        <input type="text"
-                               x-model="customerSearch"
-                               placeholder="Type to search name, email, or phone..."
-                               class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-yellow-500 focus:border-yellow-500 block p-3.5 shadow-sm">
-
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    {{-- Dropdown Results --}}
-                    <div x-show="customerSearch.length > 0 && selectedCustomerName !== customerSearch"
-                         class="mt-2 max-h-56 overflow-y-auto border border-gray-100 rounded-xl bg-white shadow-xl z-10">
-                        <template x-for="c in filteredCustomers()" :key="c.id">
-                            <button type="button"
-                                    @click="selectCustomer(c)"
-                                    class="w-full text-left px-4 py-3 flex flex-col hover:bg-yellow-50 border-b border-gray-50 last:border-0 transition">
-                                <span class="text-sm font-bold text-gray-800" x-text="c.name"></span>
-                                <div class="flex gap-2 text-xs text-gray-500 mt-0.5">
-                                    <span x-text="c.email || ''"></span>
-                                    <span x-text="c.contact_no || ''"></span>
-                                </div>
-                            </button>
-                        </template>
-
-                        <template x-if="filteredCustomers().length === 0">
-                            <div class="p-4 text-sm text-gray-500 text-center">No customers found.</div>
-                        </template>
-                    </div>
-
-                    {{-- Selected Customer ID submitted --}}
-                    <input type="hidden"
-                           name="customer_id"
-                           :value="selectedCustomerId"
-                           :disabled="customerTab !== 'existing'">
-                </div>
-
-                {{-- NEW CUSTOMER --}}
-                <div x-show="customerTab === 'new'" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                            Full Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                               name="customer_name"
-                               value="{{ old('customer_name') }}"
-                               :disabled="customerTab !== 'new'"
-                               :required="customerTab === 'new'"
-                               class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                            Email <span class="text-red-500">*</span>
-                        </label>
-                        <input type="email"
-                               name="customer_email"
-                               value="{{ old('customer_email') }}"
-                               :disabled="customerTab !== 'new'"
-                               :required="customerTab === 'new'"
-                               class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                            Phone <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                               name="customer_phone"
-                               value="{{ old('customer_phone') }}"
-                               :disabled="customerTab !== 'new'"
-                               :required="customerTab === 'new'"
-                               class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3">
-                    </div>
-                </div>
-            </div>
-
-            @php
-                $defaultLoanDate = old('loan_date', now()->format('Y-m-d'));
-                $defaultDueDate  = old('due_date', now()->addMonths(3)->format('Y-m-d'));
-            @endphp
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                {{-- LEFT: PAWN DETAILS --}}
-                <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.05)] border border-gray-100 p-6">
-                    <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4 border-b border-gray-100 pb-2">
-                        Pawn Details
-                    </h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        {{-- Loan Date --}}
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                Date Loan Granted <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date"
-                                   name="loan_date"
-                                   x-model="loanDate"
-                                   @change="updateDueDate()"
-                                   value="{{ $defaultLoanDate }}"
-                                   required
-                                   class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3">
-                        </div>
-
-                        {{-- Maturity --}}
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                Maturity Date (3 months) <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date"
-                                   name="due_date"
-                                   x-model="dueDate"
-                                   value="{{ $defaultDueDate }}"
-                                   required
-                                   class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3">
-                        </div>
-
-                        {{-- Item Title --}}
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                Item Title <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text"
-                                   name="title"
-                                   value="{{ old('title') }}"
-                                   required
-                                   class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3"
-                                   placeholder="Ex: 18k Gold Necklace with Pendant">
-                        </div>
-
-                        {{-- Description --}}
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                Description of the Pawn <span class="text-red-500">*</span>
-                            </label>
-                            <textarea name="description"
-                                      rows="3"
-                                      required
-                                      class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3"
-                                      placeholder="Weight, karat, markings, brand, etc.">{{ old('description') }}</textarea>
-                        </div>
-
-                        {{-- Images --}}
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                                Item Pictures
-                            </label>
-                            <input type="file"
-                                   name="images[]"
-                                   multiple
-                                   accept="image/*"
-                                   class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3">
-                            <p class="mt-1 text-[11px] text-gray-400">
-                                Upload clear photos of the jewelry item for reference.
-                            </p>
-                        </div>
-
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <circle cx="10.5" cy="10.5" r="6"/>
+                            <path d="M15.75 15.75 21 21" stroke-linecap="round"/>
+                        </svg>
+                        <input type="text" id="q" name="q" value="{{ request('q') }}"
+                               class="w-full rounded-xl border-gray-300 pl-10 pr-4 py-2.5 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="Customer or item title">
                     </div>
                 </div>
 
-                {{-- RIGHT: FINANCIAL SUMMARY --}}
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 p-6 sticky top-24">
-                        <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4">
-                            Loan & Charges
-                        </h2>
-
-                        <div class="space-y-4 mb-6">
-
-                            {{-- Principal --}}
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                    Principal Amount (Loan) <span class="text-red-500">*</span>
-                                </label>
-                                <input type="number"
-                                       name="price"
-                                       step="0.01"
-                                       min="1"
-                                       x-model.number="principal"
-                                       required
-                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-yellow-500 focus:border-yellow-500 p-3"
-                                       placeholder="Ex: 6400.00">
-                            </div>
-
-                            {{-- Interest --}}
-                            <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                                    Interest (3% of Principal)
-                                </label>
-                                <input type="text"
-                                       :value="money(interestAmount())"
-                                       class="w-full bg-gray-100 border border-gray-200 rounded-xl p-3 text-gray-700"
-                                       readonly>
-
-                                <input type="hidden"
-                                       name="interest_cost"
-                                       :value="interestAmount().toFixed(2)">
-                            </div>
-
-                        </div>
-
-                        {{-- Summary --}}
-                        <div class="border-t border-gray-100 pt-4 space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Principal</span>
-                                <span class="font-medium" x-text="money(principal || 0)"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Interest (3%)</span>
-                                <span class="font-medium" x-text="money(interestAmount())"></span>
-                            </div>
-                            <div class="flex justify-between pt-2 border-t border-dashed border-gray-200 mt-2">
-                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    Total
-                                </span>
-                                <span class="text-xl font-serif font-bold text-gray-900" x-text="money(netProceeds())"></span>
-                            </div>
-                        </div>
-
-                        <button type="submit"
-                                class="mt-6 w-full py-3.5 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:to-gray-700 shadow-lg transition-all transform active:scale-[0.98] font-bold tracking-wide">
-                            Save Pawn Ticket
-                        </button>
-                    </div>
+                <div class="lg:col-span-2">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="status" name="status"
+                            class="w-full rounded-xl border-gray-300 py-2.5 px-3 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">All Statuses</option>
+                        <option value="active" @selected(request('status')=='active')>Active</option>
+                        <option value="redeemed" @selected(request('status')=='redeemed')>Redeemed</option>
+                        <option value="forfeited" @selected(request('status')=='forfeited')>Forfeited</option>
+                    </select>
                 </div>
 
-            </div>
-        </form>
-
-        {{-- ERROR MODAL --}}
-        <div x-cloak x-show="errorOpen"
-             class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-
-            <div x-show="errorOpen"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
-
-            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                    <div x-show="errorOpen"
-                         x-transition:enter="ease-out duration-300"
-                         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                         x-transition:leave="ease-in duration-200"
-                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                         @click.outside="errorOpen = false"
-                         class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm border border-red-100">
-
-                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                            <div class="flex flex-col items-center justify-center text-center">
-                                <div class="mx-auto flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-red-50 border-4 border-red-50 mb-4 animate-bounce">
-                                    <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </div>
-
-                                <h3 class="text-xl font-serif font-bold leading-6 text-gray-900" id="modal-title">
-                                    Attention Needed
-                                </h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-500" x-text="errorMessage"></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse justify-center">
-                            <button type="button"
-                                    @click="errorOpen = false"
-                                    class="inline-flex w-full justify-center rounded-xl bg-red-600 px-8 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto transition-colors">
-                                OK
-                            </button>
-                        </div>
-                    </div>
+                <div class="lg:col-span-2">
+                    <label for="due_date" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input type="date" id="due_date" name="due_date" value="{{ request('due_date') }}"
+                           class="w-full rounded-xl border-gray-300 py-2.5 px-3 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
+
+                <div class="md:col-span-4 lg:col-span-1 flex items-end justify-end gap-2">
+                    <a href="{{ route('staff.pawn.index') }}"
+                       class="flex-1 text-center sm:flex-none px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+                        Clear
+                    </a>
+
+                    <button type="submit"
+                            class="flex-1 text-center sm:flex-none px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm shadow hover:bg-indigo-700 transition">
+                        Apply
+                    </button>
+                </div>
+            </form>
+
+            <div class="border-t border-gray-200 mt-6 pt-4">
+                <p class="text-sm text-gray-500">
+                    Showing <strong>{{ $pawnItems->total() }}</strong> record{{ $pawnItems->total() != 1 ? 's' : '' }}.
+                </p>
             </div>
         </div>
 
+        {{-- TABLE --}}
+        <div class="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Customer / Item</th>
+                        <th class="px-6 py-3 text-right">Principal</th>
+                        <th class="px-6 py-3 text-right">Interest</th>
+                        <th class="px-6 py-3 text-right">Total Due</th>
+                        <th class="px-6 py-3 text-left">Due Date</th>
+                        <th class="px-6 py-3 text-center">Status</th>
+                        <th class="px-6 py-3 text-center">Receipt</th>
+                        <th class="px-6 py-3 text-center">Redeem</th>
+                    </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                    @forelse($pawnItems as $item)
+                        <tr class="hover:bg-indigo-50/50 transition @if($item->is_overdue) border-l-4 border-rose-500 @endif">
+                            <td class="px-6 py-3">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-gray-900">
+                                        {{ $item->customer?->name ?? 'Walk-in' }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 mt-0.5">{{ $item->title }}</span>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-3 text-right text-gray-900 font-medium">
+                                ₱{{ number_format($item->price, 2) }}
+                            </td>
+
+                            <td class="px-6 py-3 text-right text-orange-600 font-medium">
+                                ₱{{ number_format($item->computed_interest, 2) }}
+                            </td>
+
+                            <td class="px-6 py-3 text-right font-bold text-green-700">
+                                ₱{{ number_format($item->to_pay, 2) }}
+                            </td>
+
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="@if($item->is_overdue) text-rose-600 font-semibold @endif">
+                                    {{ $item->due_date?->format('M d, Y') ?? '—' }}
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-3 text-center">
+                                @php
+                                    $badge = match($item->status) {
+                                        'active'    => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                        'redeemed'  => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                        'forfeited' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                        default     => 'bg-gray-50 text-gray-700 border-gray-200',
+                                    };
+                                @endphp
+                                <span class="px-2.5 py-0.5 text-xs rounded-full border font-semibold uppercase {{ $badge }}">
+                                    {{ $item->status }}
+                                </span>
+                            </td>
+
+                            {{-- RECEIPT --}}
+                            <td class="px-6 py-3 text-center">
+                                <button type="button"
+                                        class="px-3 py-1.5 text-xs rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition"
+                                        @click="openReceipt(@js([
+                                            'id' => $item->id,
+                                            'customer' => $item->customer?->name ?? 'Walk-in',
+                                            'title' => $item->title,
+                                            'description' => $item->description,
+                                            'loan_date' => optional($item->loan_date)->format('M d, Y'),
+                                            'due_date' => optional($item->due_date)->format('M d, Y'),
+                                            'principal' => number_format($item->price, 2),
+                                            'interest' => number_format($item->computed_interest, 2),
+                                            'total' => number_format($item->to_pay, 2),
+                                            'status' => $item->status,
+                                            'download_url' => route('staff.pawn.download', ['pawn' => $item->id]),
+                                        ]))">
+                                    View
+                                </button>
+                            </td>
+
+                            {{-- REDEEM --}}
+                            <td class="px-6 py-3 text-center">
+                                @if($item->status === 'redeemed')
+                                    <button disabled
+                                            class="px-3 py-1.5 text-xs rounded-lg bg-emerald-100 text-emerald-700 cursor-not-allowed">
+                                        Redeemed
+                                    </button>
+                                @else
+                                    <form method="POST" action="{{ route('staff.pawn.redeem', ['pawn' => $item->id]) }}">
+                                        @csrf
+                                        <button type="submit"
+                                                class="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+                                            Redeem
+                                        </button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="px-6 py-10 text-center text-gray-500 bg-gray-50">
+                                No pawn items found.
+                            </td>
+                        </tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- PAGINATION --}}
+            <div class="border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-sm text-gray-500">
+                    Showing
+                    <strong>{{ $pawnItems->firstItem() }}</strong>–<strong>{{ $pawnItems->lastItem() }}</strong>
+                    of <strong>{{ $pawnItems->total() }}</strong> records
+                </p>
+
+                <div>
+                    {{ $pawnItems->links() }}
+                </div>
+            </div>
+        </div>
     </div>
 
-    {{-- ALPINE CONTROLLER --}}
-    <script>
-        function pawnForm() {
-            return {
-                customers: @js($customers),
+    {{-- RECEIPT MODAL --}}
+    <div x-cloak x-show="receiptOpen" class="fixed inset-0 z-[100]">
+        <div class="absolute inset-0 bg-black/60" @click="closeReceipt()"></div>
 
-                // customer state
-                customerTab: 'existing',
-                customerSearch: '',
-                selectedCustomerId: null,
-                selectedCustomerName: '',
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Pawn Receipt Preview</h3>
+                        <p class="text-xs text-gray-500" x-text="receipt ? ('Pawn #' + receipt.id) : ''"></p>
+                    </div>
+                    <button class="p-2 rounded-lg hover:bg-gray-100" @click="closeReceipt()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
 
-                // dates
-                loanDate: '{{ $defaultLoanDate }}',
-                dueDate: '{{ $defaultDueDate }}',
+                <div class="px-6 py-5 space-y-3 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-500">Customer</span><span class="font-semibold" x-text="receipt?.customer"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Item</span><span class="font-semibold" x-text="receipt?.title"></span></div>
+                    <div class="text-gray-600" x-text="receipt?.description"></div>
 
-                // money fields
-                principal: Number('{{ old('price', 0) }}') || 0,
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div class="rounded-xl bg-gray-50 p-3">
+                            <div class="text-xs text-gray-500">Loan Date</div>
+                            <div class="font-semibold" x-text="receipt?.loan_date"></div>
+                        </div>
+                        <div class="rounded-xl bg-gray-50 p-3">
+                            <div class="text-xs text-gray-500">Due Date</div>
+                            <div class="font-semibold" x-text="receipt?.due_date"></div>
+                        </div>
+                    </div>
 
-                // error modal
-                errorOpen: false,
-                errorMessage: '',
+                    <div class="border-t pt-3 space-y-2">
+                        <div class="flex justify-between"><span class="text-gray-500">Principal</span><span class="font-semibold" x-text="'₱' + receipt?.principal"></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Interest</span><span class="font-semibold text-orange-600" x-text="'₱' + receipt?.interest"></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Total Due</span><span class="font-bold text-green-700" x-text="'₱' + receipt?.total"></span></div>
+                    </div>
+                </div>
 
-                init() {
-                    @if($errors->any())
-                        this.showError(@js($errors->first()));
-                    @endif
-                },
+                <div class="px-6 py-4 border-t bg-gray-50 flex gap-2">
+                    <button class="flex-1 px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800"
+                            @click="downloadReceipt(receipt?.download_url)">
+                        Download PDF
+                    </button>
+                    <button class="px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold hover:bg-white"
+                            @click="closeReceipt()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                switchTab(tab) {
-                    this.customerTab = tab;
+</div>
 
-                    if (tab === 'existing') {
-                        // clear new inputs
-                        // (optional, server-side validation already handles this)
-                    } else {
-                        // clear selection
-                        this.selectedCustomerId = null;
-                        this.selectedCustomerName = '';
-                        this.customerSearch = '';
-                    }
-                },
+<script>
+    function pawnIndex() {
+        return {
+            receiptOpen: false,
+            receipt: null,
 
-                validateAndSubmit(e) {
-                    const form = e.target;
+            openReceipt(payload) {
+                this.receipt = payload;
+                this.receiptOpen = true;
+            },
 
-                    if (this.customerTab === 'existing') {
-                        if (!this.selectedCustomerId) {
-                            this.showError('Please select an existing customer.');
-                            return;
-                        }
-                    } else {
-                        const name  = (form.querySelector('[name="customer_name"]')?.value || '').trim();
-                        const email = (form.querySelector('[name="customer_email"]')?.value || '').trim();
-                        const phone = (form.querySelector('[name="customer_phone"]')?.value || '').trim();
+            closeReceipt() {
+                this.receiptOpen = false;
+                this.receipt = null;
+            },
 
-                        if (!name || !email || !phone) {
-                            this.showError('Please complete Name, Email, and Phone to register a new customer.');
-                            return;
-                        }
-                    }
-
-                    form.submit();
-                },
-
-                showError(msg) {
-                    this.errorMessage = msg;
-                    this.errorOpen = true;
-                },
-
-                filteredCustomers() {
-                    if (!this.customerSearch) return this.customers;
-                    const s = this.customerSearch.toLowerCase();
-                    return this.customers.filter(c =>
-                        (c.name || '').toLowerCase().includes(s) ||
-                        (c.email || '').toLowerCase().includes(s) ||
-                        (c.contact_no || '').toLowerCase().includes(s)
-                    );
-                },
-
-                selectCustomer(c) {
-                    this.selectedCustomerId = c.id;
-                    this.selectedCustomerName = c.name;
-                    this.customerSearch = c.name;
-                },
-
-                updateDueDate() {
-                    if (!this.loanDate) return;
-                    const d = new Date(this.loanDate);
-                    if (isNaN(d.getTime())) return;
-                    d.setMonth(d.getMonth() + 3);
-                    const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    this.dueDate = `${y}-${m}-${day}`;
-                },
-
-                interestAmount() {
-                    const p = Number(this.principal || 0);
-                    return p * 0.03;
-                },
-
-                netProceeds() {
-                    const p = Number(this.principal || 0);
-                    const i = this.interestAmount();
-                    return p + i;
-                },
-
-                money(v) {
-                    return '₱' + Number(v || 0).toLocaleString('en-PH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    });
-                },
-            }
-        }
-    </script>
+            downloadReceipt(url) {
+                if (!url) return;
+                const a = document.createElement('a');
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            },
+        };
+    }
+</script>
 
 </x-staff-layout>

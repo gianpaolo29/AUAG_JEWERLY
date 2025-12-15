@@ -345,9 +345,9 @@ class AnalyticsController extends Controller
         // ----------------------------------------------------
         $totalCustomers = DB::table('customers')->count();
 
-        $newCustomersInRangeQ = DB::table('customers');
-        $applyBetween($newCustomersInRangeQ, 'created_at', $rangeStart, $rangeEnd);
-        $newCustomersInRange = (int) $newCustomersInRangeQ->count();
+    $newCustomersInRangeQ = DB::table('customers');
+    $applyBetween($newCustomersInRangeQ, 'created_at', $rangeStart, $rangeEnd);
+    $newCustomersInRange = (int) $newCustomersInRangeQ->count();
 
         // ----------------------------------------------------
         // PAWN / REPAIR STATUS (filtered by range)

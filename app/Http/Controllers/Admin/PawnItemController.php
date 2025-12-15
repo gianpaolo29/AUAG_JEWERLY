@@ -6,24 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PawnItem;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PawnItemController extends Controller
 {
     private float $monthlyPenaltyRate = 0.03; // 3% per month overdue
 
-    /**
-     * List pawn items.
-     */
     public function index(Request $request)
     {
-        $q       = $request->string('q')->trim()->toString();
-        $status  = $request->string('status')->trim()->toString();
-        $dueDate = $request->input('due_date'); // YYYY-MM-DD
+        $q        = $request->string('q')->trim()->toString();
+        $status   = $request->string('status')->trim()->toString();
+        $dueDate  = $request->input('due_date');  // YYYY-MM-DD
+        $loanDate = $request->input('loan_date'); // YYYY-MM-DD
 
         $today = Carbon::today();
 
@@ -35,18 +35,19 @@ class PawnItemController extends Controller
                         ->orWhere('description', 'like', "%{$q}%")
                         ->orWhereHas('customer', function ($cq) use ($q) {
                             $cq->where('name', 'like', "%{$q}%")
-                               ->orWhere('email', 'like', "%{$q}%")
-                               ->orWhere('contact_no', 'like', "%{$q}%");
+                                ->orWhere('email', 'like', "%{$q}%")
+                                ->orWhere('contact_no', 'like', "%{$q}%");
                         });
                 });
             })
             ->when($status, fn ($query) => $query->where('status', $status))
-            ->when($dueDate, fn ($query) => $query->whereDate('due_date', '<=', $dueDate))
+            ->when($loanDate, fn ($query) => $query->whereDate('loan_date', $loanDate))
+            ->when($dueDate, fn ($query) => $query->whereDate('due_date', $dueDate))
             ->latest()
             ->paginate(10)
-            ->appends($request->only('q', 'status', 'due_date'));
+            ->withQueryString();
 
-        // IMPORTANT: Ensure computed fields exist on the items rendered in Blade
+        // Attach computed totals for UI
         $pawnItems->setCollection(
             $pawnItems->getCollection()->map(function (PawnItem $item) use ($today) {
                 $this->attachComputedTotals($item, $today);
@@ -54,157 +55,166 @@ class PawnItemController extends Controller
             })
         );
 
-        return view('admin.pawn.index', compact('pawnItems', 'q', 'status', 'dueDate'));
+        return view('admin.pawn.index', compact('pawnItems'));
     }
 
-    /**
-     * Show create form.
-     */
     public function create()
     {
         $pawnItem  = new PawnItem();
         $isEdit    = false;
-        $customers = Customer::orderBy('name')->get(['id', 'name', 'email', 'contact_no']);
+        $customers = Customer::query()
+            ->select(['id', 'name', 'email', 'contact_no'])
+            ->orderBy('name')
+            ->get();
 
         return view('admin.pawn.form', compact('pawnItem', 'customers', 'isEdit'));
     }
 
-    /**
-     * Store pawn item (supports existing/new customer tabs).
-     */
     public function store(Request $request)
     {
-        $mode = $request->input('customer_mode'); // existing | new
+        $validated = $request->validate([
+            'customer_mode' => ['required', Rule::in(['existing', 'new'])],
 
-        $rules = [
-            'customer_mode'  => ['required', Rule::in(['existing', 'new'])],
+            // existing
+            'customer_id'   => ['nullable', 'required_if:customer_mode,existing', 'integer', Rule::exists('customers', 'id')],
 
-            'title'          => ['required', 'string', 'max:190'],
-            'description'    => ['nullable', 'string'],
-            'price'          => ['required', 'numeric', 'min:1'],
-            'interest_cost'  => ['nullable', 'numeric', 'min:0'],
-            'due_date'       => ['nullable', 'date'],
-            'status'         => ['required', 'string', 'max:50'],
+            // new
+            'customer_name'       => ['nullable', 'required_if:customer_mode,new', 'string', 'max:255'],
+            'customer_email'      => ['nullable', 'email', 'max:255'],
+            'customer_contact_no' => ['nullable', 'string', 'max:20'],
 
-            'images'         => ['nullable', 'array'],
-            'images.*'       => ['nullable', 'image', 'max:4096'],
-        ];
+            // pawn fields
+            'due_date'      => ['nullable', 'date'],
+            'title'         => ['required', 'string', 'max:190'],
+            'description'   => ['nullable', 'string'],
+            'price'         => ['required', 'numeric', 'min:1'],
+            'interest_cost' => ['nullable', 'numeric', 'min:0'],
+            'status'        => ['required', Rule::in(['active', 'redeemed', 'forfeited'])],
 
-        if ($mode === 'existing') {
-            $rules['customer_id'] = ['required', 'integer', Rule::exists('customers', 'id')];
-        } else {
-            $rules['customer_name']       = ['required', 'string', 'max:255'];
-            $rules['customer_email']      = ['required', 'email', 'max:255', Rule::unique('customers', 'email')];
-            $rules['customer_contact_no'] = ['nullable', 'string', 'max:20'];
+            'images'        => ['nullable', 'array'],
+            'images.*'      => ['nullable', 'image', 'max:4096'],
+        ]);
+
+        $loanDate = !empty($validated['loan_date'])
+            ? Carbon::parse($validated['loan_date'])->toDateString()
+            : Carbon::today()->toDateString();
+
+        $dueDate = !empty($validated['due_date'])
+            ? Carbon::parse($validated['due_date'])->toDateString()
+            : Carbon::parse($loanDate)->addMonths(3)->toDateString();
+
+        if (Carbon::parse($dueDate)->lt(Carbon::parse($loanDate))) {
+            throw ValidationException::withMessages([
+                'due_date' => 'Due date must be the same as or after the loan date.',
+            ]);
         }
 
-        $messages = [
-            'customer_email.unique' => 'This email already exists. Please use the "Existing Customer" tab and select the customer.',
-        ];
+        $pawn = DB::transaction(function () use ($request, $validated, $loanDate, $dueDate) {
+            $customerId = $this->resolveCustomerId($validated);
 
-        $validated = $request->validate($rules, $messages);
+            $principal = (float) $validated['price'];
+            $interest  = array_key_exists('interest_cost', $validated) && $validated['interest_cost'] !== null
+                ? (float) $validated['interest_cost']
+                : round($principal * 0.03, 2);
 
-        if (empty($validated['due_date'])) {
-            $validated['due_date'] = Carbon::now()->addMonths(3)->toDateString();
-        }
-
-        DB::transaction(function () use ($request, $validated, $mode) {
-            $customerId = $this->resolveCustomerId($validated, $mode);
-
-            $pawnItem = PawnItem::create([
-                'customer_id'    => $customerId,
-                'title'          => $validated['title'],
-                'description'    => $validated['description'] ?? null,
-                'price'          => $validated['price'],
-                'interest_cost'  => $validated['interest_cost'] ?? 0,
-                'due_date'       => $validated['due_date'],
-                'status'         => $validated['status'],
+            $pawn = PawnItem::create([
+                'customer_id'   => $customerId,
+                'due_date'      => $dueDate,
+                'title'         => $validated['title'],
+                'description'   => $validated['description'] ?? null,
+                'price'         => $principal,
+                'interest_cost' => $interest,
+                'status'        => $validated['status'] ?? 'active',
             ]);
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     if (! $file) continue;
-
                     $path = $file->store('pawn-items', 'public');
-
-                    $pawnItem->pictures()->create([
-                        'url' => $path,
-                    ]);
+                    $pawn->pictures()->create(['url' => $path]);
                 }
             }
+
+            return $pawn;
         });
 
         return redirect()
             ->route('admin.pawn.index')
-            ->with('success', 'Pawn item added successfully.');
+            ->with('success', 'Pawn item created. Downloading receipt...')
+            ->with('download_pawn_id', $pawn->id);
     }
 
-    /**
-     * Show edit form.
-     */
     public function edit(PawnItem $pawnItem)
     {
         $isEdit    = true;
-        $customers = Customer::orderBy('name')->get(['id', 'name', 'email', 'contact_no']);
+        $customers = Customer::query()
+            ->select(['id', 'name', 'email', 'contact_no'])
+            ->orderBy('name')
+            ->get();
 
-        $pawnItem->load('pictures', 'customer');
+        $pawnItem->load(['customer', 'pictures']);
 
         return view('admin.pawn.form', compact('pawnItem', 'customers', 'isEdit'));
     }
 
-    /**
-     * Update pawn item.
-     */
     public function update(Request $request, PawnItem $pawnItem)
     {
-        $mode = $request->input('customer_mode'); // existing | new
+        $validated = $request->validate([
+            'customer_mode' => ['required', Rule::in(['existing', 'new'])],
 
-        $rules = [
-            'customer_mode'  => ['required', Rule::in(['existing', 'new'])],
+            // existing
+            'customer_id'   => ['nullable', 'required_if:customer_mode,existing', 'integer', Rule::exists('customers', 'id')],
 
-            'title'          => ['required', 'string', 'max:190'],
-            'description'    => ['nullable', 'string'],
-            'price'          => ['required', 'numeric', 'min:1'],
-            'interest_cost'  => ['nullable', 'numeric', 'min:0'],
-            'due_date'       => ['nullable', 'date'],
-            'status'         => ['required', 'string', 'max:50'],
+            // new
+            'customer_name'       => ['nullable', 'required_if:customer_mode,new', 'string', 'max:255'],
+            'customer_email'      => ['nullable', 'email', 'max:255'],
+            'customer_contact_no' => ['nullable', 'string', 'max:20'],
 
-            'images'         => ['nullable', 'array'],
-            'images.*'       => ['nullable', 'image', 'max:4096'],
+            // pawn fields
+            'due_date'      => ['nullable', 'date'],
+            'title'         => ['required', 'string', 'max:190'],
+            'description'   => ['nullable', 'string'],
+            'price'         => ['required', 'numeric', 'min:1'],
+            'interest_cost' => ['nullable', 'numeric', 'min:0'],
+            'status'        => ['required', Rule::in(['active', 'redeemed', 'forfeited'])],
 
-            'remove_images'  => ['nullable', 'array'],
-            'remove_images.*'=> ['integer'],
-        ];
+            'images'        => ['nullable', 'array'],
+            'images.*'      => ['nullable', 'image', 'max:4096'],
 
-        if ($mode === 'existing') {
-            $rules['customer_id'] = ['required', 'integer', Rule::exists('customers', 'id')];
-        } else {
-            $rules['customer_name']       = ['required', 'string', 'max:255'];
-            $rules['customer_email']      = ['required', 'email', 'max:255', Rule::unique('customers', 'email')];
-            $rules['customer_contact_no'] = ['nullable', 'string', 'max:20'];
+            'remove_images'   => ['nullable', 'array'],
+            'remove_images.*' => ['integer'],
+        ]);
+
+        $loanDate = !empty($validated['loan_date'])
+            ? Carbon::parse($validated['loan_date'])->toDateString()
+            : ($pawnItem->loan_date ? Carbon::parse($pawnItem->loan_date)->toDateString() : Carbon::today()->toDateString());
+
+        $dueDate = !empty($validated['due_date'])
+            ? Carbon::parse($validated['due_date'])->toDateString()
+            : Carbon::parse($loanDate)->addMonths(3)->toDateString();
+
+        if (Carbon::parse($dueDate)->lt(Carbon::parse($loanDate))) {
+            throw ValidationException::withMessages([
+                'due_date' => 'Due date must be the same as or after the loan date.',
+            ]);
         }
 
-        $messages = [
-            'customer_email.unique' => 'This email already exists. Please use the "Existing Customer" tab and select the customer.',
-        ];
+        DB::transaction(function () use ($request, $pawnItem, $validated, $loanDate, $dueDate) {
+            $customerId = $this->resolveCustomerId($validated);
 
-        $validated = $request->validate($rules, $messages);
-
-        if (empty($validated['due_date'])) {
-            $validated['due_date'] = Carbon::now()->addMonths(3)->toDateString();
-        }
-
-        DB::transaction(function () use ($request, $pawnItem, $validated, $mode) {
-            $customerId = $this->resolveCustomerId($validated, $mode);
+            $principal = (float) $validated['price'];
+            $interest  = array_key_exists('interest_cost', $validated) && $validated['interest_cost'] !== null
+                ? (float) $validated['interest_cost']
+                : round($principal * 0.03, 2);
 
             $pawnItem->update([
-                'customer_id'    => $customerId,
-                'title'          => $validated['title'],
-                'description'    => $validated['description'] ?? null,
-                'price'          => $validated['price'],
-                'interest_cost'  => $validated['interest_cost'] ?? 0,
-                'due_date'       => $validated['due_date'],
-                'status'         => $validated['status'],
+                'customer_id'   => $customerId,
+                'due_date'      => $dueDate,
+                'title'         => $validated['title'],
+                'description'   => $validated['description'] ?? null,
+                'price'         => $principal,
+                'interest_cost' => $interest,
+                'status'        => $validated['status'],
             ]);
 
             $removeIds = $request->input('remove_images', []);
@@ -219,24 +229,18 @@ class PawnItemController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     if (! $file) continue;
-
                     $path = $file->store('pawn-items', 'public');
-
-                    $pawnItem->pictures()->create([
-                        'url' => $path,
-                    ]);
+                    $pawnItem->pictures()->create(['url' => $path]);
                 }
             }
         });
 
         return redirect()
             ->route('admin.pawn.index')
-            ->with('success', 'Pawn item updated successfully.');
+            ->with('success', 'Pawn item updated. Downloading receipt...')
+            ->with('download_pawn_id', $pawnItem->id);
     }
 
-    /**
-     * Delete pawn item.
-     */
     public function destroy(PawnItem $pawnItem)
     {
         $pawnItem->load('pictures');
@@ -249,12 +253,9 @@ class PawnItemController extends Controller
             $pawnItem->delete();
         });
 
-        return back()->with('success', 'Pawn item deleted successfully.');
+        return back()->with('success', 'Pawn item deleted.');
     }
 
-    /**
-     * Redeem pawn item -> creates a Transaction (type: Pawn) using computed TOTAL TO PAY.
-     */
     public function redeem(PawnItem $pawnItem)
     {
         if ($pawnItem->status === 'redeemed') {
@@ -264,7 +265,7 @@ class PawnItemController extends Controller
         $today = Carbon::today();
         $calc  = $this->computeTotals($pawnItem, $today);
 
-        DB::transaction(function () use ($pawnItem, $calc) {
+        $transaction = DB::transaction(function () use ($pawnItem, $calc) {
             $transaction = Transaction::create([
                 'customer_id' => $pawnItem->customer_id,
                 'staff_id'    => auth()->id(),
@@ -280,34 +281,70 @@ class PawnItemController extends Controller
                 'line_total'   => (float) $calc['to_pay'],
             ]);
 
-            PawnItem::whereKey($pawnItem->id)->update([
-                'status' => 'redeemed',
-            ]);
+            $pawnItem->update(['status' => 'redeemed']);
+
+            return $transaction;
         });
 
-        return back()->with('success', 'Pawn item redeemed and transaction recorded.');
+        return back()
+            ->with('success', 'Redeemed. Transaction recorded.')
+            ->with('download_transaction_id', $transaction->id);
     }
 
-    private function resolveCustomerId(array $validated, string $mode): int
+    public function download(PawnItem $pawnItem)
     {
-        if ($mode === 'existing') {
+        $pawnItem->load(['customer', 'pictures']);
+
+        $today = Carbon::today();
+        $calc  = $this->computeTotals($pawnItem, $today);
+
+        $pdf = Pdf::loadView('admin.pawn.receipt', [
+            'pawn' => $pawnItem,
+            'calc' => $calc,
+            'today' => $today,
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->download('pawn-receipt-' . $pawnItem->id . '.pdf');
+    }
+
+    private function resolveCustomerId(array $validated): int
+    {
+        if (($validated['customer_mode'] ?? '') === 'existing') {
             return (int) $validated['customer_id'];
         }
 
+        $name  = trim((string) ($validated['customer_name'] ?? ''));
+        $email = trim((string) ($validated['customer_email'] ?? ''));
+        $phone = trim((string) ($validated['customer_contact_no'] ?? ''));
+
+        // reuse by email/phone if exists
+        $existing = null;
+
+        if ($email !== '') {
+            $existing = Customer::where('email', $email)->first();
+        }
+        if (! $existing && $phone !== '') {
+            $existing = Customer::where('contact_no', $phone)->first();
+        }
+
+        if ($existing) {
+            return (int) $existing->id;
+        }
+
         $customer = Customer::create([
-            'name'       => $validated['customer_name'],
-            'email'      => $validated['customer_email'],
-            'contact_no' => $validated['customer_contact_no'] ?? '',
+            'name'       => $name,
+            'email'      => $email !== '' ? $email : null,
+            'contact_no' => $phone !== '' ? $phone : null,
+            'status'     => 'active',
         ]);
 
         return (int) $customer->id;
     }
 
     /**
-     * Compute totals:
+     * Overdue months:
+     * - if today > due_date, monthsOverdue counts partial month as 1
      * penalty = principal * 0.03 * monthsOverdue
-     * computed_interest = base_interest + penalty
-     * to_pay = principal + computed_interest
      */
     private function computeTotals(PawnItem $item, Carbon $today): array
     {
@@ -322,12 +359,13 @@ class PawnItemController extends Controller
                 ? $item->due_date->copy()->startOfDay()
                 : Carbon::parse($item->due_date)->startOfDay();
 
-            $today = $today->copy()->startOfDay();
+            $t = $today->copy()->startOfDay();
 
-            if ($today->gt($due)) {
-                $daysOverdue   = $due->diffInDays($today);
-                $monthsOverdue = (int) ceil($daysOverdue / 30); // every month passed by
-                $isOverdue     = $monthsOverdue > 0;
+            if ($t->gt($due)) {
+                $fullMonths = $due->diffInMonths($t);
+                $anchor     = $due->copy()->addMonths($fullMonths);
+                $monthsOverdue = $anchor->lt($t) ? $fullMonths + 1 : $fullMonths;
+                $isOverdue = $monthsOverdue > 0;
             }
         }
 
@@ -350,12 +388,9 @@ class PawnItemController extends Controller
     {
         $calc = $this->computeTotals($item, $today);
 
-        // NOT DB columns — just runtime values for the index UI
         $item->computed_interest = $calc['computed_interest'];
         $item->to_pay            = $calc['to_pay'];
         $item->is_overdue        = $calc['is_overdue'];
-
-        // optional debug display
         $item->months_overdue    = $calc['months_overdue'];
         $item->penalty           = $calc['penalty'];
     }

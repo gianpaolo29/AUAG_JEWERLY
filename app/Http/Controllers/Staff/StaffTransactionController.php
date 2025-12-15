@@ -13,59 +13,57 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StaffTransactionController extends Controller
 {
+    private const TYPE_BUY = 'Buy';
+
     /* ----------------------------------------------------
-     | INDEX – Staff sees ONLY their own transactions
+     | INDEX – Staff sees ONLY their own BUY transactions
      ---------------------------------------------------- */
     public function index(Request $request)
     {
-        $q    = $request->string('q')->trim()->toString(); // search term
-        $date = $request->input('date');                  // YYYY-MM-DD
+        $q    = $request->string('q')->trim()->toString();
+        $date = $request->input('date'); // YYYY-MM-DD
 
         $transactions = Transaction::with(['items.product', 'customer', 'staff'])
-            ->where('staff_id', auth()->id()) // still only show this staff's transactions
+            ->where('staff_id', auth()->id())
+            ->where('type', self::TYPE_BUY)
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    // 1) Search by ID (numeric)
+                    // Search by ID (supports "000123")
                     if (ctype_digit($q)) {
-                        // allow searching by raw ID or zero-padded ID typed as "000123"
                         $id = (int) ltrim($q, '0');
                         if ($id > 0) {
                             $sub->orWhere('id', $id);
                         }
                     }
 
-                    // 2) Search by customer name or email
+                    // Search by customer
                     $sub->orWhereHas('customer', function ($cq) use ($q) {
                         $cq->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%");
+                           ->orWhere('email', 'like', "%{$q}%");
                     });
 
-                    // 3) Search by product name (items they bought)
+                    // Search by product name
                     $sub->orWhereHas('items.product', function ($pq) use ($q) {
                         $pq->where('name', 'like', "%{$q}%");
                     });
                 });
             })
-            ->when($date, function ($query) use ($date) {
-                // Filter by transaction date
-                $query->whereDate('created_at', $date);
-            })
+            ->when($date, fn ($query) => $query->whereDate('created_at', $date))
             ->withSum('items as total_amount', 'line_total')
             ->latest()
             ->paginate(10)
-            ->appends($request->only('q', 'date')); // keep filters on pagination links
+            ->appends($request->only('q', 'date'));
 
         return view('staff.transactions.index', compact('transactions'));
     }
 
-
     /* ----------------------------------------------------
-     | CREATE – Sale with new or existing customer
+     | CREATE – BUY (new or existing customer)
      ---------------------------------------------------- */
     public function create()
     {
-        // Products for the cart (Alpine)
-        $products = Product::where('status', true)
+        $products = Product::query()
+            ->where('status', true)
             ->where('quantity', '>', 0)
             ->orderBy('name')
             ->get()
@@ -77,7 +75,6 @@ class StaffTransactionController extends Controller
                 'image_url' => $p->image_url,
             ]);
 
-        // Customers for the "Existing Customer" tab
         $customers = Customer::orderBy('name')
             ->get(['id', 'name', 'email', 'contact_no']);
 
@@ -85,26 +82,23 @@ class StaffTransactionController extends Controller
     }
 
     /* ----------------------------------------------------
-     | STORE – Save sale (new or existing customer)
-     | THEN redirect to index, where PDF will auto-download
+     | STORE – Save BUY
      ---------------------------------------------------- */
     public function store(Request $request)
     {
-        $mode = $request->input('customer_mode'); // 'existing' or 'new'
+        $mode = $request->input('customer_mode'); // 'existing' | 'new'
 
         $rules = [
-            'customer_mode'            => ['required', Rule::in(['existing', 'new'])],
-            'items'                    => ['required', 'array', 'min:1'],
-            'items.*.product_id'       => ['required', Rule::exists('products', 'id')],
-            'items.*.quantity'         => ['required', 'integer', 'min:1'],
-            'items.*.unit_price'       => ['required', 'numeric', 'min:0'],
+            'customer_mode'      => ['required', Rule::in(['existing', 'new'])],
+            'items'              => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')],
+            'items.*.quantity'   => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
         ];
 
         if ($mode === 'existing') {
             $rules['customer_id'] = ['required', 'integer', Rule::exists('customers', 'id')];
-        }
-
-        if ($mode === 'new') {
+        } else {
             $rules['customer_name']    = ['required', 'string', 'max:255'];
             $rules['customer_email']   = ['nullable', 'email', 'max:255'];
             $rules['customer_phone']   = ['nullable', 'string', 'max:20'];
@@ -115,9 +109,9 @@ class StaffTransactionController extends Controller
         $transaction = null;
 
         DB::transaction(function () use ($validated, $mode, &$transaction) {
-            // Resolve customer_id
+            // Resolve customer
             if ($mode === 'existing') {
-                $customerId = $validated['customer_id'];
+                $customerId = (int) $validated['customer_id'];
             } else {
                 $customer = Customer::create([
                     'name'       => $validated['customer_name'],
@@ -128,20 +122,27 @@ class StaffTransactionController extends Controller
                 $customerId = $customer->id;
             }
 
-            // Create transaction
+            // Create BUY transaction
             $transaction = Transaction::create([
                 'customer_id' => $customerId,
                 'staff_id'    => auth()->id(),
-                'type'        => 'Buy',
+                'type'        => self::TYPE_BUY,
             ]);
 
-            // Items + stock deduction
+            // Items + stock deduction (with basic stock protection)
             foreach ($validated['items'] as $item) {
-                $qty   = (int) $item['quantity'];
-                $price = (float) $item['unit_price'];
+                $productId = (int) $item['product_id'];
+                $qty       = (int) $item['quantity'];
+                $price     = (float) $item['unit_price'];
+
+                $product = Product::lockForUpdate()->findOrFail($productId);
+
+                if ($product->quantity < $qty) {
+                    abort(422, "Not enough stock for {$product->name}.");
+                }
 
                 $transaction->items()->create([
-                    'product_id'   => $item['product_id'],
+                    'product_id'   => $productId,
                     'quantity'     => $qty,
                     'unit_price'   => $price,
                     'line_total'   => $qty * $price,
@@ -149,27 +150,24 @@ class StaffTransactionController extends Controller
                     'repair_id'    => null,
                 ]);
 
-                Product::where('id', $item['product_id'])
-                    ->decrement('quantity', $qty);
+                $product->decrement('quantity', $qty);
             }
         });
 
-        // Redirect to index and tell it which transaction to download as PDF
         return redirect()
             ->route('staff.transactions.index')
             ->with([
-                'success'                 => 'Transaction created successfully.',
+                'success'                 => 'Buy transaction created successfully.',
                 'download_transaction_id' => $transaction->id,
             ]);
     }
 
     /* ----------------------------------------------------
-     | DOWNLOAD – Generate & download PDF
-     | (Called by index via hidden link/script)
+     | DOWNLOAD – PDF (ONLY BUY)
      ---------------------------------------------------- */
     public function download(Transaction $transaction)
     {
-        abort_if($transaction->staff_id !== auth()->id(), 403);
+        $this->assertBuyTransaction($transaction);
 
         $transaction->load(['items.product', 'customer']);
 
@@ -178,17 +176,17 @@ class StaffTransactionController extends Controller
             ])
             ->setPaper('a4', 'portrait');
 
-        $fileName = 'transaction_' . str_pad($transaction->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $fileName = 'buy_' . str_pad($transaction->id, 6, '0', STR_PAD_LEFT) . '.pdf';
 
         return $pdf->download($fileName);
     }
 
     /* ----------------------------------------------------
-     | SHOW – View staff transaction (normal page)
+     | SHOW – View (ONLY BUY)
      ---------------------------------------------------- */
     public function show(Transaction $transaction)
     {
-        abort_if($transaction->staff_id !== auth()->id(), 403);
+        $this->assertBuyTransaction($transaction);
 
         $transaction->load(['items.product', 'customer']);
 
@@ -196,16 +194,23 @@ class StaffTransactionController extends Controller
     }
 
     /* ----------------------------------------------------
-     | RECEIPT – HTML receipt (if you still need web view)
+     | RECEIPT – HTML view (ONLY BUY)
      ---------------------------------------------------- */
     public function receipt(Transaction $transaction)
     {
-        abort_if($transaction->staff_id !== auth()->id(), 403);
+        $this->assertBuyTransaction($transaction);
 
         $transaction->load(['items.product', 'customer']);
 
-        return view('staff.transactions.receipt', [
-            'transaction' => $transaction,
-        ]);
+        return view('staff.transactions.receipt', compact('transaction'));
+    }
+
+    /* ----------------------------------------------------
+     | Guard – ONLY allow staff owner + BUY type
+     ---------------------------------------------------- */
+    private function assertBuyTransaction(Transaction $transaction): void
+    {
+        abort_if($transaction->staff_id !== auth()->id(), 403);
+        abort_if($transaction->type !== self::TYPE_BUY, 403);
     }
 }

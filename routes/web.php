@@ -29,9 +29,9 @@ use App\Http\Controllers\GoldSpotPriceController;
 
 
 
-/* These routes are defining the endpoints for different functionalities in the application: */
-    // Route::get('/api/gold/spot', GoldSpotPriceController::class)->name('gold.spot');
-    // Route::get('/gold', function () {return view('gold-index');})->name('gold.index');
+
+    Route::get('/api/gold/spot', GoldSpotPriceController::class)->name('gold.spot');
+    Route::get('/gold', function () {return view('gold-index');})->name('gold.index');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
@@ -90,13 +90,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/transactions/{transaction}/receipt', [TransactionController::class, 'receipt'])->name('transactions.receipt');
 
     Route::get('/pawns', [PawnItemController::class, 'index'])->name('pawn.index');
-    Route::get('/pawns/create', [PawnItemController::class, 'create'])->name('pawn.create');
-    Route::post('/pawns', [PawnItemController::class, 'store'])->name('pawn.store');
+    Route::get('pawn/create', [PawnItemController::class, 'create'])->name('pawn.create');
+    Route::post('pawn', [PawnItemController::class, 'store'])->name('pawn.store');
+    Route::get('pawn/{pawnItem}/edit', [PawnItemController::class, 'edit'])->name('pawn.edit');
+    Route::put('pawn/{pawnItem}', [PawnItemController::class, 'update'])->name('pawn.update');
+    Route::delete('pawn/{pawnItem}', [PawnItemController::class, 'destroy'])->name('pawn.destroy');
 
-    Route::get('/pawns/{transaction}', [PawnItemController::class, 'show'])->name('pawn.show');
-    Route::get('/pawns/{transaction}/receipt', [PawnItemController::class, 'receipt'])->name('pawn.receipt');
-    Route::get('/pawns/{transaction}/download', [PawnItemController::class, 'download'])->name('pawn.download');
-    Route::post('/pawns/{pawnItem}/redeem', [PawnItemController::class, 'redeem'])->name('pawn.redeem');
+    Route::post('pawn/{pawnItem}/redeem', [PawnItemController::class, 'redeem'])->name('pawn.redeem');
+    Route::get('pawn/{pawnItem}/download', [PawnItemController::class, 'download'])->name('pawn.download');
 
 
 
@@ -113,6 +114,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         ]);
 
     Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
+    
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
@@ -139,9 +141,8 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::get('/staff/pawns', [StaffPawnController::class, 'index'])->name('staff.pawn.index');
     Route::get('/pawn/create', [StaffPawnController::class, 'create'])->name('staff.pawn.create');
     Route::post('/pawn', [StaffPawnController::class, 'store'])->name('staff.pawn.store');
-    Route::post('/pawn/{pawnItem}/redeem', [StaffPawnController::class, 'redeem'])
-    ->name('staff.pawn.redeem');
-    Route::get('/staff/pawn/{pawn}/download', [StaffPawnController::class, 'download']) ->name('staff.pawn.download');
+     Route::get('/pawn/{pawn}/download', [StaffPawnController::class, 'download'])->name('staff.pawn.download');
+    Route::post('/pawn/{pawn}/redeem', [StaffPawnController::class, 'redeem'])->name('staff.pawn.redeem');
 
     // Repairs
     Route::get('/staff/repairs', [StaffRepairController::class, 'index'])->name('staff.repairs.index');
@@ -152,6 +153,7 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
     Route::delete('/staff/repairs/{repair}', [StaffRepairController::class, 'destroy'])->name('staff.repairs.destroy');
     Route::post('/staff/repairs/{repair}/complete', [StaffRepairController::class, 'markComplete'])
         ->name('staff.repairs.complete');
+     Route::get('/staff/repairs/{repair}/download', [StaffRepairController::class, 'download'])->name('staff.repairs.download');
 
 });
 require __DIR__.'/auth.php';

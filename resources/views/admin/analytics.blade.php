@@ -1,6 +1,6 @@
 <x-admin-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
+        <h2 class="font-semibold text-lg text-gray-800 dark:text-gray-100 leading-tight">
             {{ __('Admin Analytics') }} 📊
         </h2>
 
@@ -8,555 +8,449 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </x-slot>
 
-    <div class="space-y-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div class="space-y-4"> {{-- Reduced overall vertical space --}}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
-            {{-- DATE RANGE FILTERS --}}
+            {{-- 1. HEADER & DATE FILTERS (Compact) --}}
             @php
                 $currentRange = $range ?? request('range', '30d');
             @endphp
 
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">
                 <div>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
                         Showing data for: <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $rangeLabel }}</span>
-                    </p>
-                    <p class="text-xs text-gray-400">
-                        Date range filters apply to charts and cards.
                     </p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('admin.analytics', ['range' => 'today']) }}"
-                       class="px-3 py-1 text-xs font-medium rounded-full border transition-colors
-                             {{ $currentRange === 'today'
-                                 ? 'bg-indigo-600 text-white border-indigo-600'
-                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700' }}">
-                        Today
-                    </a>
-                    <a href="{{ route('admin.analytics', ['range' => '7d']) }}"
-                       class="px-3 py-1 text-xs font-medium rounded-full border transition-colors
-                             {{ $currentRange === '7d'
-                                 ? 'bg-indigo-600 text-white border-indigo-600'
-                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700' }}">
-                        Last 7 Days
-                    </a>
-                    <a href="{{ route('admin.analytics', ['range' => '30d']) }}"
-                       class="px-3 py-1 text-xs font-medium rounded-full border transition-colors
-                             {{ $currentRange === '30d'
-                                 ? 'bg-indigo-600 text-white border-indigo-600'
-                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700' }}">
-                        Last 30 Days
-                    </a>
-                    <a href="{{ route('admin.analytics', ['range' => 'all']) }}"
-                       class="px-3 py-1 text-xs font-medium rounded-full border transition-colors
-                             {{ $currentRange === 'all'
-                                 ? 'bg-indigo-600 text-white border-indigo-600'
-                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700' }}">
-                        All Time
-                    </a>
+                <div class="flex flex-wrap gap-1">
+                    @foreach(['today' => 'Today', '7d' => '7D', '30d' => '30D', 'all' => 'All'] as $key => $label)
+                        <a href="{{ route('admin.analytics', ['range' => $key]) }}"
+                           class="px-3 py-1 text-[10px] uppercase tracking-wider font-semibold rounded-md border transition-colors
+                                 {{ $currentRange === $key
+                                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700' }}">
+                            {{ $label }}
+                        </a>
+                    @endforeach
                 </div>
             </div>
 
-            {{-- TOP METRICS (ALL FILTERED BY RANGE) - 3 + 2 GRID --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            {{-- 2. METRICS GRID (Compact) --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 
-                {{-- Group 1: Range Metrics with Sparklines (3 Columns) --}}
-                <div class="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {{-- Range Metrics (3 cols) --}}
+                <div class="md:col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     @foreach ([
-                        ['title' => "Revenue ({$rangeLabel})", 'type' => 'money', 'value' => $rangeRevenue ?? 0, 'change' => $rangeRevenueChange ?? 0, 'data' => $rangeRevenueData ?? [], 'label' => 'Revenue'],
-                        ['title' => "Orders ({$rangeLabel})",  'type' => 'count', 'value' => $rangeOrders ?? 0,  'change' => $rangeOrdersChange ?? 0,  'data' => $rangeOrdersData ?? [],  'label' => 'Orders'],
-                        ['title' => "AOV ({$rangeLabel})",     'type' => 'money', 'value' => $rangeAov ?? 0,     'change' => $rangeAovChange ?? 0,     'data' => $rangeAovData ?? [],     'label' => 'AOV'],
+                        ['title' => "Revenue", 'type' => 'money', 'value' => $rangeRevenue ?? 0, 'change' => $rangeRevenueChange ?? 0, 'data' => $rangeRevenueData ?? [], 'label' => 'Revenue'],
+                        ['title' => "Orders",  'type' => 'count', 'value' => $rangeOrders ?? 0,  'change' => $rangeOrdersChange ?? 0,  'data' => $rangeOrdersData ?? [],  'label' => 'Orders'],
+                        ['title' => "AOV",     'type' => 'money', 'value' => $rangeAov ?? 0,     'change' => $rangeAovChange ?? 0,     'data' => $rangeAovData ?? [],     'label' => 'AOV'],
                     ] as $metric)
                         @php
                             $isPositive = ($metric['change'] ?? 0) >= 0;
-                            $changeColor = $isPositive ? 'text-emerald-500' : 'text-red-500';
+                            $changeColor = $isPositive ? 'text-emerald-500' : 'text-rose-500';
+                            $changeBg    = $isPositive ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-rose-50 dark:bg-rose-900/20';
                             $changeIcon  = $isPositive ? '↑' : '↓';
                         @endphp
 
-                        <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow dark:bg-gray-800 dark:border-gray-700 relative">
-                            <p class="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">{{ $metric['title'] }}</p>
-
-                            <div class="flex items-end justify-between">
-                                <p class="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700 flex flex-col justify-between h-full">
+                            <div>
+                                <div class="flex justify-between items-start mb-1">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">{{ $metric['title'] }}</p>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {{ $changeBg }} {{ $changeColor }}">
+                                        {{ $changeIcon }}{{ abs($metric['change']) }}%
+                                    </span>
+                                </div>
+                                <p class="text-xl font-bold text-gray-900 dark:text-white">
                                     @if($metric['type'] === 'money')
                                         ₱{{ number_format($metric['value'], 2) }}
                                     @else
                                         {{ number_format($metric['value']) }}
                                     @endif
                                 </p>
-
-                                <p class="text-xs font-semibold {{ $changeColor }} flex items-center gap-1">
-                                    <span class="text-sm">{{ $changeIcon }}</span>
-                                    {{ abs($metric['change']) }}%
-                                </p>
                             </div>
 
-                            <div class="h-10 w-full mt-2">
-                                <canvas
-                                    id="mini-chart-{{ $loop->index }}"
-                                    data-data='@json($metric['data'])'
-                                    data-label="{{ $metric['label'] }}"
-                                ></canvas>
+                            {{-- Sparkline (Reduced Height) --}}
+                            <div class="h-8 w-full mt-2">
+                                <canvas id="mini-chart-{{ $loop->index }}"
+                                        data-data='@json($metric['data'])'
+                                        data-label="{{ $metric['label'] }}"
+                                        data-color="{{ $isPositive ? '#10B981' : '#F43F5E' }}">
+                                </canvas>
                             </div>
                         </div>
                     @endforeach
                 </div>
 
-                {{-- Group 2: Other Range Cards (2 Columns) --}}
-                <div class="md:col-span-2 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-                    {{-- Items Sold --}}
-                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-md dark:bg-gray-800 dark:border-gray-700">
-                        <p class="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">Items Sold ({{ $rangeLabel }})</p>
-                        <div class="flex items-end justify-between">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                                {{ number_format($itemsSold ?? 0) }}
-                            </p>
-                            <p class="text-xs font-semibold {{ ($itemsSoldChange ?? 0) >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
-                                {{ ($itemsSoldChange ?? 0) >= 0 ? '↑' : '↓' }} {{ abs($itemsSoldChange ?? 0) }}%
-                            </p>
+                {{-- Static Metrics (2 cols) --}}
+                <div class="md:col-span-2 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 flex items-center gap-3">
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md shrink-0">
+                            <span class="text-xl">📦</span>
                         </div>
-                        <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Total quantity sold in selected range.</p>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Items Sold</p>
+                            <p class="text-xl font-bold text-gray-900 dark:text-white">{{ number_format($itemsSold ?? 0) }}</p>
+                        </div>
                     </div>
 
-                    {{-- Unique Buyers --}}
-                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-md bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-800">
-                        <p class="mb-1 text-sm font-medium text-indigo-700 dark:text-indigo-300">Customer ({{ $rangeLabel }})</p>
-                        <div class="flex items-end justify-between">
-                            <p class="text-2xl font-extrabold text-indigo-800 dark:text-indigo-100">
-                                {{ number_format($uniqueBuyers ?? 0) }}
-                            </p>
-                            <p class="text-xs font-semibold {{ ($uniqueBuyersChange ?? 0) >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
-                                {{ ($uniqueBuyersChange ?? 0) >= 0 ? '↑' : '↓' }} {{ abs($uniqueBuyersChange ?? 0) }}%
-                            </p>
+                    <div class="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md text-white flex items-center gap-3">
+                        <div class="p-2 bg-white/20 rounded-md backdrop-blur-sm shrink-0">
+                            <span class="text-xl">👥</span>
                         </div>
-                        <p class="text-xs mt-1 text-indigo-500 dark:text-indigo-400">Distinct customers who purchased.</p>
+                        <div>
+                            <p class="text-xs font-medium text-indigo-100">Unique Buyers</p>
+                            <p class="text-xl font-bold text-white">{{ number_format($uniqueBuyers ?? 0) }}</p>
+                        </div>
                     </div>
-
                 </div>
             </div>
 
-            {{-- PRODUCT + CUSTOMER SUMMARY (NO FUNNEL) --}}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {{-- Products summary --}}
-                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <h3 class="mb-4 text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span class="text-indigo-500">📦</span> Product Status
+            {{-- 3. PRODUCT STATUS SUMMARY (Compact Grid) --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {{-- Inventory --}}
+                <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <h3 class="mb-3 text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        Product Status
                     </h3>
-                    <dl class="grid grid-cols-2 gap-x-6 gap-y-3">
-                        <div class="col-span-2 flex items-center justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Total Products</dt>
-                            <dd class="text-lg font-semibold text-gray-900 dark:text-white">{{ $totalProducts ?? 0 }}</dd>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="p-2 bg-gray-50 rounded dark:bg-gray-700">
+                            <p class="text-[10px] uppercase text-gray-500 dark:text-gray-400">Total</p>
+                            <p class="text-base font-bold text-gray-900 dark:text-white">{{ $totalProducts ?? 0 }}</p>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Published</dt>
-                            <dd class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{{ $publishedProducts ?? 0 }}</dd>
+                        <div class="p-2 bg-emerald-50 rounded dark:bg-emerald-900/20">
+                            <p class="text-[10px] uppercase text-emerald-600 dark:text-emerald-400">Published</p>
+                            <p class="text-base font-bold text-emerald-700 dark:text-emerald-300">{{ $publishedProducts ?? 0 }}</p>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Low Stock (&lt; 5)</dt>
-                            <dd class="text-lg font-semibold text-red-600 dark:text-red-400">{{ $lowStockCount ?? 0 }}</dd>
+                        <div class="p-2 bg-red-50 rounded dark:bg-red-900/20">
+                            <p class="text-[10px] uppercase text-red-600 dark:text-red-400">Low Stock</p>
+                            <p class="text-base font-bold text-red-700 dark:text-red-300">{{ $lowStockCount ?? 0 }}</p>
                         </div>
-                    </dl>
+                    </div>
                 </div>
 
-                {{-- Customers summary --}}
-                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <h3 class="mb-4 text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <span class="text-blue-500">👥</span> Customer Stats
+                {{-- Customer Stats --}}
+                <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <h3 class="mb-3 text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        Customer Growth
                     </h3>
-                    <dl class="grid grid-cols-2 gap-x-6 gap-y-3">
-                        <div class="col-span-2 flex items-center justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Total Customers</dt>
-                            <dd class="text-lg font-semibold text-gray-900 dark:text-white">{{ $totalCustomers ?? 0 }}</dd>
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="p-2 bg-gray-50 rounded dark:bg-gray-700">
+                            <p class="text-[10px] uppercase text-gray-500 dark:text-gray-400">Total</p>
+                            <p class="text-base font-bold text-gray-900 dark:text-white">{{ $totalCustomers ?? 0 }}</p>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">New ({{ $rangeLabel }})</dt>
-                            <dd class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ $newCustomersInRange ?? 0 }}</dd>
+                        <div class="p-2 bg-blue-50 rounded dark:bg-blue-900/20">
+                            <p class="text-[10px] uppercase text-blue-600 dark:text-blue-400">New ({{ $rangeLabel }})</p>
+                            <p class="text-base font-bold text-blue-700 dark:text-blue-300">{{ $newCustomersInRange ?? 0 }}</p>
                         </div>
-                    </dl>
+                    </div>
                 </div>
             </div>
 
-            {{-- CORE GRAPHS --}}
-            <section class="space-y-6">
-                <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-                        Sales Trend ({{ $rangeLabel }})
-                    </h3>
-                    <div class="h-80">
+            {{-- 4. PRIMARY CHARTS (Reduced Height) --}}
+            <section class="space-y-4">
+                {{-- Sales Trend (Area Chart) --}}
+                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">Sales Performance</h3>
+                        <span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ $rangeLabel }}</span>
+                    </div>
+                    <div class="h-64 w-full"> {{-- Reduced from h-80 --}}
                         <canvas id="salesByDayChart"></canvas>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-                            Product Material Breakdown (All)
-                        </h3>
-                        <div class="h-80">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {{-- Material Breakdown --}}
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                        <h3 class="mb-2 text-sm font-bold text-gray-900 dark:text-white">Product Material</h3>
+                        <div class="h-56 flex justify-center"> {{-- Reduced Height --}}
                             <canvas id="materialChart"></canvas>
                         </div>
                     </div>
 
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-                            Revenue by Category ({{ $rangeLabel }})
-                        </h3>
-                        <div class="h-80">
+                    {{-- Revenue By Category --}}
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                        <h3 class="mb-2 text-sm font-bold text-gray-900 dark:text-white">Revenue by Category</h3>
+                        <div class="h-56"> {{-- Reduced Height --}}
                             <canvas id="revenueByCategoryChart"></canvas>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {{-- SECONDARY GRAPHS --}}
-            <section class="space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-                            Top Products by Revenue ({{ $rangeLabel }})
-                        </h3>
-                        <div class="h-80">
-                            <canvas id="topProductsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-                            Staff Performance (Sales, {{ $rangeLabel }})
-                        </h3>
-                        <div class="h-80">
-                            <canvas id="staffSalesChart"></canvas>
-                        </div>
+            {{-- 5. SECONDARY CHARTS (Reduced Height) --}}
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <h3 class="mb-2 text-sm font-bold text-gray-900 dark:text-white">Top Products</h3>
+                    <div class="h-64"> {{-- Reduced Height --}}
+                        <canvas id="topProductsChart"></canvas>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">
-                            Pawn Status ({{ $rangeLabel }})
-                        </h3>
-                        <div class="h-48">
-                            <canvas id="pawnStatusChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">
-                            Repair Status ({{ $rangeLabel }})
-                        </h3>
-                        <div class="h-48">
-                            <canvas id="repairStatusChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">
-                            Most Favorited ({{ $rangeLabel }})
-                        </h3>
-                        <div class="h-48">
-                            <canvas id="mostFavoritedChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                        <h3 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">
-                            Most Viewed ({{ $rangeLabel }})
-                        </h3>
-                        <div class="h-48">
-                            <canvas id="mostViewedChart"></canvas>
-                        </div>
+                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <h3 class="mb-2 text-sm font-bold text-gray-900 dark:text-white">Staff Performance</h3>
+                    <div class="h-64"> {{-- Reduced Height --}}
+                        <canvas id="staffSalesChart"></canvas>
                     </div>
                 </div>
             </section>
 
-            <section class="space-y-6 mt-6">
-                <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
-                        Frequently Bought Together (All Time)
-                    </h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                        (Minimum support: {{ $minSupport ?? 5 }} transactions).
-                    </p>
-                    <div class="h-80">
-                        <canvas id="frequentCombosChart"></canvas>
+            {{-- 6. STATUS DOUGHNUTS (Small) --}}
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                @foreach([
+                    ['id' => 'pawnStatusChart', 'title' => 'Pawn Status'],
+                    ['id' => 'repairStatusChart', 'title' => 'Repair Status'],
+                    ['id' => 'mostFavoritedChart', 'title' => 'Most Favorited'],
+                    ['id' => 'mostViewedChart', 'title' => 'Most Viewed']
+                ] as $chart)
+                <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <h3 class="mb-2 text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">{{ $chart['title'] }}</h3>
+                    <div class="h-32 relative"> {{-- Significantly Reduced Height (h-32) --}}
+                        <canvas id="{{ $chart['id'] }}"></canvas>
                     </div>
+                </div>
+                @endforeach
+            </section>
+
+            {{-- 7. MARKET BASKET --}}
+            <section class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">Frequently Bought Together</h3>
+                    <span class="text-[10px] text-gray-500">Min: {{ $minSupport ?? 5 }}</span>
+                </div>
+                <div class="h-48"> {{-- Reduced Height --}}
+                    <canvas id="frequentCombosChart"></canvas>
                 </div>
             </section>
 
-            {{-- QUICK ACTIONS --}}
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700 lg:col-span-2">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">
-                        🚀 Quick Actions
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        @foreach($quickActions as $action)
-                            <a href="{{ $action['href'] }}"
-                               class="flex items-center justify-between w-full p-3 text-sm bg-gray-50 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-colors">
-                                <div>
-                                    <p class="font-medium text-gray-900 dark:text-white">
-                                        {{ $action['label'] }}
-                                    </p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ $action['description'] }}
-                                    </p>
-                                </div>
-                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                        @endforeach
-                    </div>
+             {{-- 8. QUICK ACTIONS --}}
+             <section class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-3">🚀 Quick Actions</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    @foreach($quickActions as $action)
+                        <a href="{{ $action['href'] }}"
+                           class="flex items-center justify-between p-3 text-xs bg-gray-50 rounded border border-gray-100 hover:bg-indigo-50 hover:border-indigo-100 transition-all dark:bg-gray-900 dark:border-gray-700 dark:hover:bg-gray-700">
+                            <div>
+                                <p class="font-semibold text-gray-900 dark:text-white">{{ $action['label'] }}</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $action['description'] }}</p>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </a>
+                    @endforeach
                 </div>
             </section>
-
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.5.1/flowbite.min.js"></script>
 
-    {{-- Chart.js init --}}
+    {{-- CHART.JS LOGIC --}}
     <script>
-        const primaryColor = 'rgb(79, 70, 229)';
-        const secondaryColor = 'rgb(16, 185, 129)';
+        // --- Configuration ---
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        Chart.defaults.font.size = 11; // Smaller default font
+        Chart.defaults.color = '#6B7280';
+        Chart.defaults.scale.grid.color = 'rgba(229, 231, 235, 0.5)';
+        Chart.defaults.scale.grid.borderDash = [4, 4];
 
-        function renderChart(ctx, type, data, options) {
-            if (window.analyticsCharts && window.analyticsCharts[ctx.id]) {
-                window.analyticsCharts[ctx.id].destroy();
+        const COLORS = {
+            primary: 'rgb(79, 70, 229)', // Indigo
+            secondary: 'rgb(16, 185, 129)', // Emerald
+            purple: 'rgb(139, 92, 246)',
+            palette: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
+        };
+
+        const pesoFormatter = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 }); // Removed cents for compactness
+
+        function createGradient(ctx, startColor, endColor) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, startColor);
+            gradient.addColorStop(1, endColor);
+            return gradient;
+        }
+
+        // --- Generic Render Function ---
+        function renderChart(elementId, type, data, customOptions = {}) {
+            const ctx = document.getElementById(elementId);
+            if (!ctx) return;
+
+            if (window.analyticsCharts && window.analyticsCharts[elementId]) {
+                window.analyticsCharts[elementId].destroy();
             }
             if (!window.analyticsCharts) window.analyticsCharts = {};
-            window.analyticsCharts[ctx.id] = new Chart(ctx, { type, data, options });
+
+            const defaultOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        padding: 8,
+                        cornerRadius: 4,
+                        displayColors: false,
+                        titleFont: { size: 11 },
+                        bodyFont: { size: 11 }
+                    }
+                }
+            };
+
+            const options = { ...defaultOptions, ...customOptions };
+            if(customOptions.scales) options.scales = { ...defaultOptions.scales, ...customOptions.scales };
+            if(customOptions.plugins) options.plugins = { ...defaultOptions.plugins, ...customOptions.plugins };
+
+            window.analyticsCharts[elementId] = new Chart(ctx, { type, data, options });
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            // Mini charts
+
+            // 1. Sparklines (Thinner line, no dots)
             document.querySelectorAll('[id^="mini-chart-"]').forEach(ctx => {
                 const data = JSON.parse(ctx.getAttribute('data-data') || '[]');
                 const label = ctx.getAttribute('data-label');
+                const color = ctx.getAttribute('data-color');
                 if (data.length > 0) {
-                    renderChart(ctx, 'line', {
+                    renderChart(ctx.id, 'line', {
                         labels: data.map((_, i) => i),
                         datasets: [{
-                            label: label,
                             data: data,
-                            borderColor: primaryColor,
-                            borderWidth: 2,
+                            borderColor: color,
+                            borderWidth: 1.5, // Thinner
                             pointRadius: 0,
-                            fill: true,
-                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                            tension: 0.4,
+                            tension: 0.4
                         }]
-                    }, {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: { x: { display: false }, y: { display: false } }
-                    });
+                    }, { scales: { x: { display: false }, y: { display: false } }, plugins: { tooltip: { enabled: false } } });
                 }
             });
 
-            // Sales by Day
+            // 2. Sales Trend (Gradient Area)
             const salesCtx = document.getElementById('salesByDayChart');
             if (salesCtx) {
-                renderChart(salesCtx, 'line', {
+                const ctx2d = salesCtx.getContext('2d');
+                renderChart('salesByDayChart', 'line', {
                     labels: @json($salesByDayLabels),
                     datasets: [{
-                        label: 'Sales (₱)',
+                        label: 'Revenue',
                         data: @json($salesByDayData),
-                        borderColor: primaryColor,
-                        borderWidth: 3,
+                        borderColor: COLORS.primary,
+                        backgroundColor: createGradient(ctx2d, 'rgba(79, 70, 229, 0.4)', 'rgba(79, 70, 229, 0.0)'),
+                        fill: true,
                         tension: 0.4,
-                        fill: false,
+                        borderWidth: 2,
+                        pointRadius: 0, // No points by default
+                        pointHoverRadius: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: COLORS.primary
                     }]
                 }, {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
                     scales: {
-                        y: { ticks: { callback: value => '₱' + value.toLocaleString() } }
-                    }
-                });
-            }
-
-            // Material
-            const materialCtx = document.getElementById('materialChart');
-            if (materialCtx) {
-                renderChart(materialCtx, 'doughnut', {
-                    labels: @json($materialLabels),
-                    datasets: [{ data: @json($materialData), borderWidth: 1 }]
-                }, {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                });
-            }
-
-            // Revenue by Category
-            const catCtx = document.getElementById('revenueByCategoryChart');
-            if (catCtx) {
-                renderChart(catCtx, 'bar', {
-                    labels: @json($revenueByCategoryLabels),
-                    datasets: [{
-                        label: 'Revenue (₱)',
-                        data: @json($revenueByCategoryData),
-                        borderWidth: 1,
-                        backgroundColor: secondaryColor,
-                    }]
-                }, {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { callback: value => '₱' + value.toLocaleString() } }
-                    }
-                });
-            }
-
-            // Top Products
-            const topProdCtx = document.getElementById('topProductsChart');
-            if (topProdCtx) {
-                renderChart(topProdCtx, 'bar', {
-                    labels: @json($topProducts->pluck('name')),
-                    datasets: [{
-                        label: 'Revenue (₱)',
-                        data: @json($topProducts->pluck('total_sales')),
-                        borderWidth: 1,
-                        backgroundColor: primaryColor,
-                    }]
-                }, {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { callback: value => '₱' + value.toLocaleString() } }
-                    }
-                });
-            }
-
-            // Pawn Status
-            const pawnCtx = document.getElementById('pawnStatusChart');
-            if (pawnCtx) {
-                renderChart(pawnCtx, 'doughnut', {
-                    labels: @json($pawnStatusLabels),
-                    datasets: [{ data: @json($pawnStatusData), borderWidth: 1 }]
-                }, {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                });
-            }
-
-            // Repair Status
-            const repairCtx = document.getElementById('repairStatusChart');
-            if (repairCtx) {
-                renderChart(repairCtx, 'doughnut', {
-                    labels: @json($repairStatusLabels),
-                    datasets: [{ data: @json($repairStatusData), borderWidth: 1 }]
-                }, {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                });
-            }
-
-            // Staff Sales
-            const staffCtx = document.getElementById('staffSalesChart');
-            if (staffCtx) {
-                renderChart(staffCtx, 'bar', {
-                    labels: @json($staffSalesLabels),
-                    datasets: [{
-                        label: 'Sales (₱)',
-                        data: @json($staffSalesData),
-                        borderWidth: 1,
-                        backgroundColor: primaryColor,
-                    }]
-                }, {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { ticks: { callback: value => '₱' + value.toLocaleString() } }
-                    }
-                });
-            }
-
-            // Most Favorited
-            const favCtx = document.getElementById('mostFavoritedChart');
-            if (favCtx) {
-                renderChart(favCtx, 'bar', {
-                    labels: @json($mostFavorited->pluck('name')),
-                    datasets: [{
-                        label: 'Favorites',
-                        data: @json($mostFavorited->pluck('total_favorites')),
-                        borderWidth: 1,
-                        backgroundColor: primaryColor,
-                    }]
-                }, {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { precision: 0 } } }
-                });
-            }
-
-            // Most Viewed
-            const viewedCtx = document.getElementById('mostViewedChart');
-            if (viewedCtx) {
-                renderChart(viewedCtx, 'bar', {
-                    labels: @json($mostViewed->pluck('name')),
-                    datasets: [{
-                        label: 'Views',
-                        data: @json($mostViewed->pluck('views')),
-                        borderWidth: 1,
-                        backgroundColor: secondaryColor,
-                    }]
-                }, {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { precision: 0 } } }
-                });
-            }
-
-            // Frequent Combos
-            const combosCtx = document.getElementById('frequentCombosChart');
-            if (combosCtx) {
-                const comboLabels = @json($frequentComboLabels ?? []);
-                const comboData   = @json($frequentComboSupport ?? []);
-
-                if (comboLabels.length > 0) {
-                    renderChart(combosCtx, 'bar', {
-                        labels: comboLabels,
-                        datasets: [{
-                            label: 'Number of Buy Transactions',
-                            data: comboData,
-                            borderWidth: 1,
-                            backgroundColor: primaryColor,
-                        }]
-                    }, {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (ctx) {
-                                        return ctx.raw + ' transactions';
-                                    }
-                                }
-                            }
+                        y: {
+                            ticks: { callback: (val) => pesoFormatter.format(val), font: { size: 10 } },
+                            grid: { borderDash: [4, 4] }
                         },
-                        scales: { x: { ticks: { precision: 0 } } }
-                    });
-                }
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    },
+                    plugins: {
+                        tooltip: { callbacks: { label: (c) => 'Revenue: ' + pesoFormatter.format(c.raw) } }
+                    }
+                });
             }
+
+            // 3. Materials (Doughnut)
+            renderChart('materialChart', 'doughnut', {
+                labels: @json($materialLabels),
+                datasets: [{
+                    data: @json($materialData),
+                    backgroundColor: COLORS.palette,
+                    borderWidth: 0
+                }]
+            }, {
+                cutout: '75%', // Thinner ring
+                plugins: { legend: { display: true, position: 'right', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } } }
+            });
+
+            // 4. Categories (Horizontal Bar)
+            renderChart('revenueByCategoryChart', 'bar', {
+                labels: @json($revenueByCategoryLabels),
+                datasets: [{
+                    label: 'Revenue',
+                    data: @json($revenueByCategoryData),
+                    backgroundColor: COLORS.secondary,
+                    borderRadius: 3,
+                    barPercentage: 0.7
+                }]
+            }, {
+                indexAxis: 'y',
+                scales: {
+                    x: { ticks: { callback: (val) => '₱' + val.toLocaleString(), font: { size: 10 } } },
+                    y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            });
+
+            // 5. Top Products
+            renderChart('topProductsChart', 'bar', {
+                labels: @json($topProducts->pluck('name')),
+                datasets: [{
+                    label: 'Revenue',
+                    data: @json($topProducts->pluck('total_sales')),
+                    backgroundColor: COLORS.primary,
+                    borderRadius: 3,
+                    barPercentage: 0.7
+                }]
+            }, {
+                indexAxis: 'y',
+                scales: {
+                    x: { ticks: { callback: (val) => '₱' + val.toLocaleString(), font: { size: 10 } } },
+                    y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            });
+
+            // 6. Staff Sales
+            renderChart('staffSalesChart', 'bar', {
+                labels: @json($staffSalesLabels),
+                datasets: [{
+                    label: 'Sales',
+                    data: @json($staffSalesData),
+                    backgroundColor: COLORS.purple,
+                    borderRadius: 3,
+                    barPercentage: 0.7
+                }]
+            }, {
+                indexAxis: 'y',
+                scales: { x: { ticks: { callback: (val) => '₱' + val.toLocaleString(), font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } }
+            });
+
+            // 7. Status Doughnuts (Small)
+            const doughnutOptions = { cutout: '65%', plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 6, font: {size: 9} } } } };
+            const barSimpleOptions = { indexAxis: 'y', scales: { x: { display: false }, y: { grid: { display: false }, ticks: { font: { size: 9 } } } } };
+
+            renderChart('pawnStatusChart', 'doughnut', { labels: @json($pawnStatusLabels), datasets: [{ data: @json($pawnStatusData), backgroundColor: [COLORS.primary, '#FBBF24', '#EF4444', '#10B981'], borderWidth: 0 }] }, doughnutOptions);
+            renderChart('repairStatusChart', 'doughnut', { labels: @json($repairStatusLabels), datasets: [{ data: @json($repairStatusData), backgroundColor: [COLORS.primary, '#FBBF24', '#EF4444'], borderWidth: 0 }] }, doughnutOptions);
+
+            renderChart('mostFavoritedChart', 'bar', {
+                labels: @json($mostFavorited->pluck('name')),
+                datasets: [{ data: @json($mostFavorited->pluck('total_favorites')), backgroundColor: '#EC4899', borderRadius: 3, barPercentage: 0.8 }]
+            }, barSimpleOptions);
+
+            renderChart('mostViewedChart', 'bar', {
+                labels: @json($mostViewed->pluck('name')),
+                datasets: [{ data: @json($mostViewed->pluck('views')), backgroundColor: '#8B5CF6', borderRadius: 3, barPercentage: 0.8 }]
+            }, barSimpleOptions);
+
+            // 8. Combos
+            renderChart('frequentCombosChart', 'bar', {
+                labels: @json($frequentComboLabels ?? []),
+                datasets: [{
+                    data: @json($frequentComboSupport ?? []),
+                    backgroundColor: COLORS.primary,
+                    borderRadius: 3,
+                    barPercentage: 0.6
+                }]
+            }, {
+                indexAxis: 'y',
+                scales: { x: { ticks: { stepSize: 1, font: { size: 10 } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+            });
         });
     </script>
 </x-admin-layout>
