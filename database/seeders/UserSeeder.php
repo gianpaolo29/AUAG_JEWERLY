@@ -3,22 +3,17 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Customer; // ✅ ADD THIS
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Create Admin User
         User::firstOrCreate(
-            [
-                'email' => 'admin1@gmail.com',
-            ],
+            ['email' => 'admin1@gmail.com'],
             [
                 'name' => 'Gian Mulingbayan',
                 'password' => Hash::make('Computer_29'),
@@ -28,11 +23,8 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // Create Staff User
         User::firstOrCreate(
-            [
-                'email' => 'neil.armstrong@gmail.com',
-            ],
+            ['email' => 'neil.armstrong@gmail.com'],
             [
                 'name' => 'Neil Armstrong',
                 'password' => Hash::make('password'),
@@ -42,11 +34,8 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // Create Single Customer User
         User::firstOrCreate(
-            [
-                'email' => 'gianpaolo.mulingbayan@example.com',
-            ],
+            ['email' => 'gianpaolo.mulingbayan@example.com'],
             [
                 'name' => 'Gian Paolo Mulingbayan',
                 'password' => Hash::make('password123'),
@@ -56,11 +45,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // User::factory()
-        //     ->count(100)
-        //     ->state([
-        //         'role' => 'customer',
-        //     ])
-        //     ->create();
+        Customer::factory()->count(100)->create();
     }
 }

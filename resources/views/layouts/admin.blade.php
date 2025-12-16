@@ -594,7 +594,7 @@
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.analytics')
+                                        {{ request()->routeIs('admin.forecast')
                                             ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
