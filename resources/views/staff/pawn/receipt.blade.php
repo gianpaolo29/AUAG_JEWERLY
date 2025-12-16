@@ -7,7 +7,7 @@
         /* PDF SETUP */
         @page { margin: 20px; size: A4 portrait; }
         body {
-            font-family: 'DejaVu Sans', sans-serif; /* Required for Peso Sign */
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 11px;
             color: #000;
             line-height: 1.4;
@@ -21,7 +21,7 @@
         .text-red { color: #cc0000; }
         .uppercase { text-transform: uppercase; }
 
-        /* MAIN CONTAINER (Double Border) */
+        /* MAIN CONTAINER */
         .receipt-box {
             border: 3px double #000;
             padding: 20px;
@@ -79,7 +79,24 @@
         /* FINANCIALS */
         .money-row { margin-bottom: 5px; }
         .money-label { display: inline-block; width: 60%; font-size: 10px; }
-        .money-val { display: inline-block; width: 35%; text-align: right; font-weight: bold; font-family: 'Courier New', monospace; }
+        
+        /* CRITICAL FIX: 
+           Courier New is good for numbers, but bad for symbols. 
+           We will apply DejaVu Sans specifically to the peso symbol inline below.
+        */
+        .money-val { 
+            display: inline-block; 
+            width: 35%; 
+            text-align: right; 
+            font-weight: bold; 
+            font-family: 'Courier New', monospace; 
+        }
+        
+        /* Helper class just for the symbol */
+        .php-symbol {
+            font-family: 'DejaVu Sans', sans-serif !important;
+        }
+
         .total-box {
             border-top: 2px solid #000;
             padding-top: 5px;
@@ -106,17 +123,13 @@
 <body>
 
 @php
-    // --- Data Prep ---
     $principal = $pawn->price;
-    $interest  = $pawn->interest_cost ?? 0; // Using raw value if available
-    // OR recalculate if needed: $interest = ($principal * 0.03); 
-    
+    $interest  = $pawn->interest_cost ?? 0; 
     $service   = $pawn->service_charge ?? 0;
     $net       = $principal - $interest - $service;
-
-    // Dates
-    $loanDate = $pawn->created_at; // Assumes Carbon
-    $dueDate  = $pawn->due_date;  // Assumes Carbon
+    
+    $loanDate = $pawn->created_at; 
+    $dueDate  = $pawn->due_date;  
     $expiry   = $pawn->due_date;
 @endphp
 
@@ -125,10 +138,10 @@
     <table class="w-100">
         <tr>
             <td width="65%">
-                <h1 class="header-title">AUAG PAWNSHOP</h1>
+                <h1 class="header-title">AUAG JEWELRY | PAWNSHOP</h1>
                 <div class="header-sub">
-                    Malabayabas Bldg., Cor. Mayor Enerio St.<br>
-                    Contact: (088) 531-0122 | TIN: 123-456-789-000<br>
+                    Rizal, Tuy, Batangas, Philippines<br>
+                    Contact: +63 945-406-0982<br>
                     Owned & Operated by: AUAG Jewelry Corp.
                 </div>
             </td>
@@ -183,20 +196,20 @@
                 <td style="background-color: #fafafa;">
                     <div class="money-row">
                         <span class="money-label">Principal Amount</span>
-                        <span class="money-val">&#8369; {{ number_format($principal, 2) }}</span>
+                        <span class="money-val"><span class="php-symbol">&#8369;</span> {{ number_format($principal, 2) }}</span>
                     </div>
                     <div class="money-row">
                         <span class="money-label">Less: Interest</span>
-                        <span class="money-val">{{ number_format($interest, 2) }}</span>
+                        <span class="money-val"><span class="php-symbol">&#8369;</span> {{ number_format($interest, 2) }}</span>
                     </div>
                     <div class="money-row">
                         <span class="money-label">Less: Service Charge</span>
-                        <span class="money-val">{{ number_format($service, 2) }}</span>
+                        <span class="money-val"><span class="php-symbol">&#8369;</span> {{ number_format($service, 2) }}</span>
                     </div>
                     
                     <div class="money-row total-box">
                         <span class="money-label text-bold">NET PROCEEDS</span>
-                        <span class="money-val text-bold">&#8369; {{ number_format($net, 2) }}</span>
+                        <span class="money-val text-bold"><span class="php-symbol">&#8369;</span> {{ number_format($net, 2) }}</span>
                     </div>
                 </td>
             </tr>

@@ -6,45 +6,42 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Customer; // ✅ ADD THIS
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 class TransactionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $staffIds = User::where('role', 'staff')->pluck('id')->all();
-        $products = Product::all();
+        $staffIds    = User::where('role', 'staff')->pluck('id')->all();
+        $customerIds = Customer::pluck('id')->all(); // ✅ customers table
+        $products    = Product::all();
 
         if (empty($staffIds) || $products->isEmpty()) {
             $this->command?->warn('No staff or products found. Skipping TransactionSeeder.');
             return;
         }
 
+        // If you have no customers, we can still seed walk-in transactions.
+        $hasCustomers = !empty($customerIds);
+
         $now       = Carbon::now();
         $year      = $now->year;
-        $lastMonth = $now->month; // up to current month
+        $lastMonth = $now->month;
 
         $totalTransactions = 500;
 
-        // -------------------------------------------------
-        // 1) Build strongly increasing weights per month
-        //    (later months have MUCH higher weight)
-        // -------------------------------------------------
+        // Strongly increasing weights per month
         $monthWeights = [];
         $totalWeight  = 0;
 
         for ($m = 1; $m <= $lastMonth; $m++) {
-            // square the month to strongly favor later ones
             $weight = $m * $m;
             $monthWeights[$m] = $weight;
             $totalWeight     += $weight;
         }
 
-        // Compute exact transaction counts per month
         $monthCounts = [];
         $assigned    = 0;
 
@@ -54,7 +51,6 @@ class TransactionSeeder extends Seeder
             $assigned        += $count;
         }
 
-        // Distribute any leftover transactions, starting from the last month backwards
         $remaining = $totalTransactions - $assigned;
 
         while ($remaining > 0) {
@@ -64,59 +60,52 @@ class TransactionSeeder extends Seeder
             }
         }
 
-        // -------------------------------------------------
-        // 2) Generate transactions per month
-        // -------------------------------------------------
+        // % of transactions that are walk-in (no customer_id)
+        // Adjust as you like: 30% walk-in, 70% registered customer
+        $walkInChance = 30;
+
         foreach ($monthCounts as $month => $txCount) {
-            if ($txCount <= 0) {
-                continue;
-            }
+            if ($txCount <= 0) continue;
 
             $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
-
-            // Ratio used to scale sales for later months
-            $monthRatio = $month / max(1, $lastMonth); // 0–1
+            $monthRatio  = $month / max(1, $lastMonth);
 
             for ($i = 0; $i < $txCount; $i++) {
-                // Random day/time within the month
                 $day    = rand(1, $daysInMonth);
-                $hour   = rand(9, 20);  // business hours-ish
+                $hour   = rand(9, 20);
                 $minute = rand(0, 59);
                 $second = rand(0, 59);
 
                 $randomTimestamp = Carbon::create($year, $month, $day, $hour, $minute, $second);
 
-                // Avoid future timestamps (for current month)
                 if ($randomTimestamp->greaterThan($now)) {
                     $randomTimestamp = $now->copy()->subMinutes(rand(0, 60 * 24));
                 }
 
-                // Create Buy transaction (walk-in)
+                // ✅ Choose customer from customers table (or walk-in)
+                $customerId = null;
+                if ($hasCustomers && rand(1, 100) > $walkInChance) {
+                    $customerId = $customerIds[array_rand($customerIds)];
+                }
+
                 $transaction = Transaction::create([
-                    'customer_id' => null,
+                    'customer_id' => $customerId, // ✅ now can be real customer
                     'staff_id'    => $staffIds[array_rand($staffIds)],
                     'type'        => 'Buy',
                     'created_at'  => $randomTimestamp,
                     'updated_at'  => $randomTimestamp,
                 ]);
 
-                // -------------------------------------------------
-                // Items per transaction:
-                //   earlier months: fewer items, smaller qty
-                //   later months: more items, bigger qty
-                // -------------------------------------------------
-                // max items grows with month
-                $minItems = 1;
-                $maxItems = 2 + (int) ceil($monthRatio * 3); // early: 2–3, late: up to 5
+                $minItems  = 1;
+                $maxItems  = 2 + (int) ceil($monthRatio * 3);
                 $itemCount = rand($minItems, $maxItems);
 
                 for ($j = 0; $j < $itemCount; $j++) {
-                    /** @var \App\Models\Product $product */
                     $product = $products->random();
 
                     $baseMaxQty = 2;
-                    $extraQty   = (int) ceil($monthRatio * 3); // later months: more qty
-                    $maxQty     = max(1, $baseMaxQty + $extraQty); // early: 2–3, late: up to 5
+                    $extraQty   = (int) ceil($monthRatio * 3);
+                    $maxQty     = max(1, $baseMaxQty + $extraQty);
 
                     $qty       = rand(1, $maxQty);
                     $unitPrice = (float) $product->price;

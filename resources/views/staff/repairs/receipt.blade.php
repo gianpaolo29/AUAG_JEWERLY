@@ -105,11 +105,11 @@
     <table class="w-100">
         <tr>
             <td width="60%">
-                <h1 class="header-title">AUAG JEWELRY</h1>
+                <h1 class="header-title">AUAG JEWELRY | PAWNSHOP</h1>
                 <div class="header-sub">
-                    REPAIR SERVICES DEPARTMENT<br>
-                    Malabayabas Bldg., Cor. Mayor Enerio St.<br>
-                    Contact: (088) 531-0122 | Owned by: AUAG Corp.
+                    Rizal, Tuy, Batangas, Philippines<br>
+                    Contact: +63 945-406-0982<br>
+                    Owned & Operated by: AUAG Jewelry Corp.
                 </div>
             </td>
             <td width="40%" class="text-right">
