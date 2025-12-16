@@ -134,7 +134,7 @@
 
             {{-- Close button --}}
             <div class="absolute top-0 left-full flex w-16 justify-center pt-5">
-                <button type="button" @click="isSidebarOpen = false" 
+                <button type="button" @click="isSidebarOpen = false"
                         class="-m-2.5 p-2.5 text-gray-600 hover:text-amber-600 focus:outline-none">
                     <span class="sr-only">Close sidebar</span>
                     <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -164,8 +164,8 @@
                                 <li>
                                     <a href="{{ route('admin.dashboard') }}"
                                        class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.dashboard') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.dashboard')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <div class="{{ request()->routeIs('admin.dashboard') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
                                             <svg class="size-5 {{ request()->routeIs('admin.dashboard') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
@@ -183,8 +183,8 @@
                                     <button type="button"
                                         @click="openUsers = !openUsers"
                                         class="w-full group flex items-center justify-between gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                            {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) 
-                                                ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700' 
+                                            {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*'))
+                                                ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700'
                                                 : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <span class="flex items-center gap-x-3">
                                             <div class="{{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -221,8 +221,8 @@
                                 <li>
                                     <a href="{{ route('admin.products.index') }}"
                                        class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.products.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.products.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <div class="{{ request()->routeIs('admin.products.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
                                             <svg class="size-5 {{ request()->routeIs('admin.products.*') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
@@ -239,8 +239,8 @@
                                 <li>
                                     <a href="{{ route('admin.transactions.index') }}"
                                        class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.transactions.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.transactions.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <div class="{{ request()->routeIs('admin.transactions.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
                                             <svg class="size-5 {{ request()->routeIs('admin.transactions.*') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
@@ -256,8 +256,8 @@
                                 <li>
                                     <a href="{{ route('admin.pawn.index') }}"
                                        class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.pawn.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.pawn.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <div class="{{ request()->routeIs('admin.pawn.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
                                             <svg class="size-5 {{ request()->routeIs('admin.pawn.*') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
@@ -273,8 +273,8 @@
                                 <li>
                                     <a href="{{ route('admin.repairs.index') }}"
                                        class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.repairs.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.repairs.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <div class="{{ request()->routeIs('admin.repairs.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
                                             <svg class="size-5 {{ request()->routeIs('admin.repairs.*') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
@@ -290,8 +290,8 @@
                                 <li>
                                     <a href="{{ route('admin.analytics') }}"
                                        class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.analytics') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.analytics')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
                                         <div class="{{ request()->routeIs('admin.analytics') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
                                             <svg class="size-5 {{ request()->routeIs('admin.analytics') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
@@ -302,9 +302,26 @@
                                         Analytics
                                     </a>
                                 </li>
+
+                                {{-- Forecast --}}
+                                <li>
+                                    <a href="{{ route('admin.forecast') }}"
+                                       class="group flex items-center gap-x-3 rounded-lg p-3 text-sm font-semibold transition-all duration-200
+                                        {{ request()->routeIs('admin.forecast')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}">
+                                        <div class="{{ request()->routeIs('admin.forecast') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
+                                            <svg class="size-5 {{ request()->routeIs('admin.forecast') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
+                                                 fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16M6 16v-6M12 19V5M18 19v-9" />
+                                            </svg>
+                                        </div>
+                                        Forecast
+                                    </a>
+                                </li>
                             </ul>
                         </li>
-                        
+
                         {{-- Logout --}}
                         <li class="mt-auto border-t border-gray-100 pt-4">
                             <button type="button"
@@ -353,16 +370,16 @@
                             {{-- Dashboard --}}
                             <li>
                                 <a href="{{ route('admin.dashboard') }}"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                       activeTooltip = 'Dashboard'; 
-                                       tooltipText = 'Dashboard'; 
-                                       const rect = $el.getBoundingClientRect(); 
-                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Dashboard';
+                                       tooltipText = 'Dashboard';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.dashboard') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.dashboard')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ request()->routeIs('admin.dashboard') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -381,17 +398,17 @@
                             {{-- Users (dropdown) --}}
                             <li x-data="{ openUsers: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }} }">
                                 <button type="button"
-                                    @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                         activeTooltip = 'Users'; 
-                                         tooltipText = 'Users'; 
-                                         const rect = $el.getBoundingClientRect(); 
-                                         tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                    @mouseenter="if (isDesktopSidebarCollapsed) {
+                                         activeTooltip = 'Users';
+                                         tooltipText = 'Users';
+                                         const rect = $el.getBoundingClientRect();
+                                         tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                      }"
                                     @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                     @click="openUsers = !openUsers"
                                     class="w-full group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700' 
+                                        {{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*'))
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                     :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ (request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*')) ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -433,16 +450,16 @@
                             {{-- Products --}}
                             <li>
                                 <a href="{{ route('admin.products.index') }}"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                       activeTooltip = 'Products'; 
-                                       tooltipText = 'Products'; 
-                                       const rect = $el.getBoundingClientRect(); 
-                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Products';
+                                       tooltipText = 'Products';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.products.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.products.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ request()->routeIs('admin.products.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -461,16 +478,16 @@
                             {{-- Transactions --}}
                             <li>
                                 <a href="{{ route('admin.transactions.index') }}"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                       activeTooltip = 'Transactions'; 
-                                       tooltipText = 'Transactions'; 
-                                       const rect = $el.getBoundingClientRect(); 
-                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Transactions';
+                                       tooltipText = 'Transactions';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.transactions.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.transactions.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ request()->routeIs('admin.transactions.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -488,16 +505,16 @@
                             {{-- Pawn --}}
                             <li>
                                 <a href="{{ route('admin.pawn.index') }}"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                       activeTooltip = 'Pawn'; 
-                                       tooltipText = 'Pawn'; 
-                                       const rect = $el.getBoundingClientRect(); 
-                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Pawn';
+                                       tooltipText = 'Pawn';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.pawn.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.pawn.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ request()->routeIs('admin.pawn.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -515,16 +532,16 @@
                             {{-- Repairs --}}
                             <li>
                                 <a href="{{ route('admin.repairs.index') }}"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                       activeTooltip = 'Repairs'; 
-                                       tooltipText = 'Repairs'; 
-                                       const rect = $el.getBoundingClientRect(); 
-                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Repairs';
+                                       tooltipText = 'Repairs';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.repairs.*') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.repairs.*')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ request()->routeIs('admin.repairs.*') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -542,16 +559,16 @@
                             {{-- Analytics --}}
                             <li>
                                 <a href="{{ route('admin.analytics') }}"
-                                   @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                       activeTooltip = 'Analytics'; 
-                                       tooltipText = 'Analytics'; 
-                                       const rect = $el.getBoundingClientRect(); 
-                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Analytics';
+                                       tooltipText = 'Analytics';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                    }"
                                    @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                    class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
-                                        {{ request()->routeIs('admin.analytics') 
-                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm' 
+                                        {{ request()->routeIs('admin.analytics')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
                                             : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
                                    :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
                                     <div class="{{ request()->routeIs('admin.analytics') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
@@ -565,17 +582,45 @@
                                     </span>
                                 </a>
                             </li>
+
+                            {{-- Analytics --}}
+                            <li>
+                                <a href="{{ route('admin.forecast') }}"
+                                   @mouseenter="if (isDesktopSidebarCollapsed) {
+                                       activeTooltip = 'Forecast';
+                                       tooltipText = 'Forecast';
+                                       const rect = $el.getBoundingClientRect();
+                                       tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
+                                   }"
+                                   @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
+                                   class="group flex items-center rounded-lg p-3 text-sm font-semibold transition-all duration-200
+                                        {{ request()->routeIs('admin.analytics')
+                                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-l-4 border-amber-500 shadow-sm'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-amber-600' }}"
+                                   :class="isDesktopSidebarCollapsed ? 'justify-center px-2' : 'justify-start gap-x-3'">
+                                    <div class="{{ request()->routeIs('admin.forecast') ? 'gold-gradient-light' : 'bg-gray-100 group-hover:bg-amber-100' }} p-2 rounded-lg smooth-transition">
+                                        <svg class="size-5 {{ request()->routeIs('admin.forecast') ? 'text-amber-600' : 'text-gray-500 group-hover:text-amber-600' }}"
+                                             fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16M6 16v-6M12 19V5M18 19v-9" />
+                                        </svg>
+                                    </div>
+                                    <span x-show="!isDesktopSidebarCollapsed" class="truncate sidebar-transition">
+                                        Forecast
+                                    </span>
+                                </a>
+                            </li>
+
                         </ul>
                     </li>
 
                     {{-- Logout --}}
                     <li class="mt-auto border-t border-gray-100 pt-4">
                         <button type="button"
-                                @mouseenter="if (isDesktopSidebarCollapsed) { 
-                                    activeTooltip = 'Logout'; 
-                                    tooltipText = 'Logout'; 
-                                    const rect = $el.getBoundingClientRect(); 
-                                    tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 }; 
+                                @mouseenter="if (isDesktopSidebarCollapsed) {
+                                    activeTooltip = 'Logout';
+                                    tooltipText = 'Logout';
+                                    const rect = $el.getBoundingClientRect();
+                                    tooltipPosition = { x: rect.right + 8, y: rect.top + rect.height / 2 };
                                 }"
                                 @mouseleave="if (isDesktopSidebarCollapsed) { activeTooltip = null; }"
                                 @click="openLogoutModal()"
@@ -613,10 +658,10 @@
     </div>
 
     {{-- LUXURY LOGOUT MODAL --}}
-    <div x-cloak x-show="logoutModalOpen" 
-         class="relative z-[99999]" 
+    <div x-cloak x-show="logoutModalOpen"
+         class="relative z-[99999]"
          aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        
+
         <div x-show="logoutModalOpen"
              x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0"
@@ -628,7 +673,7 @@
 
         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                
+
                 <div x-show="logoutModalOpen"
                      x-transition:enter="ease-out duration-300"
                      x-transition:enter-start="opacity-0 scale-95"
@@ -638,20 +683,20 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      @click.outside="logoutModalOpen = false"
                      class="relative transform overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 border border-amber-500/30 text-left shadow-2xl transition-all sm:w-full sm:max-w-md luxury-modal">
-                    
+
                     <div class="px-6 py-8 sm:p-8">
                         <div class="flex flex-col items-center text-center">
-                            
+
                             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 mb-5 border border-amber-500/20 shadow-inner">
                                 <svg class="h-7 w-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
                                 </svg>
                             </div>
-                            
+
                             <h3 class="text-2xl font-serif tracking-wide text-amber-50 mb-2" id="modal-title">
                                 Sign Out
                             </h3>
-                            
+
                             <div class="mt-2">
                                 <p class="text-sm text-gray-400">
                                     Are you sure you want to logout?
@@ -661,12 +706,12 @@
                     </div>
 
                     <div class="bg-gray-800/50 px-6 py-4 flex flex-col sm:flex-row-reverse sm:gap-3 border-t border-white/5">
-                        <button type="button" 
+                        <button type="button"
                                 @click="document.getElementById('logout-form').submit()"
                                 class="inline-flex w-full justify-center items-center rounded-lg gold-gradient-dark px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all hover:scale-[1.02] sm:w-auto">
                             Confirm Sign Out
                         </button>
-                        <button type="button" 
+                        <button type="button"
                                 @click="logoutModalOpen = false"
                                 class="mt-3 inline-flex w-full justify-center items-center rounded-lg border border-gray-600 bg-transparent px-4 py-2.5 text-sm font-semibold text-gray-300 hover:text-white hover:border-gray-500 hover:bg-gray-700/30 transition-colors sm:mt-0 sm:w-auto">
                             Cancel
@@ -724,7 +769,7 @@
                 {{-- Search --}}
                 <div class="relative hidden lg:block">
                     <div class="relative">
-                        <input type="search" placeholder="Search..." 
+                        <input type="search" placeholder="Search..."
                                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 w-64">
                         <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -788,7 +833,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-300"></div>
 
                 {{-- Profile dropdown --}}
