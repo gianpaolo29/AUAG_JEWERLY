@@ -23,17 +23,55 @@
                     </p>
                 </div>
 
-                <div class="flex flex-wrap gap-1">
-                    @foreach(['today' => 'Today', '7d' => '7D', '30d' => '30D', 'all' => 'All'] as $key => $label)
-                        <a href="{{ route('admin.analytics', ['range' => $key]) }}"
-                           class="px-3 py-1 text-[10px] uppercase tracking-wider font-semibold rounded-md border transition-colors
-                                 {{ $currentRange === $key
-                                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700' }}">
-                            {{ $label }}
-                        </a>
-                    @endforeach
+                @php
+                $currentRange = $range ?? request('range', '30d');
+
+                $ranges = [
+                    'today' => 'Today',
+                    '7d'    => '7 Days',
+                    '30d'   => '30 Days',
+                    'all'   => 'All Time',
+                ];
+
+                $currentLabel = $ranges[$currentRange] ?? '30 Days';
+            @endphp
+
+            <div class="relative inline-block">
+                <button
+                    id="rangeDropdownButton"
+                    data-dropdown-toggle="rangeDropdownMenu"
+                    type="button"
+                    class="inline-flex items-center justify-between gap-2 px-3 py-2 text-[10px] uppercase tracking-wider font-semibold rounded-md border transition-colors
+                        bg-white text-gray-700 border-gray-200 hover:bg-gray-50
+                        dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                >
+                    {{ $currentLabel }}
+                    <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+
+                <div
+                    id="rangeDropdownMenu"
+                    class="hidden z-10 mt-2 w-44 rounded-md border border-gray-200 bg-white shadow-sm
+                        dark:bg-gray-800 dark:border-gray-700"
+                >
+                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        @foreach($ranges as $key => $label)
+                            <li>
+                                <a
+                                    href="{{ route('admin.analytics', ['range' => $key]) }}"
+                                    class="block px-4 py-2 text-[11px] uppercase tracking-wider transition-colors
+                                        hover:bg-gray-50 dark:hover:bg-gray-700
+                                        {{ $currentRange === $key ? 'bg-indigo-600 text-white dark:bg-indigo-600' : '' }}"
+                                >
+                                    {{ $label }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
+            </div>
             </div>
 
             {{-- 2. METRICS GRID (Compact) --}}
