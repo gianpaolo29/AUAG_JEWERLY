@@ -1,19 +1,13 @@
 <?php
 
 return [
-    // FreeGoldAPI endpoint (no key)
-    'api_url' => env('GOLD_API_URL', 'https://freegoldapi.com/data/latest.json'),
-
-    // IMPORTANT:
-    // FreeGoldAPI contains annual + monthly + daily segments.
-    // To keep forecasting consistent for a daily model, we will train only on recent daily data.
-    // FreeGoldAPI says daily data is available for 2025-present. :contentReference[oaicite:4]{index=4}
-    'daily_start' => env('GOLD_DAILY_START', '2025-01-01'),
-
-    // Where to store the trained model file
-    'model_path' => storage_path('app/models/gold_forecast.rbx'),
+    'provider' => env('GOLD_PROVIDER', 'metals_dev'),
+    'daily_start' => env('GOLD_DAILY_START'),
+    'model_path' => env('GOLD_MODEL_PATH', storage_path('app/gold/gold-model.rbx')),
 
 
-    // How many past days to use as input features
-    'lookback' => (int) env('GOLD_LOOKBACK', 60),
+    'metals_dev' => [
+        'base_url' => 'https://api.metals.dev/v1',
+        'api_key'  => env('METALS_DEV_API_KEY'),
+    ],
 ];

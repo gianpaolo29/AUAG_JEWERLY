@@ -12,43 +12,46 @@ use Illuminate\Http\Request;
 
 class GoldController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, \App\Services\Gold\ExchangeRateService $fx)
     {
         $days = (int) $request->query('days', 14);
         $days = in_array($days, [7, 14, 30], true) ? $days : 14;
 
-        // last 180 records for chart
-        $history = GoldPrice::query()
+        $fxInfo = $fx->usdToPhp();
+        $usdToPhp = (float) $fxInfo['rate'];
+        $fxDate = (string) $fxInfo['date'];
+
+        // ✅ provide $history
+        $history = \App\Models\GoldPrice::query()
             ->orderBy('date', 'desc')
             ->limit(180)
             ->get(['date', 'price_usd'])
             ->reverse()
             ->values();
 
-        // latest real price
-        $latest = GoldPrice::query()->orderByDesc('date')->first();
+        $latest = \App\Models\GoldPrice::query()->orderByDesc('date')->first();
 
-        // previous day price (for change)
         $prev = $latest
-            ? GoldPrice::query()
-                ->where('date', '<', $latest->date)
-                ->orderByDesc('date')
-                ->first()
+            ? \App\Models\GoldPrice::query()->where('date', '<', $latest->date)->orderByDesc('date')->first()
             : null;
 
-        $change = ($latest && $prev) ? ((float) $latest->price_usd - (float) $prev->price_usd) : null;
+        $latestPhpPerGram = $latest ? (($latest->price_usd * $usdToPhp) / 31.1034768) : null;
+        $prevPhpPerGram   = $prev   ? (($prev->price_usd   * $usdToPhp) / 31.1034768) : null;
 
-        $changePct = ($latest && $prev && (float) $prev->price_usd > 0)
-            ? ($change / (float) $prev->price_usd) * 100
+        $change = ($latestPhpPerGram !== null && $prevPhpPerGram !== null)
+            ? ($latestPhpPerGram - $prevPhpPerGram)
             : null;
 
-        // latest training run
-        $lastRun = GoldModelRun::query()->latest('trained_at')->first();
+        $changePct = ($latestPhpPerGram !== null && $prevPhpPerGram !== null && $prevPhpPerGram > 0)
+            ? ($change / $prevPhpPerGram) * 100
+            : null;
 
-        // load forecast for latest date + latest run (if exists)
+        $lastRun = \App\Models\GoldModelRun::query()->latest('trained_at')->first();
+
+        // ✅ provide $forecast
         $forecast = collect();
         if ($latest && $lastRun) {
-            $forecast = GoldForecast::query()
+            $forecast = \App\Models\GoldForecast::query()
                 ->where('as_of_date', $latest->date)
                 ->where('gold_model_run_id', $lastRun->id)
                 ->orderBy('target_date')
@@ -56,17 +59,33 @@ class GoldController extends Controller
                 ->get(['target_date', 'predicted_usd', 'lower_usd', 'upper_usd']);
         }
 
-        return view('gold.dashboard', compact(
-            'history',
-            'forecast',
+        // ✅ points for chart (PHP/gram)
+        $historyPhpPoints = $history->map(fn($r) => [
+            'x' => $r->date->toDateString(),
+            'y' => ((float)$r->price_usd * $usdToPhp) / 31.1034768,
+        ])->values();
+
+        $forecastPhpPoints = $forecast->map(fn($r) => [
+            'x' => \Carbon\Carbon::parse($r->target_date)->toDateString(),
+            'y' => ((float)$r->predicted_usd * $usdToPhp) / 31.1034768,
+        ])->values();
+
+        return view('admin.Forecast.Index', compact(
+            'days',
+            'history',            // ✅ now exists in Blade
+            'forecast',           // ✅ now exists in Blade
             'latest',
-            'prev',
+            'lastRun',
+            'historyPhpPoints',
+            'forecastPhpPoints',
+            'latestPhpPerGram',
             'change',
             'changePct',
-            'lastRun',
-            'days'
+            'usdToPhp',
+            'fxDate',
         ));
     }
+
 
     public function sync(GoldDataSyncService $sync)
     {
@@ -97,7 +116,7 @@ class GoldController extends Controller
             $count = $forecaster->forecast($days);
 
             return redirect()
-                ->route('gold.dashboard', ['days' => $days])
+                ->route('admin.forecast', ['days' => $days])
                 ->with('status', "Forecast complete: {$count} future points generated.");
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());

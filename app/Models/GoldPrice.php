@@ -10,6 +10,9 @@ class GoldPrice extends Model
         'date',
         'price_usd',
         'source',
+        'usd_to_php',
+        'price_php_per_gram'
+
     ];
 
     protected $casts = [

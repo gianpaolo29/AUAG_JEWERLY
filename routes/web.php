@@ -24,6 +24,7 @@ use App\Http\Controllers\Staff\StaffProductController;
 use App\Http\Controllers\Staff\StaffRepairController;
 use App\Http\Controllers\Staff\StaffTransactionController;
 use App\Http\Controllers\StorefrontController;
+use App\Services\Gold\GoldSummaryService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoldSpotPriceController;
 
@@ -31,7 +32,13 @@ use App\Http\Controllers\GoldSpotPriceController;
 
 
     Route::get('/api/gold/spot', GoldSpotPriceController::class)->name('gold.spot');
-    Route::get('/gold', function () {return view('gold-index');})->name('gold.index');
+    Route::get('/gold', function (GoldSummaryService $goldSummary)
+    {
+        return view('gold-index', [
+            'gold' => $goldSummary->get(60),
+        ]);
+    })->name('gold.index');
+
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
 Route::get('auth/google', [GoogleController::class, 'redirect'])->name('google.login');
@@ -58,8 +65,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/staff/profile', [StaffProfileController::class, 'edit'])->name('staff.profile.edit');
     Route::patch('/staff/profile', [StaffProfileController::class, 'update'])->name('staff.profile.update');
     Route::delete('/staff/profile', [StaffProfileController::class, 'destroy'])->name('staff.profile.destroy');
-    
-    
+
+
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
@@ -114,8 +121,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         ]);
 
     Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
-    
+
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/forecast', [\App\Http\Controllers\GoldController::class, 'index'])->name('forecast');
     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('admin.notifications.markAllRead');
@@ -123,7 +131,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 });
 
 Route::middleware(['auth', 'role:customer'])->group(function () {
- 
+
 });
 
 Route::middleware(['auth', 'role:staff'])->group(function () {
@@ -156,4 +164,9 @@ Route::middleware(['auth', 'role:staff'])->group(function () {
      Route::get('/staff/repairs/{repair}/download', [StaffRepairController::class, 'download'])->name('staff.repairs.download');
 
 });
+
+Route::post('/gold/sync', [\App\Http\Controllers\GoldController::class, 'sync'])->name('gold.sync');
+Route::post('/gold/train', [\App\Http\Controllers\GoldController::class, 'train'])->name('gold.train');
+Route::post('/gold/forecast', [\App\Http\Controllers\GoldController::class, 'forecast'])->name('gold.forecast');
+
 require __DIR__.'/auth.php';
