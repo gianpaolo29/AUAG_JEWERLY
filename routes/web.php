@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\MonthlySalesReportController;
 use App\Http\Controllers\Admin\PawnItemController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RepairController;
@@ -108,19 +109,30 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
 
 
-    Route::resource('repairs', RepairController::class)
-        ->names([
-            'index' => 'repairs.index',
-            'create' => 'repairs.create',
-            'store' => 'repairs.store',
-            'edit' => 'repairs.edit',
-            'update' => 'repairs.update',
-            'destroy' => 'repairs.destroy',
-        ])->parameters([
-            'repairs' => 'repair',
-        ]);
+//    Route::resource('repairs', RepairController::class)
+//        ->names([
+//            'index' => 'repairs.index',
+//            'create' => 'repairs.create',
+//            'store' => 'repairs.store',
+//            'edit' => 'repairs.edit',
+//            'update' => 'repairs.update',
+//            'destroy' => 'repairs.destroy',
+//        ])->parameters([
+//            'repairs' => 'repair',
+//        ]);
 
-    Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
+    Route::get('/admin/repairs', [RepairController::class, 'index'])->name('repairs.index');
+    Route::get('/admin/repairs/create', [RepairController::class, 'create'])->name('repairs.create');
+    Route::post('/admin/repairs', [RepairController::class, 'store'])->name('repairs.store');
+    Route::get('/admin/repairs/{repair}/edit', [RepairController::class, 'edit'])->name('repairs.edit');
+    Route::put('/admin/repairs/{repair}', [RepairController::class, 'update'])->name('repairs.update');
+    Route::delete('/admin/repairs/{repair}', [RepairController::class, 'destroy'])->name('repairs.destroy');
+    Route::post('/admin/repairs/{repair}/complete', [RepairController::class, 'markComplete'])
+        ->name('repairs.complete');
+    Route::get('/admin/repairs/{repair}/download', [RepairController::class, 'download'])->name('repairs.download');
+
+
+//    Route::post('repairs/{repair}/complete', [RepairController::class, 'markComplete'])->name('repairs.complete');
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
     Route::get('/forecast', [\App\Http\Controllers\GoldController::class, 'index'])->name('forecast');
@@ -169,4 +181,8 @@ Route::post('/gold/sync', [\App\Http\Controllers\GoldController::class, 'sync'])
 Route::post('/gold/train', [\App\Http\Controllers\GoldController::class, 'train'])->name('gold.train');
 Route::post('/gold/forecast', [\App\Http\Controllers\GoldController::class, 'forecast'])->name('gold.forecast');
 
+
+
+Route::get('/admin/reports/monthly-sales/download', [MonthlySalesReportController::class, 'download'])
+    ->name('admin.reports.monthly-sales.download');
 require __DIR__.'/auth.php';

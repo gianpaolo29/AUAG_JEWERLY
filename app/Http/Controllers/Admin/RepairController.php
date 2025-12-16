@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Repair;
 use App\Models\Transaction;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RepairController extends Controller
 {
@@ -17,18 +20,18 @@ class RepairController extends Controller
      */
     public function index(Request $request)
     {
-        $q = $request->string('q')->toString();
-        $status = $request->string('status')->toString();
+        $q      = $request->string('q')->trim()->toString();
+        $status = $request->string('status')->trim()->toString();
 
         $repairs = Repair::query()
-            ->with(['customer', 'picture'])   // FIXED: picture, not pictures
+            ->with(['customer', 'picture'])
             ->when($q, function ($query) use ($q) {
-                $query->where(function ($inner) use ($q) {
-                    $inner->where('id', $q)
-                        ->orWhere('description', 'like', "%{$q}%")
-                        ->orWhereHas('customer', function ($q2) use ($q) {
-                            $q2->where('name', 'like', "%{$q}%")
-                                ->orWhere('email', 'like', "%{$q}%");
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('description', 'like', "%{$q}%")
+                        ->orWhereHas('customer', function ($cq) use ($q) {
+                            $cq->where('name', 'like', "%{$q}%")
+                                ->orWhere('email', 'like', "%{$q}%")
+                                ->orWhere('contact_no', 'like', "%{$q}%");
                         });
                 });
             })
@@ -48,9 +51,8 @@ class RepairController extends Controller
         $repair = new Repair;
         $isEdit = false;
 
-        $customers = User::where('role', 'customer')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+        $customers = Customer::orderBy('name')
+            ->get(['id', 'name', 'email', 'contact_no']);
 
         return view('admin.repairs.form', compact('repair', 'customers', 'isEdit'));
     }
@@ -60,35 +62,96 @@ class RepairController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'customer_id' => ['required', 'exists:users,id'],
-            'description' => ['required', 'string', 'max:1000'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'max:50'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-        ]);
+        $mode = $request->input('customer_mode');
 
-        $repair = Repair::create([
-            'customer_id' => $validated['customer_id'],
-            'description' => $validated['description'],
-            'price' => $validated['price'],
-            'status' => $validated['status'],
-        ]);
+        $rules = [
+            'customer_mode' => ['required', Rule::in(['existing', 'new'])],
 
-        // fix save to public
-        if ($request->hasFile('image')) {
-            $filename = uniqid().'.'.$request->image->extension();
-            $path = $request->image->storeAs('repairs', $filename, 'public');
+            'description'   => ['required', 'string', 'max:1000'],
+            'price'         => ['required', 'numeric', 'min:0'],
+            'status'        => ['required', Rule::in(['pending', 'completed', 'cancelled'])],
+            'image'         => ['nullable', 'image', 'max:4096'],
+        ];
 
-            // Save relative URL to DB
-            $repair->picture()->create([
-                'url' => $path,
-            ]);
+        if ($mode === 'existing') {
+            $rules['customer_id'] = ['required', 'integer', Rule::exists('customers', 'id')];
+        } else {
+            $rules['customer_name']  = ['required', 'string', 'max:255'];
+
+            // ✅ DUPLICATE CHECKS (New Customer)
+            $rules['customer_email'] = [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('customers', 'email'),
+            ];
+
+            $rules['customer_phone'] = [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('customers', 'contact_no'),
+            ];
         }
+
+        $messages = [
+            'customer_mode.required' => 'Please choose customer type (Existing or New).',
+
+            'customer_id.required'   => 'Please select an existing customer.',
+            'customer_id.exists'     => 'Selected customer does not exist.',
+
+            'customer_name.required' => 'Customer name is required for a new customer.',
+
+            'customer_email.email'   => 'Please enter a valid email address.',
+            'customer_email.unique'  => 'This email is already registered. Please use "Existing Customer" or enter a different email.',
+
+            'customer_phone.unique'  => 'This contact number is already registered. Please use "Existing Customer" or enter a different number.',
+
+            'description.required'   => 'Repair description is required.',
+            'price.required'         => 'Repair price is required.',
+            'price.numeric'          => 'Repair price must be a number.',
+            'price.min'              => 'Repair price cannot be negative.',
+            'status.required'        => 'Please select a status.',
+            'status.in'              => 'Invalid status selected.',
+            'image.image'            => 'Uploaded file must be an image.',
+            'image.max'              => 'Image is too large. Max size is 4MB.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
+
+        $repair = null;
+
+        DB::transaction(function () use (&$repair, $validated, $mode, $request) {
+            if ($mode === 'existing') {
+                $customerId = (int) $validated['customer_id'];
+            } else {
+                $customer = Customer::create([
+                    'name'       => $validated['customer_name'],
+                    'email'      => $validated['customer_email'] ?? null,
+                    'contact_no' => $validated['customer_phone'] ?? null,
+                ]);
+                $customerId = $customer->id;
+            }
+
+            $repair = Repair::create([
+                'customer_id' => $customerId,
+                'description' => $validated['description'],
+                'price'       => $validated['price'],
+                'status'      => $validated['status'],
+            ]);
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('repairs', 'public');
+                $repair->picture()->create(['url' => $path]);
+            }
+        });
 
         return redirect()
             ->route('admin.repairs.index')
-            ->with('success', 'Repair created successfully.');
+            ->with([
+                'success'            => 'Repair created successfully.',
+                'download_repair_id' => $repair->id,
+            ]);
     }
 
     /**
@@ -98,12 +161,10 @@ class RepairController extends Controller
     {
         $isEdit = true;
 
-        $customers = User::where('role', 'customer')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+        $customers = Customer::orderBy('name')
+            ->get(['id', 'name', 'email', 'contact_no']);
 
-        // Load single picture
-        $repair->load('picture');
+        $repair->load('picture', 'customer');
 
         return view('admin.repairs.form', compact('repair', 'customers', 'isEdit'));
     }
@@ -113,38 +174,100 @@ class RepairController extends Controller
      */
     public function update(Request $request, Repair $repair)
     {
-        $validated = $request->validate([
-            'customer_id' => ['required', 'exists:users,id'],
-            'description' => ['required', 'string', 'max:1000'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'max:50'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-        ]);
+        $mode = $request->input('customer_mode');
 
-        $repair->update([
-            'customer_id' => $validated['customer_id'],
-            'description' => $validated['description'],
-            'price' => $validated['price'],
-            'status' => $validated['status'],
-        ]);
+        $rules = [
+            'customer_mode' => ['required', Rule::in(['existing', 'new'])],
 
-        // Replace existing image
+            'description'   => ['required', 'string', 'max:1000'],
+            'price'         => ['required', 'numeric', 'min:0'],
+            'status'        => ['required', Rule::in(['pending', 'completed', 'cancelled'])],
+            'image'         => ['nullable', 'image', 'max:4096'],
+        ];
 
-        if ($request->hasFile('image')) {
-            $filename = uniqid().'.'.$request->image->extension();
-            $path = $request->image->storeAs('repairs', $filename, 'public');
+        if ($mode === 'existing') {
+            $rules['customer_id'] = ['required', 'integer', Rule::exists('customers', 'id')];
+        } else {
+            $rules['customer_name']  = ['required', 'string', 'max:255'];
 
-            $repair->picture()->delete();
+            // ✅ DUPLICATE CHECKS (New Customer)
+            $rules['customer_email'] = [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('customers', 'email'),
+            ];
 
-            // Save relative URL to DB
-            $repair->picture()->create([
-                'url' => $path,
-            ]);
+            $rules['customer_phone'] = [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('customers', 'contact_no'),
+            ];
         }
+
+        $messages = [
+            'customer_mode.required' => 'Please choose customer type (Existing or New).',
+
+            'customer_id.required'   => 'Please select an existing customer.',
+            'customer_id.exists'     => 'Selected customer does not exist.',
+
+            'customer_name.required' => 'Customer name is required for a new customer.',
+
+            'customer_email.email'   => 'Please enter a valid email address.',
+            'customer_email.unique'  => 'This email is already registered. Please use "Existing Customer" or enter a different email.',
+
+            'customer_phone.unique'  => 'This contact number is already registered. Please use "Existing Customer" or enter a different number.',
+
+            'description.required'   => 'Repair description is required.',
+            'price.required'         => 'Repair price is required.',
+            'price.numeric'          => 'Repair price must be a number.',
+            'price.min'              => 'Repair price cannot be negative.',
+            'status.required'        => 'Please select a status.',
+            'status.in'              => 'Invalid status selected.',
+            'image.image'            => 'Uploaded file must be an image.',
+            'image.max'              => 'Image is too large. Max size is 4MB.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
+
+        DB::transaction(function () use ($repair, $validated, $mode, $request) {
+            if ($mode === 'existing') {
+                $customerId = (int) $validated['customer_id'];
+            } else {
+                $customer = Customer::create([
+                    'name'       => $validated['customer_name'],
+                    'email'      => $validated['customer_email'] ?? null,
+                    'contact_no' => $validated['customer_phone'] ?? null,
+                ]);
+                $customerId = $customer->id;
+            }
+
+            $repair->update([
+                'customer_id' => $customerId,
+                'description' => $validated['description'],
+                'price'       => $validated['price'],
+                'status'      => $validated['status'],
+            ]);
+
+            if ($request->hasFile('image')) {
+                if ($repair->picture) {
+                    Storage::disk('public')->delete($repair->picture->url);
+                    $repair->picture->delete();
+                }
+
+                $path = $request->file('image')->store('repairs', 'public');
+                $repair->picture()->create(['url' => $path]);
+            }
+        });
+
 
         return redirect()
             ->route('admin.repairs.index')
-            ->with('success', 'Repair updated successfully.');
+            ->with([
+                'success'            => 'Repair updated successfully.',
+                'download_repair_id' => $repair->id,
+            ]);
     }
 
     /**
@@ -166,35 +289,45 @@ class RepairController extends Controller
 
     public function markComplete(Repair $repair)
     {
-        // If already completed, don't double-create a transaction
         if ($repair->status === 'completed') {
-            return back()->with('info', 'This repair is already completed.');
+            return back()->with('info', 'Already completed.');
         }
 
         DB::transaction(function () use ($repair) {
-            // 1) Update status
-            $repair->update([
-                'status' => 'completed',
-            ]);
+            $repair->update(['status' => 'completed']);
 
-            // 2) Create a transaction record
             $transaction = Transaction::create([
                 'customer_id' => $repair->customer_id,
-                'staff_id' => auth()->id(),   // current logged-in staff
-                'type' => 'Repair',       // so you can filter later
+                'staff_id'    => auth()->id(),
+                'type'        => 'Repair',
             ]);
 
-            // 3) Add a single transaction item linked to this repair
             $transaction->items()->create([
-                'product_id' => null,
+                'product_id'   => null,
                 'pawn_item_id' => null,
-                'repair_id' => $repair->id,
-                'quantity' => 1,
-                'unit_price' => $repair->price,
-                'line_total' => $repair->price,
+                'repair_id'    => $repair->id,
+                'quantity'     => 1,
+                'unit_price'   => $repair->price,
+                'line_total'   => $repair->price,
             ]);
         });
 
         return back()->with('success', 'Transaction Completed');
     }
+
+
+    public function download(Repair $repair)
+    {
+        $repair->load(['customer', 'picture']);
+
+        $pdf = Pdf::loadView('admin.repairs.receipt', [
+            'repair' => $repair,
+        ])
+            ->setPaper('a4', 'portrait');
+
+        $fileName = 'repair_' . str_pad($repair->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+
+        return $pdf->download($fileName);
+    }
+
 }

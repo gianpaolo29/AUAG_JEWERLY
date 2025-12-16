@@ -17,62 +17,93 @@
             @endphp
 
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">
+                {{-- LEFT: label --}}
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Showing data for: <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $rangeLabel }}</span>
+                        Showing data for:
+                        <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ $rangeLabel }}</span>
                     </p>
                 </div>
 
+                {{-- RIGHT: controls --}}
                 @php
-                $currentRange = $range ?? request('range', '30d');
+                    $currentRange = $range ?? request('range', '30d');
 
-                $ranges = [
-                    'today' => 'Today',
-                    '7d'    => '7 Days',
-                    '30d'   => '30 Days',
-                    'all'   => 'All Time',
-                ];
+                    $ranges = [
+                        'today' => 'Today',
+                        '7d'    => '7 Days',
+                        '30d'   => '30 Days',
+                        'all'   => 'All Time',
+                    ];
 
-                $currentLabel = $ranges[$currentRange] ?? '30 Days';
-            @endphp
+                    $currentLabel = $ranges[$currentRange] ?? '30 Days';
+                    $month = request('month', now()->format('Y-m'));
+                @endphp
 
-            <div class="relative inline-block">
-                <button
-                    id="rangeDropdownButton"
-                    data-dropdown-toggle="rangeDropdownMenu"
-                    type="button"
-                    class="inline-flex items-center justify-between gap-2 px-3 py-2 text-[10px] uppercase tracking-wider font-semibold rounded-md border transition-colors
-                        bg-white text-gray-700 border-gray-200 hover:bg-gray-50
-                        dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
-                >
-                    {{ $currentLabel }}
-                    <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
-                    </svg>
-                </button>
+                <div class="flex flex-wrap items-center gap-2 md:justify-end">
+                    {{-- Range dropdown --}}
+                    <div class="relative">
+                        <button
+                            id="rangeDropdownButton"
+                            data-dropdown-toggle="rangeDropdownMenu"
+                            type="button"
+                            class="inline-flex items-center justify-between gap-2 min-w-[120px] px-3 py-2
+                       text-[10px] uppercase tracking-wider font-semibold rounded-md border transition-colors
+                       bg-white text-gray-700 border-gray-200 hover:bg-gray-50
+                       dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                        >
+                            {{ $currentLabel }}
+                            <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
 
-                <div
-                    id="rangeDropdownMenu"
-                    class="hidden z-10 mt-2 w-44 rounded-md border border-gray-200 bg-white shadow-sm
-                        dark:bg-gray-800 dark:border-gray-700"
-                >
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-                        @foreach($ranges as $key => $label)
-                            <li>
-                                <a
-                                    href="{{ route('admin.analytics', ['range' => $key]) }}"
-                                    class="block px-4 py-2 text-[11px] uppercase tracking-wider transition-colors
-                                        hover:bg-gray-50 dark:hover:bg-gray-700
-                                        {{ $currentRange === $key ? 'bg-indigo-600 text-white dark:bg-indigo-600' : '' }}"
-                                >
-                                    {{ $label }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
+                        <div
+                            id="rangeDropdownMenu"
+                            class="hidden z-10 mt-2 w-44 rounded-md border border-gray-200 bg-white shadow-sm
+                       dark:bg-gray-800 dark:border-gray-700"
+                        >
+                            <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                                @foreach($ranges as $key => $label)
+                                    <li>
+                                        <a
+                                            href="{{ route('admin.analytics', ['range' => $key, 'month' => $month]) }}"
+                                            class="block px-4 py-2 text-[11px] uppercase tracking-wider transition-colors
+                                       hover:bg-gray-50 dark:hover:bg-gray-700
+                                       {{ $currentRange === $key ? 'bg-indigo-600 text-white dark:bg-indigo-600' : '' }}"
+                                        >
+                                            {{ $label }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+
+                    {{-- Month + Download --}}
+                    <form method="GET" class="flex flex-wrap items-center gap-2">
+                        {{-- keep range when changing month --}}
+                        <input type="hidden" name="range" value="{{ $currentRange }}">
+
+                        <input
+                            type="month"
+                            name="month"
+                            value="{{ $month }}"
+                            class="px-3 py-2 text-sm rounded-md border border-gray-200 bg-white
+                       dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                        >
+
+                        <a
+                            href="{{ route('admin.reports.monthly-sales.download', ['month' => $month]) }}"
+                            class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-indigo-600 text-white
+                       hover:bg-indigo-700 transition-colors"
+                        >
+                            Download Monthly PDF
+                        </a>
+                    </form>
                 </div>
             </div>
-            </div>
+
 
             {{-- 2. METRICS GRID (Compact) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

@@ -14,7 +14,7 @@ return [
     |
     */
     'python' => [
-    'binary' => env('PYTHON_BINARY', 'python'),
+        'binary' => env('PYTHON_BINARY', 'python3'),
     ],
 
     'goldapi' => [
